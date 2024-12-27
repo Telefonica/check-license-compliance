@@ -108,9 +108,6 @@ jobs:
         with:
           npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
 
-      - name: Remove dist/ directory
-        run: rm -rf dist/
-
       - name: Check license compliance
         if: github.event_name != 'pull_request'
         uses: ./
