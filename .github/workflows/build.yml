@@ -90,6 +90,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check SPDX headers
+        if: github.event_name != 'pull_request'
+        uses: Telefonica/check-spdx-headers@main
+
+      - name: Check SPDX headers
+        if: github.event_name == 'pull_request'
         uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
