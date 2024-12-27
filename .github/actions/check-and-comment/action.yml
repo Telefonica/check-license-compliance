@@ -65,6 +65,6 @@ runs:
         issue-number: ${{ github.event.pull_request.number }}
         body: ${{ steps.check-license-compliance.outputs.report }}
         edit-mode: replace
-    - if: ${{ (steps.check-license-compliance.outputs.found-forbidden == 'true' and inputs.fail-on-forbidden == 'true') or (steps.check-license-compliance.outputs.found-warning == 'true' and inputs.fail-on-warning == 'true') }}
+    - if: ${{ (steps.check-license-compliance.outputs.found-forbidden == 'true' && inputs.fail-on-forbidden == 'true') || (steps.check-license-compliance.outputs.found-warning == 'true' && inputs.fail-on-warning == 'true') }}
       shell: bash
       run: echo "Check License Compliance failed" && exit 1
