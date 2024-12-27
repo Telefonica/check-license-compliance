@@ -5,7 +5,7 @@ import * as core from "@actions/core";
 import { parse } from "yaml";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
-import { inputOptionsSchema } from "./Config.types";
+import { inputOptionsSchema, allConfigSchema } from "./Config.types";
 import type { InputOptions } from "./Config.types";
 import { fromError } from "zod-validation-error";
 
@@ -113,10 +113,24 @@ export async function getConfig(): Promise<InputOptions> {
     inputs.configFile || "check-license-compliance.config.yml",
   );
 
+  const inputsValues: InputOptions = {};
+
+  if (inputs.log) {
+    inputsValues.log = inputs.log as InputOptions["log"];
+  }
+
+  if (inputs.failOnForbidden !== undefined) {
+    inputsValues.failOnForbidden = inputs.failOnForbidden;
+  }
+
+  if (inputs.failOnWarning !== undefined) {
+    inputsValues.failOnWarning = inputs.failOnWarning;
+  }
+
   const mergedConfig = {
     ...configFromFile,
     ...config,
-    ...inputs,
+    ...inputsValues,
     ...parsedInputs,
   };
 
@@ -140,7 +154,7 @@ export async function getConfig(): Promise<InputOptions> {
 
   core.debug(`Configuration: ${JSON.stringify(mergedConfigWithDefaults)}`);
 
-  const result = inputOptionsSchema.safeParse(mergedConfigWithDefaults);
+  const result = allConfigSchema.safeParse(mergedConfigWithDefaults);
 
   if (!result.success) {
     core.error("Error validating the configuration");

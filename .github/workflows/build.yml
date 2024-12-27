@@ -93,6 +93,7 @@ jobs:
         uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   check-license-compliance:
     name: Check license compliance
     runs-on: ubuntu-latest

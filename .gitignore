@@ -1,4 +1,5 @@
 .npmrc
+.DS_Store
 
 # Logs
 logs

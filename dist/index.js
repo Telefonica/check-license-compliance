@@ -69344,17 +69344,22 @@ const configSchema = z
 // SPDX-License-Identifier: Apache-2.0
 
 
+
 const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
 const failOnForbiddenSchema = z.boolean().optional();
 const failOnWarningSchema = z.boolean().optional();
 const inputOptionsSchema = z
     .object({
-    ...configSchema.shape,
-    reporter: reporterSchema,
-    failOnForbidden: failOnForbiddenSchema,
-    failOnWarning: failOnWarningSchema,
+    log: logLevelSchema.optional(),
+    reporter: reporterSchema.optional(),
+    failOnForbidden: failOnForbiddenSchema.optional(),
+    failOnWarning: failOnWarningSchema.optional(),
 })
     .strict();
+const allConfigSchema = z.object({
+    ...configSchema.shape,
+    ...inputOptionsSchema.shape,
+});
 
 ;// CONCATENATED MODULE: ./node_modules/zod-validation-error/dist/index.mjs
 // lib/isZodErrorLike.ts
@@ -69695,10 +69700,20 @@ async function getConfig() {
         core.debug(`Parsed config option from inputs: ${JSON.stringify(config)}`);
     }
     configFromFile = await loadConfigFile(inputs.configFile || "check-license-compliance.config.yml");
+    const inputsValues = {};
+    if (inputs.log) {
+        inputsValues.log = inputs.log;
+    }
+    if (inputs.failOnForbidden !== undefined) {
+        inputsValues.failOnForbidden = inputs.failOnForbidden;
+    }
+    if (inputs.failOnWarning !== undefined) {
+        inputsValues.failOnWarning = inputs.failOnWarning;
+    }
     const mergedConfig = {
         ...configFromFile,
         ...config,
-        ...inputs,
+        ...inputsValues,
         ...parsedInputs,
     };
     core.debug(`Configuration without default values: ${JSON.stringify(mergedConfig)}`);
@@ -69714,7 +69729,7 @@ async function getConfig() {
         reporter: mergedConfig.reporter || "text",
     };
     core.debug(`Configuration: ${JSON.stringify(mergedConfigWithDefaults)}`);
-    const result = inputOptionsSchema.safeParse(mergedConfigWithDefaults);
+    const result = allConfigSchema.safeParse(mergedConfigWithDefaults);
     if (!result.success) {
         core.error("Error validating the configuration");
         throw new Error(fromError(result.error).toString());

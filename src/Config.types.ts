@@ -4,6 +4,7 @@
 import { z } from "zod";
 
 import { configSchema } from "./lib/Config.types";
+import { logLevelSchema } from "./lib/Logger.types";
 
 export const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
 /** Formatter of the response */
@@ -19,12 +20,17 @@ export type FailOnWarning = z.infer<typeof failOnWarningSchema>;
 
 export const inputOptionsSchema = z
   .object({
-    ...configSchema.shape,
-    reporter: reporterSchema,
-    failOnForbidden: failOnForbiddenSchema,
-    failOnWarning: failOnWarningSchema,
+    log: logLevelSchema.optional(),
+    reporter: reporterSchema.optional(),
+    failOnForbidden: failOnForbiddenSchema.optional(),
+    failOnWarning: failOnWarningSchema.optional(),
   })
   .strict();
 
 /** Input options */
 export type InputOptions = z.infer<typeof inputOptionsSchema>;
+
+export const allConfigSchema = z.object({
+  ...configSchema.shape,
+  ...inputOptionsSchema.shape,
+});
