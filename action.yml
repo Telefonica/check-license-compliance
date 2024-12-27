@@ -31,11 +31,9 @@ inputs:
   fail-on-forbidden:
     description: 'Fail the action when there are forbidden licenses'
     type: boolean
-    default: 'true'
   fail-on-warning:
     description: 'Fail the action when there are dangerous licenses'
     type: boolean
-    default: 'true'
   fail-on-not-valid:
     description: 'Fail the action when the result is not valid'
     type: boolean
