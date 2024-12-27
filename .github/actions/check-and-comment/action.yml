@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+# SPDX-License-Identifier: MIT
+
+name: Check License Compliance
+description: Checks that repository dependencies are compliant with allowed licenses according to a given configuration, and comments the results on a pull request.
+
+permissions:
+  pull-requests: write
+  statuses: write
+
+inputs:
+  log:
+    description: 'Log level'
+    type: choice
+    options:
+      - 'silly'
+      - 'debug'
+      - 'verbose'
+      - 'info'
+      - 'warn'
+      - 'error'
+      - 'silent'
+    default: 'info'
+    required: false
+  fail-on-forbidden:
+    description: 'Fail the action when there are forbidden licenses'
+    type: boolean
+    default: 'true'
+  fail-on-warning:
+    description: 'Fail the action when there are dangerous licenses'
+    type: boolean
+    default: 'true'
+  config:
+    description: 'Configuration object expressed as a YAML string'
+    multiline: true
+    required: false
+  config-file:
+    description: 'Path to a configuration file'
+    default: 'check-license-compliance.config.yml'
+
+runs:
+  using: composite
+  steps:
+    - name: Check License Compliance
+      id: check-license-compliance
+      uses: ./
+      with:
+        log: ${{ inputs.log }}
+        reporter: 'markdown'
+        fail-on-forbidden: false
+        fail-on-warning: false
+        config: ${{ inputs.config }}
+        config-file: ${{ inputs.config-file }}
+    - name: Find Comment
+      uses: peter-evans/find-comment@v3
+      id: previous-comment
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Check License Compliance
+    - name: Create or update comment
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.previous-comment.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body: ${{ steps.check-license-compliance.outputs.report }}
+        edit-mode: replace
+    - if: ${{ (steps.check-license-compliance.outputs.found-forbidden == 'true' and inputs.fail-on-forbidden == 'true') or (steps.check-license-compliance.outputs.found-warning == 'true' and inputs.fail-on-warning == 'true') }}
+      shell: bash
+      run: echo "Check License Compliance failed" && exit 1

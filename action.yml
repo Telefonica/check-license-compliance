@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+# SPDX-License-Identifier: Apache-2.0
+
+name: 'Check License Compliance'
+description: 'GitHub Action to check that dependencies are compliant with approved licenses'
+author: 'Telefónica Innovación Digital'
+
+inputs:
+  log:
+    description: 'Log level'
+    type: choice
+    options:
+      - 'silly'
+      - 'debug'
+      - 'verbose'
+      - 'info'
+      - 'warn'
+      - 'error'
+      - 'silent'
+    default: 'info'
+    required: false
+  reporter:
+    description: 'Reporter to use'
+    type: choice
+    options:
+      - 'json'
+      - 'markdown'
+      - 'text'
+    default: 'text'
+    required: false
+  fail-on-forbidden:
+    description: 'Fail the action when there are forbidden licenses'
+    type: boolean
+    default: 'true'
+  fail-on-warning:
+    description: 'Fail the action when there are dangerous licenses'
+    type: boolean
+    default: 'true'
+  config:
+    description: 'Configuration object expressed as a YAML string'
+    multiline: true
+    required: false
+  config-file:
+    description: 'Path to a configuration file'
+    default: 'check-license-compliance.config.yml'
+outputs:
+  found-forbidden:
+    description: 'Whether forbidden licenses were found'
+  found-warning:
+    description: 'Whether dangerous licenses were found'
+  report:
+    description: 'A report containing the results of the check'
+runs:
+  using: node20
+  main: dist/index.js
