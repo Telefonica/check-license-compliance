@@ -14,8 +14,18 @@ console.log("Replacing __filename and __dirname in", filePath);
 
 const result = await replaceInFile({
   files: filePath,
-  from: [/__filename/g, /__dirname/g],
-  to: ["import.meta.filename", "import.meta.dirname"],
+  from: [
+    /__filename/g,
+    /__dirname/g,
+    /var deps = obj\.dependencies = obj\.dependencies \|\| {}/g,
+    /var peerDeps = obj\.peerDependencies = obj\.peerDependencies \|\| {}/g,
+  ],
+  to: [
+    "import.meta.filename",
+    "import.meta.dirname",
+    "var deps = obj.dependencies || {}",
+    "var peerDeps = obj.peerDependencies || {}",
+  ],
 });
 
 // eslint-disable-next-line no-console
