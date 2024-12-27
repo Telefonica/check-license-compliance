@@ -30,7 +30,12 @@ export async function run(): Promise<void> {
     });
     const result = await checker.check();
 
-    const report = getReport(options.reporter, result);
+    const report = getReport(
+      options.reporter,
+      result,
+      options.failOnForbidden,
+      options.failOnWarning,
+    );
     core.info(report);
     core.setOutput(OUTPUT_REPORT, report);
 
