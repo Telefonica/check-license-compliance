@@ -6,7 +6,7 @@ import { parse } from "yaml";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { allConfigSchema } from "./Config.types";
-import type { InputOptions } from "./Config.types";
+import type { InputOptions, AllConfig } from "./Config.types";
 import { fromError } from "zod-validation-error";
 
 /**
@@ -97,7 +97,7 @@ async function loadConfigFile(configFile: string) {
  * Returns the configuration from the action inputs, loading configuration files if needed and parsing the inputs accordingly.
  * @returns The configuration from the action inputs and configuration files.
  */
-export async function getConfig(): Promise<InputOptions> {
+export async function getConfig(): Promise<AllConfig> {
   const inputs = getInputs();
   let config: Partial<InputOptions> = {};
   let configFromFile: Partial<InputOptions> = {};

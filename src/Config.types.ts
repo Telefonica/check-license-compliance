@@ -34,3 +34,6 @@ export const allConfigSchema = z.object({
   ...configSchema.shape,
   ...inputOptionsSchema.shape,
 });
+
+/** All the configuration */
+export type AllConfig = z.infer<typeof allConfigSchema>;
