@@ -21162,7 +21162,6 @@ function resolveInheritance (obj, opts) {
     obj.dependencies = {}
   }
   Object.keys(obj.dependencies).forEach(function (dep) {
-    console.log(dep, obj.dependencies[dep]);
     findUnmet(obj.dependencies[dep], opts)
   })
   Object.keys(obj.dependencies).forEach(function (dep) {
@@ -21182,7 +21181,8 @@ function findUnmet (obj, opts) {
   if (findUnmetSeen.indexOf(obj) !== -1) return
   findUnmetSeen.push(obj)
   debug("find unmet parent=%s obj=", obj.parent && obj.parent.name, obj.name || obj)
-  var deps = obj.dependencies = obj.dependencies || {}
+  console.log(obj, obj?.dependencies);
+  var deps = obj?.dependencies = obj?.dependencies || {}
 
   debug(deps)
   Object.keys(deps)
