@@ -21182,7 +21182,7 @@ function findUnmet (obj, opts) {
   findUnmetSeen.push(obj)
   debug("find unmet parent=%s obj=", obj.parent && obj.parent.name, obj.name || obj)
   console.log(obj, obj?.dependencies);
-  var deps = obj?.dependencies = obj?.dependencies || {}
+  var deps = obj?.dependencies || {}
 
   debug(deps)
   Object.keys(deps)
