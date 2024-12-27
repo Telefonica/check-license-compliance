@@ -22,14 +22,6 @@ inputs:
       - 'silent'
     default: 'info'
     required: false
-  fail-on-forbidden:
-    description: 'Fail the action when there are forbidden licenses'
-    type: boolean
-    default: 'true'
-  fail-on-warning:
-    description: 'Fail the action when there are dangerous licenses'
-    type: boolean
-    default: 'true'
   config:
     description: 'Configuration object expressed as a YAML string'
     multiline: true
@@ -47,8 +39,7 @@ runs:
       with:
         log: ${{ inputs.log }}
         reporter: 'markdown'
-        fail-on-forbidden: false
-        fail-on-warning: false
+        fail-on-not-valid: false
         config: ${{ inputs.config }}
         config-file: ${{ inputs.config-file }}
     - name: Find Comment
@@ -65,6 +56,6 @@ runs:
         issue-number: ${{ github.event.pull_request.number }}
         body: ${{ steps.check-license-compliance.outputs.report }}
         edit-mode: replace
-    - if: ${{ (steps.check-license-compliance.outputs.found-forbidden == 'true' && inputs.fail-on-forbidden == 'true') || (steps.check-license-compliance.outputs.found-warning == 'true' && inputs.fail-on-warning == 'true') }}
+    - if: ${{ steps.check-license-compliance.outputs.valid == 'false' }}
       shell: bash
       run: echo "Check License Compliance failed" && exit 1

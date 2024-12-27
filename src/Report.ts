@@ -96,8 +96,7 @@ export function successReport(reporter: Reporter, result: Result): string {
 export function errorReport(
   reporter: Reporter,
   result: Result,
-  failOnForbidden?: boolean,
-  failOnWarning?: boolean,
+  isValid: boolean,
 ): string {
   let summaryPhrases = [];
 
@@ -128,7 +127,7 @@ export function errorReport(
           .map((line, index) => (index > 0 ? indentString(line, 8) : line))
           .join("\n")}
 
-        ${(result.forbidden.length > 0 && failOnForbidden) || (result.warning.length > 0 && failOnWarning) ? "❌ Result: Not valid" : "✅ Result: Valid"}
+        ${!isValid ? "❌ Result: Not valid" : "✅ Result: Valid"}
       `);
     default:
       return summary;
@@ -144,10 +143,9 @@ export function errorReport(
 export function getReport(
   reporter: Reporter,
   result: Result,
-  failOnForbidden?: boolean,
-  failOnWarning?: boolean,
+  isValid: boolean,
 ): string {
   return result.forbidden.length > 0 || result.warning.length > 0
-    ? errorReport(reporter, result, failOnForbidden, failOnWarning)
+    ? errorReport(reporter, result, isValid)
     : successReport(reporter, result);
 }

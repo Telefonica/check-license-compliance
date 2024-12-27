@@ -36,6 +36,10 @@ inputs:
     description: 'Fail the action when there are dangerous licenses'
     type: boolean
     default: 'true'
+  fail-on-not-valid:
+    description: 'Fail the action when the result is not valid'
+    type: boolean
+    default: 'true'
   config:
     description: 'Configuration object expressed as a YAML string'
     multiline: true
@@ -48,6 +52,8 @@ outputs:
     description: 'Whether forbidden licenses were found'
   found-warning:
     description: 'Whether dangerous licenses were found'
+  valid:
+    description: 'Whether the result is valid or not'
   report:
     description: 'A report containing the results of the check'
 runs:

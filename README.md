@@ -131,6 +131,7 @@ The configuration file is a YAML file that must be placed at the root of your re
   * `warning`: Array of strings with the licenses that should produce a warning.
 * `failOnForbidden`: Boolean indicating if the check should fail when a forbidden license is found.
 * `failOnWarning`: Boolean indicating if the check should fail when a warning license is found.
+* `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid according to the dependencies and the `failOnForbidden` and `failOnWarning` properties. Default is `true`.
 * `licenseCheckerOptions`: Object with the options that are passed to the [`license-checker` library](https://github.com/davglass/license-checker) on each different type of check. So, __it is only useful when checking Node dependencies__. You can find the available options [here](https://github.com/davglass/license-checker#options).
   * `global`: Object with the global options. These options are applied both when checking "warning" and "forbidden" licenses.
   * `warning`: Object with the options that are applied when checking "warning" licenses. They are merged with the global options. By default, the `unknown` option is set to `true`. You should redefine it if you want to not produce a warning for unknown licenses.
@@ -150,6 +151,7 @@ The action also allows to set the configuration by using inputs. When defined, t
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
 * `fail-on-forbidden`: Boolean value to determine if the action should fail when a file does not have the correct headers. Default is `true`.
 * `fail-on-warning`: Boolean value to determine if the action should fail when a file does not have the correct headers. Default is `true`.
+* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid according to the dependencies and the `fail-on-forbidden` and `fail-on-warning` properties. Default is `true`.
 * `config`: Multiline string with the whole [configuration](#configuration) expressed as a YAML object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here.
     Example:
 
@@ -234,8 +236,8 @@ Node.js licenses are checked using the [`license-checker` library](https://githu
 
 The action executed the `license-checker` library two times with the following options:
 
-1. Check forbidden: It executes the check, passing as exclusions the licenses in the `allowed` and `warning` arrays. If any license is found, it will fail the check if the `failOnForbidden` property is set to `true`.
-2. Check warning: It executes the check, passing as exclusions the licenses in the `allowed` and `forbidden` arrays. If any license is found, it will fail the check if the `failOnWarning` property is set to `true`.
+1. Check forbidden: It executes the check, passing as exclusions the licenses in the `allowed` and `warning` arrays. If any license is found, it will consider the dependencies not valid if the `failOnForbidden` property is set to `true`.
+2. Check warning: It executes the check, passing as exclusions the licenses in the `allowed` and `forbidden` arrays. If any license is found, it will consider the dependencies not valid if the `failOnWarning` property is set to `true`.
 
 The action will return a report with the details of the check, including the dependencies that are not compliant, their installation path, the license they have, etc.
 
@@ -248,6 +250,7 @@ The action returns the following outputs:
 
 * `found-forbidden`: A boolean value indicating whether any forbidden license was found.
 * `found-warning`: A boolean value indicating whether any warning license was found.
+* `valid`: A boolean value indicating whether the check is valid according to the dependencies and the `failOnForbidden` and `failOnWarning` properties.
 * `report`: A report containing details about the result of the check. The report can be returned in different formats, that can be defined by using the [`reporter` configuration property](#configuration). The possible values are:
   * `text`: Generates a text report. This is the default reporter.
   * `markdown`: Generates a markdown report. This is very useful if you want to send the results to a GitHub comment in a PR, for example.
