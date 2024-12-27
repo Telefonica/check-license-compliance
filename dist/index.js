@@ -69354,6 +69354,7 @@ const inputOptionsSchema = z
     reporter: reporterSchema.optional(),
     failOnForbidden: failOnForbiddenSchema.optional(),
     failOnWarning: failOnWarningSchema.optional(),
+    failOnNotValid: z.boolean().optional(),
 })
     .strict();
 const allConfigSchema = z.object({
@@ -69646,6 +69647,7 @@ function getInputs() {
     const log = core.getInput("log");
     const failOnForbidden = core.getInput("fail-on-forbidden");
     const failOnWarning = core.getInput("fail-on-warning");
+    const failOnNotValid = core.getInput("fail-on-not-valid");
     const reporter = core.getInput("reporter");
     const config = core.getMultilineInput("config").join("\n");
     const configFile = core.getInput("config-file");
@@ -69653,6 +69655,7 @@ function getInputs() {
         log: valueIfDefined(log),
         failOnForbidden: valueIfBoolean(failOnForbidden),
         failOnWarning: valueIfBoolean(failOnWarning),
+        failOnNotValid: valueIfBoolean(failOnNotValid),
         reporter: valueIfDefined(reporter),
         config: valueIfDefined(config),
         configFile: valueIfDefined(configFile),
@@ -69693,7 +69696,6 @@ async function getConfig() {
     const inputs = getInputs();
     let config = {};
     let configFromFile = {};
-    let parsedInputs = {};
     if (inputs.config) {
         core.debug("Parsing the config option from the inputs");
         config = parseYamlConfig(inputs.config);
@@ -69710,11 +69712,16 @@ async function getConfig() {
     if (inputs.failOnWarning !== undefined) {
         inputsValues.failOnWarning = inputs.failOnWarning;
     }
+    if (inputs.failOnNotValid !== undefined) {
+        inputsValues.failOnNotValid = inputs.failOnNotValid;
+    }
+    if (inputs.reporter) {
+        inputsValues.reporter = inputs.reporter;
+    }
     const mergedConfig = {
         ...configFromFile,
         ...config,
         ...inputsValues,
-        ...parsedInputs,
     };
     core.debug(`Configuration without default values: ${JSON.stringify(mergedConfig)}`);
     const mergedConfigWithDefaults = {
@@ -69726,6 +69733,9 @@ async function getConfig() {
         failOnForbidden: mergedConfig.failOnForbidden === undefined
             ? true
             : mergedConfig.failOnForbidden,
+        failOnNotValid: mergedConfig.failOnNotValid === undefined
+            ? true
+            : mergedConfig.failOnNotValid,
         reporter: mergedConfig.reporter || "text",
     };
     core.debug(`Configuration: ${JSON.stringify(mergedConfigWithDefaults)}`);
@@ -70680,7 +70690,7 @@ function successReport(reporter, result) {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-function errorReport(reporter, result) {
+function errorReport(reporter, result, isValid) {
     let summaryPhrases = [];
     summaryPhrases.push(`${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} have forbidden licenses.`);
     summaryPhrases.push(`${result.warning.length} ${pluralize(result.warning.length, "dependency")} have dangerous licenses.`);
@@ -70702,6 +70712,8 @@ function errorReport(reporter, result) {
         ${getErrorsMarkdown(result.warning, "dangerous", "⚠️")
                 .map((line, index) => (index > 0 ? indentString(line, 8) : line))
                 .join("\n")}
+
+        ${!isValid ? "❌ Result: Not valid" : "✅ Result: Valid"}
       `);
         default:
             return summary;
@@ -70713,9 +70725,9 @@ function errorReport(reporter, result) {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-function getReport(reporter, result) {
+function getReport(reporter, result, isValid) {
     return result.forbidden.length > 0 || result.warning.length > 0
-        ? errorReport(reporter, result)
+        ? errorReport(reporter, result, isValid)
         : successReport(reporter, result);
 }
 
@@ -70728,6 +70740,7 @@ function getReport(reporter, result) {
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
+const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 /**
@@ -70745,15 +70758,17 @@ async function run() {
             log: options.log,
         });
         const result = await checker.check();
-        const report = getReport(options.reporter, result);
-        core.info(report);
-        core.setOutput(OUTPUT_REPORT, report);
         const hasWarnings = result.warning.length > 0;
         const hasForbidden = result.forbidden.length > 0;
         core.setOutput(FOUND_FORBIDDEN, hasForbidden);
         core.setOutput(FOUND_WARNING, hasWarnings);
-        if ((hasWarnings && options.failOnWarning) ||
-            (hasForbidden && options.failOnForbidden)) {
+        const isValid = !((hasWarnings && options.failOnWarning) ||
+            (hasForbidden && options.failOnForbidden));
+        const report = getReport(options.reporter, result, isValid);
+        core.info(report);
+        core.setOutput(OUTPUT_REPORT, report);
+        core.setOutput(OUTPUT_VALID, isValid);
+        if (!isValid && options.failOnNotValid) {
             core.setFailed(FAILED_MESSAGE);
         }
     }

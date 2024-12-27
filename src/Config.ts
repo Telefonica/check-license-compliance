@@ -46,6 +46,7 @@ function getInputs() {
   const log = core.getInput("log");
   const failOnForbidden = core.getInput("fail-on-forbidden");
   const failOnWarning = core.getInput("fail-on-warning");
+  const failOnNotValid = core.getInput("fail-on-not-valid");
   const reporter = core.getInput("reporter");
   const config = core.getMultilineInput("config").join("\n");
   const configFile = core.getInput("config-file");
@@ -54,6 +55,7 @@ function getInputs() {
     log: valueIfDefined(log),
     failOnForbidden: valueIfBoolean(failOnForbidden),
     failOnWarning: valueIfBoolean(failOnWarning),
+    failOnNotValid: valueIfBoolean(failOnNotValid),
     reporter: valueIfDefined(reporter),
     config: valueIfDefined(config),
     configFile: valueIfDefined(configFile),
@@ -101,7 +103,6 @@ export async function getConfig(): Promise<AllConfig> {
   const inputs = getInputs();
   let config: Partial<InputOptions> = {};
   let configFromFile: Partial<InputOptions> = {};
-  let parsedInputs: Partial<InputOptions> = {};
 
   if (inputs.config) {
     core.debug("Parsing the config option from the inputs");
@@ -127,11 +128,18 @@ export async function getConfig(): Promise<AllConfig> {
     inputsValues.failOnWarning = inputs.failOnWarning;
   }
 
+  if (inputs.failOnNotValid !== undefined) {
+    inputsValues.failOnNotValid = inputs.failOnNotValid;
+  }
+
+  if (inputs.reporter) {
+    inputsValues.reporter = inputs.reporter as InputOptions["reporter"];
+  }
+
   const mergedConfig = {
     ...configFromFile,
     ...config,
     ...inputsValues,
-    ...parsedInputs,
   };
 
   core.debug(
@@ -149,6 +157,10 @@ export async function getConfig(): Promise<AllConfig> {
       mergedConfig.failOnForbidden === undefined
         ? true
         : mergedConfig.failOnForbidden,
+    failOnNotValid:
+      mergedConfig.failOnNotValid === undefined
+        ? true
+        : mergedConfig.failOnNotValid,
     reporter: mergedConfig.reporter || "text",
   };
 

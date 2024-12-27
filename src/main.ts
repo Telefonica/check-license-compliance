@@ -10,6 +10,7 @@ import { getReport } from "./Report";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
+const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 
@@ -30,20 +31,23 @@ export async function run(): Promise<void> {
     });
     const result = await checker.check();
 
-    const report = getReport(options.reporter, result);
-    core.info(report);
-    core.setOutput(OUTPUT_REPORT, report);
-
     const hasWarnings = result.warning.length > 0;
     const hasForbidden = result.forbidden.length > 0;
 
     core.setOutput(FOUND_FORBIDDEN, hasForbidden);
     core.setOutput(FOUND_WARNING, hasWarnings);
 
-    if (
+    const isValid = !(
       (hasWarnings && options.failOnWarning) ||
       (hasForbidden && options.failOnForbidden)
-    ) {
+    );
+
+    const report = getReport(options.reporter, result, isValid);
+    core.info(report);
+    core.setOutput(OUTPUT_REPORT, report);
+    core.setOutput(OUTPUT_VALID, isValid);
+
+    if (!isValid && options.failOnNotValid) {
       core.setFailed(FAILED_MESSAGE);
     }
   } catch (error) {

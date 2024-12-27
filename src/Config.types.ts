@@ -24,6 +24,7 @@ export const inputOptionsSchema = z
     reporter: reporterSchema.optional(),
     failOnForbidden: failOnForbiddenSchema.optional(),
     failOnWarning: failOnWarningSchema.optional(),
+    failOnNotValid: z.boolean().optional(),
   })
   .strict();
 

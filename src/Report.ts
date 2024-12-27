@@ -93,7 +93,11 @@ export function successReport(reporter: Reporter, result: Result): string {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-export function errorReport(reporter: Reporter, result: Result): string {
+export function errorReport(
+  reporter: Reporter,
+  result: Result,
+  isValid: boolean,
+): string {
   let summaryPhrases = [];
 
   summaryPhrases.push(
@@ -122,6 +126,8 @@ export function errorReport(reporter: Reporter, result: Result): string {
         ${getErrorsMarkdown(result.warning, "dangerous", "⚠️")
           .map((line, index) => (index > 0 ? indentString(line, 8) : line))
           .join("\n")}
+
+        ${!isValid ? "❌ Result: Not valid" : "✅ Result: Valid"}
       `);
     default:
       return summary;
@@ -134,8 +140,12 @@ export function errorReport(reporter: Reporter, result: Result): string {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-export function getReport(reporter: Reporter, result: Result): string {
+export function getReport(
+  reporter: Reporter,
+  result: Result,
+  isValid: boolean,
+): string {
   return result.forbidden.length > 0 || result.warning.length > 0
-    ? errorReport(reporter, result)
+    ? errorReport(reporter, result, isValid)
     : successReport(reporter, result);
 }
