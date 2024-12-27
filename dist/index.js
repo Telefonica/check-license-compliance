@@ -21162,7 +21162,7 @@ function resolveInheritance (obj, opts) {
     obj.dependencies = {}
   }
   Object.keys(obj.dependencies).forEach(function (dep) {
-    console.log(dep);
+    console.log(dep, obj.dependencies[dep]);
     findUnmet(obj.dependencies[dep], opts)
   })
   Object.keys(obj.dependencies).forEach(function (dep) {
