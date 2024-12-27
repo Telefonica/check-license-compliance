@@ -21181,8 +21181,7 @@ function findUnmet (obj, opts) {
   if (findUnmetSeen.indexOf(obj) !== -1) return
   findUnmetSeen.push(obj)
   debug("find unmet parent=%s obj=", obj.parent && obj.parent.name, obj.name || obj)
-  console.log(obj, obj?.dependencies);
-  var deps = obj?.dependencies || {}
+  var deps = obj.dependencies || {}
 
   debug(deps)
   Object.keys(deps)
@@ -21207,7 +21206,7 @@ function findUnmet (obj, opts) {
       }
     })
 
-  var peerDeps = obj.peerDependencies = obj.peerDependencies || {}
+  var peerDeps = obj.peerDependencies || {}
   Object.keys(peerDeps).forEach(function (d) {
     var dependency
 
