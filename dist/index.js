@@ -70681,7 +70681,7 @@ function successReport(reporter, result) {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-function errorReport(reporter, result) {
+function errorReport(reporter, result, failOnForbidden, failOnWarning) {
     let summaryPhrases = [];
     summaryPhrases.push(`${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} have forbidden licenses.`);
     summaryPhrases.push(`${result.warning.length} ${pluralize(result.warning.length, "dependency")} have dangerous licenses.`);
@@ -70703,6 +70703,8 @@ function errorReport(reporter, result) {
         ${getErrorsMarkdown(result.warning, "dangerous", "⚠️")
                 .map((line, index) => (index > 0 ? indentString(line, 8) : line))
                 .join("\n")}
+
+        ${(result.forbidden.length > 0 && failOnForbidden) || (result.warning.length > 0 && failOnWarning) ? "❌ Result: Not valid" : "✅ Result: Valid"}
       `);
         default:
             return summary;
@@ -70714,9 +70716,9 @@ function errorReport(reporter, result) {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-function getReport(reporter, result) {
+function getReport(reporter, result, failOnForbidden, failOnWarning) {
     return result.forbidden.length > 0 || result.warning.length > 0
-        ? errorReport(reporter, result)
+        ? errorReport(reporter, result, failOnForbidden, failOnWarning)
         : successReport(reporter, result);
 }
 
@@ -70746,7 +70748,7 @@ async function run() {
             log: options.log,
         });
         const result = await checker.check();
-        const report = getReport(options.reporter, result);
+        const report = getReport(options.reporter, result, options.failOnForbidden, options.failOnWarning);
         core.info(report);
         core.setOutput(OUTPUT_REPORT, report);
         const hasWarnings = result.warning.length > 0;
