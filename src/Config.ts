@@ -5,7 +5,7 @@ import * as core from "@actions/core";
 import { parse } from "yaml";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
-import { inputOptionsSchema, allConfigSchema } from "./Config.types";
+import { allConfigSchema } from "./Config.types";
 import type { InputOptions } from "./Config.types";
 import { fromError } from "zod-validation-error";
 
