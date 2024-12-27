@@ -69693,7 +69693,6 @@ async function getConfig() {
     const inputs = getInputs();
     let config = {};
     let configFromFile = {};
-    let parsedInputs = {};
     if (inputs.config) {
         core.debug("Parsing the config option from the inputs");
         config = parseYamlConfig(inputs.config);
@@ -69710,11 +69709,13 @@ async function getConfig() {
     if (inputs.failOnWarning !== undefined) {
         inputsValues.failOnWarning = inputs.failOnWarning;
     }
+    if (inputs.reporter) {
+        inputsValues.reporter = inputs.reporter;
+    }
     const mergedConfig = {
         ...configFromFile,
         ...config,
         ...inputsValues,
-        ...parsedInputs,
     };
     core.debug(`Configuration without default values: ${JSON.stringify(mergedConfig)}`);
     const mergedConfigWithDefaults = {

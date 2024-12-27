@@ -101,7 +101,6 @@ export async function getConfig(): Promise<AllConfig> {
   const inputs = getInputs();
   let config: Partial<InputOptions> = {};
   let configFromFile: Partial<InputOptions> = {};
-  let parsedInputs: Partial<InputOptions> = {};
 
   if (inputs.config) {
     core.debug("Parsing the config option from the inputs");
@@ -127,11 +126,14 @@ export async function getConfig(): Promise<AllConfig> {
     inputsValues.failOnWarning = inputs.failOnWarning;
   }
 
+  if (inputs.reporter) {
+    inputsValues.reporter = inputs.reporter as InputOptions["reporter"];
+  }
+
   const mergedConfig = {
     ...configFromFile,
     ...config,
     ...inputsValues,
-    ...parsedInputs,
   };
 
   core.debug(
