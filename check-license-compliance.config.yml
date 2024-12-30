@@ -23,7 +23,7 @@ licenses:
     - AGPL-3.0
     - GPL-2.0
     - GPL-3.0
-allowWarnings: true
+allowWarnings: false
 # Options passed directly to the license-checker package
 licenseCheckerOptions:
   # Global options are applied to all types of checks
