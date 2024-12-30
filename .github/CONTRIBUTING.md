@@ -2,7 +2,7 @@
 
 Thank you for being part of the Telefónica Open Source Community!
 
-# Table of Contents
+## Table of Contents
 
 - [Getting started](#getting-started)
 - [Test the action locally](#test-the-action-locally)
@@ -84,7 +84,7 @@ Some important points to consider:
 > [!IMPORTANT]
 > The action code must be always packaged before pushing changes to the repository. This is because the action code is executed in the GitHub Actions environment, and it must be in the JavaScript format. The action code is packaged using the `npm run package` command. A github action check is executed on every PR to verify if the action code was packaged before pushing changes to the repository.
 
-## Merging strategy
+### Merging strategy
 
 We use the __squash and merge strategy for merging PRs to the release branch__. This means that all the changes in the PR will be squashed into a single commit before being merged. The reasons are:
 
@@ -96,7 +96,17 @@ But we use the __merge commit strategy for merging PRs to the main branch from t
 * To keep in the history the information about the features that were merged separately into the release branch. This is very important, because we may have changes from different packages in the release branch. Squashing all the changes into a single commit would make it difficult to understand or revert the changes for a specific package.
 * To avoid having to rebase the release branch every time a PR is merged to the main branch.
 
-# Versioning
+## Pull Request
+When you're finished with the changes, create a pull request, also known as a PR.
+
+* Fill the PR template. This template helps reviewers understand your changes as well as the purpose of your pull request.
+* Don't forget to [link PR to issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue) if you are solving one.
+* Enable the checkbox to [allow maintainer edits](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork) so the branch can be updated for a merge. Once you submit your PR, a maintainer will review your proposal. We may ask questions or request additional information.
+* We may ask for changes to be made before a PR can be merged, either using suggested changes or pull request comments. You can apply suggested changes directly through the UI. You can make any other changes in your fork, then commit them to your branch.
+* As you update your PR and apply changes, mark each conversation as resolved.
+* If you run into any merge issues, checkout this git tutorial to help you resolve merge conflicts and other issues.
+
+## Versioning
 
 This project uses [Semantic Versioning](https://semver.org/). The version number is defined in the `package.json` file. The version number must be updated in the `package.json` file before creating a new release.
 
@@ -104,7 +114,7 @@ This project uses [Semantic Versioning](https://semver.org/). The version number
 > The `check-and-comment` composite action version must be always updated before creating a new release. This is because the action itself can't be referenced locally when it is used in a external workflow. So, the reference to the action (`Telefonica/check-license-compliance@x`) must always point to the latest released version. For example:
 > If the version in the package.json file is `1.0.0`, the reference to the action in the composite action must be `Telefonica/check-license-compliance@v1.0.0` before tagging the release. __Note that this would lead to an error when running the PR check, because the action is not published yet. But this is the expected behavior, so, the action should be changed to the PR branch when opening a PR, and changed to the released version before tagging the release.__
 
-# Release process
+## Release process
 
 Once the PR is approved and merged into the main branch, a project maintainer can start the release process by:
 
@@ -138,11 +148,11 @@ following steps:
    to create a new release in GitHub so users can easily reference the new tags
    in their workflows.
 
-# License
+## License
 
 By contributing to this project, you agree that your contributions will be licensed under the [LICENSE](../LICENSE) file in the root of this repository, and that you agree to the [Contributor License Agreement](#contributor-license-agreement).
 
-## Licensing of new files
+### Licensing of new files
 
 This project adheres to the [Software Package Data Exchange (SPDX)](https://spdx.dev/). SPDX is a standard format for communicating the components, licenses, and copyrights associated with software packages. It is a simple and concise way to communicate licensing information. Read more about how to define headers using the SPDX ids [here](https://spdx.dev/learn/handling-license-info/).
 
@@ -164,7 +174,7 @@ SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors. A
 SPDX-License-Identifier: Apache-2.0
 ```
 
-## MIT License
+### MIT License
 
 This license can be used for test scripts and other short code snippets, at the discretion of the author.
 
@@ -184,21 +194,11 @@ SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 SPDX-License-Identifier: MIT
 ```
 
-# Pull Request
-When you're finished with the changes, create a pull request, also known as a PR.
-
-* Fill the PR template. This template helps reviewers understand your changes as well as the purpose of your pull request.
-* Don't forget to [link PR to issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue) if you are solving one.
-* Enable the checkbox to [allow maintainer edits](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/allowing-changes-to-a-pull-request-branch-created-from-a-fork) so the branch can be updated for a merge. Once you submit your PR, a maintainer will review your proposal. We may ask questions or request additional information.
-* We may ask for changes to be made before a PR can be merged, either using suggested changes or pull request comments. You can apply suggested changes directly through the UI. You can make any other changes in your fork, then commit them to your branch.
-* As you update your PR and apply changes, mark each conversation as resolved.
-* If you run into any merge issues, checkout this git tutorial to help you resolve merge conflicts and other issues.
-
-# Code of Conduct
+## Code of Conduct
 
 Please read our [Code of Conduct](../.github/CODE_OF_CONDUCT.md) before contributing.
 
-# Contributor License Agreement
+## Contributor License Agreement
 
 This is a human-readable summary of (and not a substitute for) the [full agreement](./CLA.md). This highlights only some of the key terms of the CLA. It has no legal value and you should carefully review all the terms of the [actual CLA before agreeing](./CLA.md).
 
