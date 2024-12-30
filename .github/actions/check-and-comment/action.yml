@@ -34,7 +34,7 @@ runs:
   steps:
     - name: Check License Compliance
       id: check-license-compliance
-      uses: Telefonica/check-license-compliance@v1.0.0-beta.1
+      uses: Telefonica/check-license-compliance@test/pre-release
       with:
         log: ${{ inputs.log }}
         reporter: 'markdown'
