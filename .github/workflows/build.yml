@@ -91,11 +91,11 @@ jobs:
 
       - name: Check SPDX headers
         if: github.event_name != 'pull_request'
-        uses: Telefonica/check-spdx-headers@main
+        uses: Telefonica/check-spdx-headers@v0.1.0
 
       - name: Check SPDX headers
         if: github.event_name == 'pull_request'
-        uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@main
+        uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@v0.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
