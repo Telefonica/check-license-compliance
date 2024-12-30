@@ -8,6 +8,7 @@ Thank you for being part of the Telefónica Open Source Community!
 - [Test the action locally](#test-the-action-locally)
 - [Branching model](#branching-model)
 - [Pull Request](#pull-request)
+- [Versioning](#versioning)
 - [Release process](#release-process)
 - [License](#license)
   - [Licensing of new files](#licensing-of-new-files)
@@ -94,6 +95,14 @@ But we use the __merge commit strategy for merging PRs to the main branch from t
 
 * To keep in the history the information about the features that were merged separately into the release branch. This is very important, because we may have changes from different packages in the release branch. Squashing all the changes into a single commit would make it difficult to understand or revert the changes for a specific package.
 * To avoid having to rebase the release branch every time a PR is merged to the main branch.
+
+# Versioning
+
+This project uses [Semantic Versioning](https://semver.org/). The version number is defined in the `package.json` file. The version number must be updated in the `package.json` file before creating a new release.
+
+> [!WARNING]
+> The `check-and-comment` composite action version must be always updated before creating a new release. This is because the action itself can't be referenced locally when it is used in a external workflow. So, the reference to the action (`Telefonica/check-license-compliance@x`) must always point to the latest released version. For example:
+> If the version in the package.json file is `1.0.0`, the reference to the action in the composite action must be `Telefonica/check-license-compliance@v1.0.0` before tagging the release.
 
 # Release process
 

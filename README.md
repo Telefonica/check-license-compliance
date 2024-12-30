@@ -50,8 +50,7 @@ licenses:
   forbidden:
     - AGPL-3.0
     - GPL-2.0
-failOnForbidden: true
-failOnWarning: false
+allowWarnings: false
 ```
 
 Example of a GitHub Actions workflow file:
@@ -129,9 +128,8 @@ The configuration file is a YAML file that must be placed at the root of your re
   * `allowed`: Array of strings with the allowed licenses. 
   * `forbidden`: Array of strings with the forbidden licenses.
   * `warning`: Array of strings with the licenses that should produce a warning.
-* `failOnForbidden`: Boolean indicating if the check should fail when a forbidden license is found.
-* `failOnWarning`: Boolean indicating if the check should fail when a warning license is found.
-* `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid according to the dependencies and the `failOnForbidden` and `failOnWarning` properties. Default is `true`.
+* `allowWarnings`: Boolean indicating if the check should fail when a warning license is found. Default is `true`.
+* `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid. Default is `true`.
 * `licenseCheckerOptions`: Object with the options that are passed to the [`license-checker` library](https://github.com/davglass/license-checker) on each different type of check. So, __it is only useful when checking Node dependencies__. You can find the available options [here](https://github.com/davglass/license-checker#options).
   * `global`: Object with the global options. These options are applied both when checking "warning" and "forbidden" licenses.
   * `warning`: Object with the options that are applied when checking "warning" licenses. They are merged with the global options. By default, the `unknown` option is set to `true`. You should redefine it if you want to not produce a warning for unknown licenses.
@@ -149,9 +147,8 @@ The action also allows to set the configuration by using inputs. When defined, t
 * `config-file`: Path to the configuration file. Default is `check-license-compliance.config.yml`.
 * `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`.
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
-* `fail-on-forbidden`: Boolean value to determine if the action should fail when a file does not have the correct headers. Default is `true`.
-* `fail-on-warning`: Boolean value to determine if the action should fail when a file does not have the correct headers. Default is `true`.
-* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid according to the dependencies and the `fail-on-forbidden` and `fail-on-warning` properties. Default is `true`.
+* `allow-warnings`: Boolean value to determine if the action should be considered valid when warning dependencies are found. Default is `true`.
+* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
 * `config`: Multiline string with the whole [configuration](#configuration) expressed as a YAML object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here.
     Example:
 
@@ -161,7 +158,6 @@ The action also allows to set the configuration by using inputs. When defined, t
         allowed:
           - Apache-2.0
           - MIT
-      failOnForbidden: true
     ```
 
 > [!WARNING]
@@ -218,14 +214,14 @@ jobs:
           # Properties with preference over values defined in any other place
           reporter: "markdown"
           log: "debug"
-          fail-on-forbidden: false
+          allow-warnings: true
           # This will extend the values in the configuration file
           config: |
             licenses:
               allowed:
                 - Apache-2.0
                 - MIT
-            failOnForbidden: true
+            allowWarnings: false
 ```
 
 ## How it works
@@ -236,8 +232,8 @@ Node.js licenses are checked using the [`license-checker` library](https://githu
 
 The action executed the `license-checker` library two times with the following options:
 
-1. Check forbidden: It executes the check, passing as exclusions the licenses in the `allowed` and `warning` arrays. If any license is found, it will consider the dependencies not valid if the `failOnForbidden` property is set to `true`.
-2. Check warning: It executes the check, passing as exclusions the licenses in the `allowed` and `forbidden` arrays. If any license is found, it will consider the dependencies not valid if the `failOnWarning` property is set to `true`.
+1. Check forbidden: It executes the check, passing as exclusions the licenses in the `allowed` and `warning` arrays.
+2. Check warning: It executes the check, passing as exclusions the licenses in the `allowed` and `forbidden` arrays. If any license is found, it will consider the dependencies not valid if the `allowWarnings` property is set to `false`.
 
 The action will return a report with the details of the check, including the dependencies that are not compliant, their installation path, the license they have, etc.
 
@@ -250,7 +246,7 @@ The action returns the following outputs:
 
 * `found-forbidden`: A boolean value indicating whether any forbidden license was found.
 * `found-warning`: A boolean value indicating whether any warning license was found.
-* `valid`: A boolean value indicating whether the check is valid according to the dependencies and the `failOnForbidden` and `failOnWarning` properties.
+* `valid`: A boolean value indicating whether the check is valid or not. The check is considered valid if no forbidden licenses are found and the `allowWarnings` property is set to `true` or no warning licenses are found.
 * `report`: A report containing details about the result of the check. The report can be returned in different formats, that can be defined by using the [`reporter` configuration property](#configuration). The possible values are:
   * `text`: Generates a text report. This is the default reporter.
   * `markdown`: Generates a markdown report. This is very useful if you want to send the results to a GitHub comment in a PR, for example.

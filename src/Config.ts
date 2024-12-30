@@ -44,8 +44,7 @@ function valueIfBoolean(value: string): boolean | undefined {
  */
 function getInputs() {
   const log = core.getInput("log");
-  const failOnForbidden = core.getInput("fail-on-forbidden");
-  const failOnWarning = core.getInput("fail-on-warning");
+  const allowWarnings = core.getInput("allow-warnings");
   const failOnNotValid = core.getInput("fail-on-not-valid");
   const reporter = core.getInput("reporter");
   const config = core.getMultilineInput("config").join("\n");
@@ -53,8 +52,7 @@ function getInputs() {
 
   const inputs = {
     log: valueIfDefined(log),
-    failOnForbidden: valueIfBoolean(failOnForbidden),
-    failOnWarning: valueIfBoolean(failOnWarning),
+    allowWarnings: valueIfBoolean(allowWarnings),
     failOnNotValid: valueIfBoolean(failOnNotValid),
     reporter: valueIfDefined(reporter),
     config: valueIfDefined(config),
@@ -120,12 +118,8 @@ export async function getConfig(): Promise<AllConfig> {
     inputsValues.log = inputs.log as InputOptions["log"];
   }
 
-  if (inputs.failOnForbidden !== undefined) {
-    inputsValues.failOnForbidden = inputs.failOnForbidden;
-  }
-
-  if (inputs.failOnWarning !== undefined) {
-    inputsValues.failOnWarning = inputs.failOnWarning;
+  if (inputs.allowWarnings !== undefined) {
+    inputsValues.allowWarnings = inputs.allowWarnings;
   }
 
   if (inputs.failOnNotValid !== undefined) {
@@ -149,14 +143,10 @@ export async function getConfig(): Promise<AllConfig> {
   const mergedConfigWithDefaults = {
     ...mergedConfig,
     log: mergedConfig.log || "info",
-    failOnWarning:
-      mergedConfig.failOnWarning === undefined
+    allowWarnings:
+      mergedConfig.allowWarnings === undefined
         ? true
-        : mergedConfig.failOnWarning,
-    failOnForbidden:
-      mergedConfig.failOnForbidden === undefined
-        ? true
-        : mergedConfig.failOnForbidden,
+        : mergedConfig.allowWarnings,
     failOnNotValid:
       mergedConfig.failOnNotValid === undefined
         ? true

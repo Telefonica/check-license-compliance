@@ -10,20 +10,15 @@ export const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
 /** Formatter of the response */
 export type Reporter = z.infer<typeof reporterSchema>;
 
-export const failOnForbiddenSchema = z.boolean().optional();
-/** Fail on error */
-export type FailOnForbidden = z.infer<typeof failOnForbiddenSchema>;
-
-export const failOnWarningSchema = z.boolean().optional();
-/** Fail on warning */
-export type FailOnWarning = z.infer<typeof failOnWarningSchema>;
+export const allowWarningsSchema = z.boolean().optional();
+/** Allow warnings */
+export type AllowWarnings = z.infer<typeof allowWarningsSchema>;
 
 export const inputOptionsSchema = z
   .object({
     log: logLevelSchema.optional(),
     reporter: reporterSchema.optional(),
-    failOnForbidden: failOnForbiddenSchema.optional(),
-    failOnWarning: failOnWarningSchema.optional(),
+    allowWarnings: allowWarningsSchema.optional(),
     failOnNotValid: z.boolean().optional(),
   })
   .strict();

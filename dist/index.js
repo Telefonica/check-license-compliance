@@ -69346,14 +69346,12 @@ const configSchema = z
 
 
 const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
-const failOnForbiddenSchema = z.boolean().optional();
-const failOnWarningSchema = z.boolean().optional();
+const allowWarningsSchema = z.boolean().optional();
 const inputOptionsSchema = z
     .object({
     log: logLevelSchema.optional(),
     reporter: reporterSchema.optional(),
-    failOnForbidden: failOnForbiddenSchema.optional(),
-    failOnWarning: failOnWarningSchema.optional(),
+    allowWarnings: allowWarningsSchema.optional(),
     failOnNotValid: z.boolean().optional(),
 })
     .strict();
@@ -69645,16 +69643,14 @@ function valueIfBoolean(value) {
  */
 function getInputs() {
     const log = core.getInput("log");
-    const failOnForbidden = core.getInput("fail-on-forbidden");
-    const failOnWarning = core.getInput("fail-on-warning");
+    const allowWarnings = core.getInput("allow-warnings");
     const failOnNotValid = core.getInput("fail-on-not-valid");
     const reporter = core.getInput("reporter");
     const config = core.getMultilineInput("config").join("\n");
     const configFile = core.getInput("config-file");
     const inputs = {
         log: valueIfDefined(log),
-        failOnForbidden: valueIfBoolean(failOnForbidden),
-        failOnWarning: valueIfBoolean(failOnWarning),
+        allowWarnings: valueIfBoolean(allowWarnings),
         failOnNotValid: valueIfBoolean(failOnNotValid),
         reporter: valueIfDefined(reporter),
         config: valueIfDefined(config),
@@ -69706,11 +69702,8 @@ async function getConfig() {
     if (inputs.log) {
         inputsValues.log = inputs.log;
     }
-    if (inputs.failOnForbidden !== undefined) {
-        inputsValues.failOnForbidden = inputs.failOnForbidden;
-    }
-    if (inputs.failOnWarning !== undefined) {
-        inputsValues.failOnWarning = inputs.failOnWarning;
+    if (inputs.allowWarnings !== undefined) {
+        inputsValues.allowWarnings = inputs.allowWarnings;
     }
     if (inputs.failOnNotValid !== undefined) {
         inputsValues.failOnNotValid = inputs.failOnNotValid;
@@ -69727,12 +69720,9 @@ async function getConfig() {
     const mergedConfigWithDefaults = {
         ...mergedConfig,
         log: mergedConfig.log || "info",
-        failOnWarning: mergedConfig.failOnWarning === undefined
+        allowWarnings: mergedConfig.allowWarnings === undefined
             ? true
-            : mergedConfig.failOnWarning,
-        failOnForbidden: mergedConfig.failOnForbidden === undefined
-            ? true
-            : mergedConfig.failOnForbidden,
+            : mergedConfig.allowWarnings,
         failOnNotValid: mergedConfig.failOnNotValid === undefined
             ? true
             : mergedConfig.failOnNotValid,
@@ -70762,8 +70752,7 @@ async function run() {
         const hasForbidden = result.forbidden.length > 0;
         core.setOutput(FOUND_FORBIDDEN, hasForbidden);
         core.setOutput(FOUND_WARNING, hasWarnings);
-        const isValid = !((hasWarnings && options.failOnWarning) ||
-            (hasForbidden && options.failOnForbidden));
+        const isValid = !((hasWarnings && !options.allowWarnings) || hasForbidden);
         const report = getReport(options.reporter, result, isValid);
         core.info(report);
         core.setOutput(OUTPUT_REPORT, report);

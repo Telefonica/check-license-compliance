@@ -37,10 +37,7 @@ export async function run(): Promise<void> {
     core.setOutput(FOUND_FORBIDDEN, hasForbidden);
     core.setOutput(FOUND_WARNING, hasWarnings);
 
-    const isValid = !(
-      (hasWarnings && options.failOnWarning) ||
-      (hasForbidden && options.failOnForbidden)
-    );
+    const isValid = !((hasWarnings && !options.allowWarnings) || hasForbidden);
 
     const report = getReport(options.reporter, result, isValid);
     core.info(report);
