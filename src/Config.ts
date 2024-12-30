@@ -99,8 +99,8 @@ async function loadConfigFile(configFile: string) {
  */
 export async function getConfig(): Promise<AllConfig> {
   const inputs = getInputs();
-  let config: Partial<InputOptions> = {};
-  let configFromFile: Partial<InputOptions> = {};
+  let config: Partial<AllConfig> = {};
+  let configFromFile: Partial<AllConfig> = {};
 
   if (inputs.config) {
     core.debug("Parsing the config option from the inputs");
