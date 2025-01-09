@@ -11,7 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
-## [unreleased] - 2024-12
+## [0.2.0] - 2025-01
+
+### Added
+
+* feat: Support running composite action both in PRs or pushes. In pushes, the action won't send any comment.
+
+### Fixed
+
+* docs: Fix complex configuration example in README.
+
+## [0.1.0] - 2024-12
 
 ### Added
 

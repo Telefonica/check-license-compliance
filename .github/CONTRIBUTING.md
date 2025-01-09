@@ -116,7 +116,7 @@ This project uses [Semantic Versioning](https://semver.org/). The version number
 
 ## Release process
 
-Once the PR is approved and merged into the main branch, a project maintainer can start the release process by:
+Once the PR is approved and __merged into the main branch__, a project maintainer can start the release process by:
 
 1. Updating the version number in the `package.json` file.
 2. Updating the action version in the `.github/actions/check-and-comment/action.yml` file.
