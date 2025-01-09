@@ -43,6 +43,7 @@ runs:
         config-file: ${{ inputs.config-file }}
     - name: Find Comment
       uses: peter-evans/find-comment@v3
+      if: ${{ github.event_name == 'pull_request' }}
       id: previous-comment
       with:
         issue-number: ${{ github.event.pull_request.number }}
@@ -50,6 +51,7 @@ runs:
         body-includes: Check License Compliance
     - name: Create or update comment
       uses: peter-evans/create-or-update-comment@v4
+      if: ${{ github.event_name == 'pull_request' }}
       with:
         comment-id: ${{ steps.previous-comment.outputs.comment-id }}
         issue-number: ${{ github.event.pull_request.number }}
