@@ -178,15 +178,9 @@ Example of a complex configuration using both the configuration file and the inp
 
 ```yaml
 # Configuration file
-rules:
-  - name: "Source code"
-    headers:
-      - files:
-          - "**/*.js"
-        license:
-          - "Apache-2.0"
-        copyright: "My Company"
-ignore: "**/node_modules/**"
+licenseCheckerOptions:
+  global:
+    production: true
 ```
 
 ```yaml
