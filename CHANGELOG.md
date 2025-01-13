@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [0.3.0] - 2025-01
+
+### Added
+
+* feat: Do not fail action if no node_modules folder is found. Return a warning instead.
+
+### Changed
+
+* chore: Pin @types/license-checker to 25.0.6
+
 ## [0.2.0] - 2025-01
 
 ### Added
