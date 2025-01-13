@@ -5,8 +5,9 @@ import * as core from "@actions/core";
 
 import { getConfig } from "./Config";
 import { Checker } from "./lib/index";
+import { existsSync } from "fs";
 
-import { getReport } from "./Report";
+import { getNotInstalledReport, getReport, NOT_INSTALLED } from "./Report";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
@@ -22,6 +23,14 @@ export async function run(): Promise<void> {
   try {
     core.debug("Getting configuration...");
     const options = await getConfig();
+
+    if (!existsSync("node_modules")) {
+      core.warning(NOT_INSTALLED);
+      core.setOutput(FOUND_FORBIDDEN, false);
+      core.setOutput(FOUND_WARNING, false);
+      core.setOutput(OUTPUT_REPORT, getNotInstalledReport(options.reporter));
+      return;
+    }
 
     core.debug("Running checker...");
     const checker = new Checker({

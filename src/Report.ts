@@ -8,6 +8,8 @@ import indentString from "indent-string";
 
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";
+export const NOT_INSTALLED =
+  "node_modules folder not found. Please install NPM dependencies before running this action.";
 
 /**
  * Returns a markdown message with the dependencies that failed the check
@@ -135,6 +137,28 @@ export function errorReport(
 }
 
 /**
+ * Report that no dependencies have been found
+ * @param reporter The reporter to use
+ * @returns The report in the specified format
+ */
+export function notInstalledReport(reporter: Reporter): string {
+  switch (reporter) {
+    case "json":
+      return JSON.stringify({
+        message: NOT_INSTALLED,
+      });
+    case "markdown":
+      return stripIndent(`
+        __${TITLE}__
+
+        ⚠️ ${NOT_INSTALLED}
+      `);
+    default:
+      return NOT_INSTALLED;
+  }
+}
+
+/**
  * Get the report in the specified format
  * @param reporter The reporter to use
  * @param result The result of the check
@@ -148,4 +172,13 @@ export function getReport(
   return result.forbidden.length > 0 || result.warning.length > 0
     ? errorReport(reporter, result, isValid)
     : successReport(reporter, result);
+}
+
+/**
+ * Get report when no dependencies are found
+ * @param reporter The reporter to use
+ * @returns The report in the specified format
+ */
+export function getNotInstalledReport(reporter: Reporter): string {
+  return notInstalledReport(reporter);
 }

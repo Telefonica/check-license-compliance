@@ -26,7 +26,7 @@ For the moment, it supports the following languages:
 * Node.js - License check using the [`license-checker` library](https://github.com/davglass/license-checker).
 
 > [!IMPORTANT]
-> It requires dependencies to be installed in the repository. If you are using a package manager, make sure to run the installation command before running this action.
+> It requires dependencies to be installed in the repository. If you are using a package manager, make sure to run the installation command before running this action. Otherwise, it will simply return a warning.
 
 For better user experience in PRs, it also includes a Github Composite Action that performs the check and posts the results into a comment in the PR. Read the [PR comments](#pr-comments) section for more information.
 

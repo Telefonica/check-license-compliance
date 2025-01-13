@@ -70608,6 +70608,7 @@ function indentString(string, count = 1, options = {}) {
 
 const TITLE = "Check License Compliance";
 const ALL_VALID = "All dependencies have acceptable licenses.";
+const NOT_INSTALLED = "node_modules folder not found. Please install NPM dependencies before running this action.";
 /**
  * Returns a markdown message with the dependencies that failed the check
  * @returns The markdown message
@@ -70710,6 +70711,27 @@ function errorReport(reporter, result, isValid) {
     }
 }
 /**
+ * Report that no dependencies have been found
+ * @param reporter The reporter to use
+ * @returns The report in the specified format
+ */
+function notInstalledReport(reporter) {
+    switch (reporter) {
+        case "json":
+            return JSON.stringify({
+                message: NOT_INSTALLED,
+            });
+        case "markdown":
+            return stripIndent(`
+        __${TITLE}__
+
+        ⚠️ ${NOT_INSTALLED}
+      `);
+        default:
+            return NOT_INSTALLED;
+    }
+}
+/**
  * Get the report in the specified format
  * @param reporter The reporter to use
  * @param result The result of the check
@@ -70720,10 +70742,19 @@ function getReport(reporter, result, isValid) {
         ? errorReport(reporter, result, isValid)
         : successReport(reporter, result);
 }
+/**
+ * Get report when no dependencies are found
+ * @param reporter The reporter to use
+ * @returns The report in the specified format
+ */
+function getNotInstalledReport(reporter) {
+    return notInstalledReport(reporter);
+}
 
 ;// CONCATENATED MODULE: ./src/main.ts
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
+
 
 
 
@@ -70741,6 +70772,13 @@ async function run() {
     try {
         core.debug("Getting configuration...");
         const options = await getConfig();
+        if (!(0,external_fs_.existsSync)("node_modules")) {
+            core.warning(NOT_INSTALLED);
+            core.setOutput(FOUND_FORBIDDEN, false);
+            core.setOutput(FOUND_WARNING, false);
+            core.setOutput(OUTPUT_REPORT, getNotInstalledReport(options.reporter));
+            return;
+        }
         core.debug("Running checker...");
         const checker = new Checker({
             licenses: options.licenses,
