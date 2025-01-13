@@ -1,7 +1,7 @@
 {
   "name": "@tid-xcut/check-license-compliance",
   "description": "Checks that repository dependencies are compliant with allowed licenses",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Telefónica Innovación Digital",
   "homepage": "https://github.com/Telefonica/check-license-compliance",
   "repository": {
@@ -58,7 +58,7 @@
     "@eslint/markdown": "6.2.1",
     "@github/local-action": "2.2.0",
     "@types/jest": "29.5.14",
-    "@types/license-checker": "^25.0.6",
+    "@types/license-checker": "25.0.6",
     "@types/node": "22.9.0",
     "@typescript-eslint/eslint-plugin": "8.14.0",
     "@typescript-eslint/parser": "8.14.0",
