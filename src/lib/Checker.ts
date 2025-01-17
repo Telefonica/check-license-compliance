@@ -6,7 +6,7 @@ import { LicenseCheckerResult, Result } from "./Checker.types";
 import { createLogger } from "./Logger";
 
 import { cwd } from "node:process";
-import licenseChecker from "license-checker";
+import { init } from "license-checker";
 
 const ROOT_DIR = cwd();
 
@@ -28,13 +28,6 @@ export class Checker {
   }
 
   /**
-   * Get the logger
-   */
-  public get logger() {
-    return this._logger;
-  }
-
-  /**
    * Returns an array of packages using a license that is not in the exclusions, or is unknown
    * @returns List of packages using a license that is not in the exclusions
    */
@@ -43,7 +36,7 @@ export class Checker {
     licenseCheckerOptions: LicenseCheckerConfig,
   ): Promise<LicenseCheckerResult[]> {
     return new Promise((resolve, reject) => {
-      licenseChecker.init(
+      init(
         {
           start: ROOT_DIR,
           // @ts-expect-error The library typing says that requires an array, but it only works with a comma-separated string

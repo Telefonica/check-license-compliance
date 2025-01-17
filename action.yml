@@ -37,7 +37,7 @@ inputs:
     type: boolean
     default: 'true'
   config:
-    description: 'Configuration object expressed as a YAML string'
+    description: 'Configuration object expressed as a JSON string'
     multiline: true
     required: false
   config-file:
