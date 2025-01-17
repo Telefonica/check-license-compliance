@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [1.0.0] - 2025-01-17
+
+#### Added
+
+* test: Add unit tests
+* test: Add E2E tests
+
+### Changed
+
+* docs: Change github inputs examples to JSON format to avoid indentation issues
+
+### Fixed
+
+* fix: Fix plurals in report messages
+
 ## [0.3.0] - 2025-01
 
 ### Added
