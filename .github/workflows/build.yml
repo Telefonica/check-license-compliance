@@ -82,6 +82,7 @@ jobs:
         with:
           name: dist
           path: dist/
+
   check-spdx-headers:
     name: Check SPDX Headers
     runs-on: ubuntu-latest
@@ -90,12 +91,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check SPDX headers
-        if: github.event_name != 'pull_request'
-        uses: Telefonica/check-spdx-headers@v0.1.0
-
-      - name: Check SPDX headers
-        if: github.event_name == 'pull_request'
-        uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@v0.1.0
+        uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
