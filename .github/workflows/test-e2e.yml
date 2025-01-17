@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-       # NOTE: Next steps check that the library produces the expected errors when the dependencies are not valid according to the rules
+      # NOTE: Next steps check that the library produces the expected errors when the dependencies are not valid according to the rules
       - name: Test - Case 1
         id: test-01
         uses: ./
@@ -59,3 +59,28 @@ jobs:
         if: contains(fromJson(steps.test-01.outputs.report).message, '115 dependencies have forbidden licenses. 0 dependencies have dangerous licenses.') == false
         run: |
           echo "Test case 1 failed. The check did not found 115 forbidden dependencies" && exit 1
+
+      - name: Test - Case 2
+        id: test-02
+        uses: ./
+        with:
+          config: |
+            {
+              "licenses": {
+                "allowed": ["Apache-2.0"],
+                "warning": ["MIT"]
+              },
+            }
+          log: "debug"
+          reporter: "json"
+          fail-on-not-valid: false
+
+      - name: Test - Case 2 - Assert 1 failed
+        if: fromJson(steps.test-02.outputs.report).warning[0] == null
+        run: |
+          echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
+
+      - name: Test - Case 2 - Assert 2 failed
+        if: contains(fromJson(steps.test-01.outputs.report).message, '0 dependencies have forbidden licenses. 115 dependencies have dangerous licenses.') == false
+        run: |
+          echo "Test case 2 failed. The check did not found 115 dangerous dependencies" && exit 1    
