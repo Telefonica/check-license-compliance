@@ -5,6 +5,7 @@ import { LicenseCheckerResult, Result } from "./lib/Checker.types";
 import { Reporter } from "./Config.types";
 import stripIndent from "strip-indent";
 import indentString from "indent-string";
+import { warning } from "@actions/core";
 
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";
@@ -50,6 +51,7 @@ function getErrorsMarkdown(
 function pluralize(count: number, singular: string): string {
   const plurals = {
     dependency: "dependencies",
+    has: "have",
   };
 
   return count === 1 ? singular : plurals[singular as keyof typeof plurals];
@@ -103,10 +105,10 @@ export function errorReport(
   let summaryPhrases = [];
 
   summaryPhrases.push(
-    `${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} have forbidden licenses.`,
+    `${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} ${pluralize(result.forbidden.length, "has")} forbidden licenses.`,
   );
   summaryPhrases.push(
-    `${result.warning.length} ${pluralize(result.warning.length, "dependency")} have dangerous licenses.`,
+    `${result.warning.length} ${pluralize(result.warning.length, "dependency")} ${pluralize(result.warning.length, "has")} dangerous licenses.`,
   );
 
   const summary = summaryPhrases.join("\n");
@@ -146,6 +148,8 @@ export function notInstalledReport(reporter: Reporter): string {
     case "json":
       return JSON.stringify({
         message: NOT_INSTALLED,
+        forbidden: [],
+        warning: [],
       });
     case "markdown":
       return stripIndent(`
