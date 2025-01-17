@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+# SPDX-License-Identifier: MIT
+
+name: Test E2E
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - test/unit-and-e2e
+
+permissions:
+  contents: read
+
+jobs:
+  test-e2e:
+    name: Test E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node
+        id: setup-node
+        with:
+          npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
+
+      # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
+      - name: Check license compliance
+        uses: ./.github/actions/check-and-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+       # NOTE: Next steps check that the library produces the expected errors when the dependencies are not valid according to the rules
+      - name: Test - Case 1
+        id: test-01
+        uses: ./
+        with:
+          config: |
+            {
+              "licenses": {
+                "allowed": ["MIT"],
+                "forbidden": ["Apache-2.0"]
+              },
+            }
+          log: "debug"
+          reporter: "json"
+          fail-on-not-valid: false
+
+      - name: Test - Case 1 - Assert 1 failed
+        if: fromJson(steps.test-01.outputs.report).forbidden[0] == null
+        run: |
+          echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1

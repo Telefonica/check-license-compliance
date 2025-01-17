@@ -94,22 +94,3 @@ jobs:
         uses: Telefonica/check-spdx-headers/.github/actions/check-and-comment@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  check-license-compliance:
-    name: Check license compliance
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        id: checkout
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/setup-node
-        id: setup-node
-        with:
-          npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
-
-      - name: Check license compliance
-        uses: ./.github/actions/check-and-comment
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
