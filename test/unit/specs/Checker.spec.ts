@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import path from "path";
 import { Checker } from "../../../src/lib/index";
 import { init } from "license-checker";
 

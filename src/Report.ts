@@ -5,7 +5,6 @@ import { LicenseCheckerResult, Result } from "./lib/Checker.types";
 import { Reporter } from "./Config.types";
 import stripIndent from "strip-indent";
 import indentString from "indent-string";
-import { warning } from "@actions/core";
 
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";
