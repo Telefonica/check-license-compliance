@@ -149,15 +149,17 @@ The action also allows to set the configuration by using inputs. When defined, t
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
 * `allow-warnings`: Boolean value to determine if the action should be considered valid when warning dependencies are found. Default is `true`.
 * `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
-* `config`: Multiline string with the whole [configuration](#configuration) expressed as a YAML object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here.
+* `config`: Multiline string with the whole [configuration](#configuration) expressed as a JSON object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here. NOTE: Here you should use JSON instead of YAML to avoid indentation issues.
     Example:
 
     ```yaml
     config: |
-      licenses:
-        allowed:
-          - Apache-2.0
-          - MIT
+      {
+        "licenses": {
+          "allowed": ["Apache-2.0", "MIT"]
+        },
+        "allowWarnings": false
+      }
     ```
 
 > [!WARNING]
@@ -205,17 +207,18 @@ jobs:
         uses: Telefonica/check-license-compliance@v1
         with:
           config-file: "check-licenses.config.yml"
-          # Properties with preference over values defined in any other place
+          # Properties defined at input first level will have preference over values defined in any other place
           reporter: "markdown"
           log: "debug"
           allow-warnings: true
           # This will extend the values in the configuration file
           config: |
-            licenses:
-              allowed:
-                - Apache-2.0
-                - MIT
-            allowWarnings: false
+            {
+              "licenses": {
+                "allowed": ["Apache-2.0", "MIT"]
+              },
+              "allowWarnings": false
+            }
 ```
 
 ## How it works
