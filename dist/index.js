@@ -70460,18 +70460,12 @@ class Checker {
         this._logger.verbose("Checker created with config", config);
     }
     /**
-     * Get the logger
-     */
-    get logger() {
-        return this._logger;
-    }
-    /**
      * Returns an array of packages using a license that is not in the exclusions, or is unknown
      * @returns List of packages using a license that is not in the exclusions
      */
     async _checkLicensesExcluding(exclusions, licenseCheckerOptions) {
         return new Promise((resolve, reject) => {
-            lib.init({
+            (0,lib.init)({
                 start: ROOT_DIR,
                 // @ts-expect-error The library typing says that requires an array, but it only works with a comma-separated string
                 exclude: exclusions.join(","),
@@ -70640,6 +70634,7 @@ function getErrorsMarkdown(errors, type, emoji) {
 function pluralize(count, singular) {
     const plurals = {
         dependency: "dependencies",
+        has: "have",
     };
     return count === 1 ? singular : plurals[singular];
 }
@@ -70683,8 +70678,8 @@ function successReport(reporter, result) {
  */
 function errorReport(reporter, result, isValid) {
     let summaryPhrases = [];
-    summaryPhrases.push(`${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} have forbidden licenses.`);
-    summaryPhrases.push(`${result.warning.length} ${pluralize(result.warning.length, "dependency")} have dangerous licenses.`);
+    summaryPhrases.push(`${result.forbidden.length} ${pluralize(result.forbidden.length, "dependency")} ${pluralize(result.forbidden.length, "has")} forbidden licenses.`);
+    summaryPhrases.push(`${result.warning.length} ${pluralize(result.warning.length, "dependency")} ${pluralize(result.warning.length, "has")} dangerous licenses.`);
     const summary = summaryPhrases.join("\n");
     switch (reporter) {
         case "json":
@@ -70720,6 +70715,8 @@ function notInstalledReport(reporter) {
         case "json":
             return JSON.stringify({
                 message: NOT_INSTALLED,
+                forbidden: [],
+                warning: [],
             });
         case "markdown":
             return stripIndent(`
