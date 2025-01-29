@@ -13559,7 +13559,7 @@ var license = __nccwpck_require__(2790);
 var licenseFiles = __nccwpck_require__(9636);
 var debug = __nccwpck_require__(5461);
 var mkdirp = __nccwpck_require__(4469);
-var spdxSatisfies = __nccwpck_require__(5131);
+var spdxSatisfies = __nccwpck_require__(8714);
 var spdxCorrect =__nccwpck_require__(5728);
 
 // Set up debug logging
@@ -15517,6 +15517,132 @@ module.exports = (flag, argv) => {
 	const terminatorPos = argv.indexOf('--');
 	return pos !== -1 && (terminatorPos === -1 ? true : pos < terminatorPos);
 };
+
+
+/***/ }),
+
+/***/ 8714:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var compare = __nccwpck_require__(7369)
+var parse = __nccwpck_require__(3326)
+var ranges = __nccwpck_require__(9344)
+
+var rangesAreCompatible = function (first, second) {
+  return (
+    first.license === second.license ||
+    ranges.some(function (range) {
+      return (
+        licenseInRange(first.license, range) &&
+        licenseInRange(second.license, range)
+      )
+    })
+  )
+}
+
+function licenseInRange (license, range) {
+  return (
+    range.indexOf(license) !== -1 ||
+    range.some(function (element) {
+      return (
+        Array.isArray(element) &&
+        element.indexOf(license) !== -1
+      )
+    })
+  )
+}
+
+var identifierInRange = function (identifier, range) {
+  return (
+    identifier.license === range.license ||
+    compare.gt(identifier.license, range.license) ||
+    compare.eq(identifier.license, range.license)
+  )
+}
+
+var licensesAreCompatible = function (first, second) {
+  if (first.exception !== second.exception) {
+    return false
+  } else if (second.hasOwnProperty('license')) {
+    if (second.hasOwnProperty('plus')) {
+      if (first.hasOwnProperty('plus')) {
+        // first+, second+
+        return rangesAreCompatible(first, second)
+      } else {
+        // first, second+
+        return identifierInRange(first, second)
+      }
+    } else {
+      if (first.hasOwnProperty('plus')) {
+        // first+, second
+        return identifierInRange(second, first)
+      } else {
+        // first, second
+        return first.license === second.license
+      }
+    }
+  }
+}
+
+var recurseLeftAndRight = function (first, second) {
+  var firstConjunction = first.conjunction
+  var secondConjunction = second.conjunction
+
+  if (firstConjunction === 'and' && secondConjunction === 'and') {
+    return (
+      (recurse(first.left, second.left) && recurse(first.right, second.right)) ||
+      (recurse(first.left, second.right) && recurse(first.right, second.left))
+    )
+  } else if (firstConjunction === 'and') {
+    return (
+      recurse(first.left, second) &&
+      recurse(first.right, second)
+    )
+  } else if (firstConjunction === 'or') {
+    return (
+      recurse(first.left, second) ||
+      recurse(first.right, second)
+    )
+  }
+}
+
+var recurse = function (first, second) {
+  if (first.hasOwnProperty('conjunction')) {
+    return recurseLeftAndRight(first, second)
+  } else if (second.hasOwnProperty('conjunction')) {
+    return recurseLeftAndRight(second, first)
+  } else {
+    return licensesAreCompatible(first, second)
+  }
+}
+
+function normalizeGPLIdentifiers (argument) {
+  var license = argument.license
+  if (license) {
+    if (endsWith(license, '-or-later')) {
+      argument.license = license.replace('-or-later', '')
+      argument.plus = true
+    } else if (endsWith(license, '-only')) {
+      argument.license = license.replace('-or-later', '')
+      delete argument.plus
+    }
+  } else {
+    argument.left = normalizeGPLIdentifiers(argument.left)
+    argument.right = normalizeGPLIdentifiers(argument.right)
+  }
+  return argument
+}
+
+function endsWith (string, substring) {
+  return string.indexOf(substring) === string.length - 1
+}
+
+module.exports = function (first, second) {
+  return recurse(
+    normalizeGPLIdentifiers(parse(first)),
+    normalizeGPLIdentifiers(parse(second))
+  )
+}
 
 
 /***/ }),
@@ -27190,132 +27316,6 @@ module.exports = function (source) {
     tokens.push(token)
   }
   return tokens
-}
-
-
-/***/ }),
-
-/***/ 5131:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var compare = __nccwpck_require__(7369)
-var parse = __nccwpck_require__(3326)
-var ranges = __nccwpck_require__(9344)
-
-var rangesAreCompatible = function (first, second) {
-  return (
-    first.license === second.license ||
-    ranges.some(function (range) {
-      return (
-        licenseInRange(first.license, range) &&
-        licenseInRange(second.license, range)
-      )
-    })
-  )
-}
-
-function licenseInRange (license, range) {
-  return (
-    range.indexOf(license) !== -1 ||
-    range.some(function (element) {
-      return (
-        Array.isArray(element) &&
-        element.indexOf(license) !== -1
-      )
-    })
-  )
-}
-
-var identifierInRange = function (identifier, range) {
-  return (
-    identifier.license === range.license ||
-    compare.gt(identifier.license, range.license) ||
-    compare.eq(identifier.license, range.license)
-  )
-}
-
-var licensesAreCompatible = function (first, second) {
-  if (first.exception !== second.exception) {
-    return false
-  } else if (second.hasOwnProperty('license')) {
-    if (second.hasOwnProperty('plus')) {
-      if (first.hasOwnProperty('plus')) {
-        // first+, second+
-        return rangesAreCompatible(first, second)
-      } else {
-        // first, second+
-        return identifierInRange(first, second)
-      }
-    } else {
-      if (first.hasOwnProperty('plus')) {
-        // first+, second
-        return identifierInRange(second, first)
-      } else {
-        // first, second
-        return first.license === second.license
-      }
-    }
-  }
-}
-
-var recurseLeftAndRight = function (first, second) {
-  var firstConjunction = first.conjunction
-  var secondConjunction = second.conjunction
-
-  if (firstConjunction === 'and' && secondConjunction === 'and') {
-    return (
-      (recurse(first.left, second.left) && recurse(first.right, second.right)) ||
-      (recurse(first.left, second.right) && recurse(first.right, second.left))
-    )
-  } else if (firstConjunction === 'and') {
-    return (
-      recurse(first.left, second) &&
-      recurse(first.right, second)
-    )
-  } else if (firstConjunction === 'or') {
-    return (
-      recurse(first.left, second) ||
-      recurse(first.right, second)
-    )
-  }
-}
-
-var recurse = function (first, second) {
-  if (first.hasOwnProperty('conjunction')) {
-    return recurseLeftAndRight(first, second)
-  } else if (second.hasOwnProperty('conjunction')) {
-    return recurseLeftAndRight(second, first)
-  } else {
-    return licensesAreCompatible(first, second)
-  }
-}
-
-function normalizeGPLIdentifiers (argument) {
-  var license = argument.license
-  if (license) {
-    if (endsWith(license, '-or-later')) {
-      argument.license = license.replace('-or-later', '')
-      argument.plus = true
-    } else if (endsWith(license, '-only')) {
-      argument.license = license.replace('-or-later', '')
-      delete argument.plus
-    }
-  } else {
-    argument.left = normalizeGPLIdentifiers(argument.left)
-    argument.right = normalizeGPLIdentifiers(argument.right)
-  }
-  return argument
-}
-
-function endsWith (string, substring) {
-  return string.indexOf(substring) === string.length - 1
-}
-
-module.exports = function (first, second) {
-  return recurse(
-    normalizeGPLIdentifiers(parse(first)),
-    normalizeGPLIdentifiers(parse(second))
-  )
 }
 
 
@@ -69294,47 +69294,19 @@ const licensesConfigSchema = z.object({
     allowed: allowedLicensesSchema.optional(),
     warning: warningLicensesSchema.optional(),
     forbidden: forbiddenLicensesSchema.optional(),
+    others: z.enum(["warning", "forbidden"]).optional(),
+    unknown: z.enum(["warning", "forbidden"]).optional(),
 });
-const licenseCheckerConfigSchema = z.object({
-    /** Exclude private packages or not */
-    excludePrivatePackages: z.boolean().optional(),
-    /** Only show production dependencies */
-    production: z.boolean().optional(),
-    /** Only show development dependencies */
-    development: z.boolean().optional(),
-    /** Path to start checking dependencies from */
-    start: z.string().optional(),
-    /** Show unknown licenses */
-    unknown: z.boolean().optional(),
-    /** Only list packages with unknown licenses */
-    onlyUnknown: z.boolean().optional(),
-    /** Exclude modules which licenses are in the comma-separated list from the output */
-    exclude: z.boolean().optional(),
-    /** Output the relative license path */
-    relativeLicensePath: z.boolean().optional(),
-    /** fail (exit with code 1) on the first occurrence of the licenses of the semicolon-separated list */
-    failOn: z.string().optional(),
-    /** fail (exit with code 1) on the first occurrence of the licenses not in the semicolon-separated list */
-    onlyAllow: z.string().optional(),
-    /** restrict output to the packages (package@version) in the semicolon-separated list */
-    packages: z.string().optional(),
-    /** restrict output to the packages (package@version) not in the semicolon-separated list */
-    excludePackages: z.string().optional(),
-    /** look for direct dependencies only */
-    direct: z.boolean().optional(),
-});
-const licenseCheckersOptionsSchema = z.object({
-    /** Common options for all checks */
-    global: licenseCheckerConfigSchema.optional(),
-    /** Options for licenses that require special attention */
-    warning: licenseCheckerConfigSchema.optional(),
-    /** Options for forbidden licenses */
-    forbidden: licenseCheckerConfigSchema.optional(),
-});
+/** Options schema */
 const configSchema = z
     .object({
-    licenses: licensesConfigSchema,
-    licenseCheckerOptions: licenseCheckersOptionsSchema.optional(),
+    licenses: licensesConfigSchema.optional(),
+    production: z.boolean().optional(),
+    development: z.boolean().optional(),
+    direct: z.boolean().optional(),
+    packages: z.array(z.string()).optional(),
+    excludePackages: z.array(z.string()).optional(),
+    excludePrivatePackages: z.boolean().optional(),
     log: logLevelSchema.optional(),
 })
     .strict();
@@ -69351,7 +69323,6 @@ const inputOptionsSchema = z
     .object({
     log: logLevelSchema.optional(),
     reporter: reporterSchema.optional(),
-    allowWarnings: allowWarningsSchema.optional(),
     failOnNotValid: z.boolean().optional(),
 })
     .strict();
@@ -69643,14 +69614,12 @@ function valueIfBoolean(value) {
  */
 function getInputs() {
     const log = core.getInput("log");
-    const allowWarnings = core.getInput("allow-warnings");
     const failOnNotValid = core.getInput("fail-on-not-valid");
     const reporter = core.getInput("reporter");
     const config = core.getMultilineInput("config").join("\n");
     const configFile = core.getInput("config-file");
     const inputs = {
         log: valueIfDefined(log),
-        allowWarnings: valueIfBoolean(allowWarnings),
         failOnNotValid: valueIfBoolean(failOnNotValid),
         reporter: valueIfDefined(reporter),
         config: valueIfDefined(config),
@@ -69702,9 +69671,6 @@ async function getConfig() {
     if (inputs.log) {
         inputsValues.log = inputs.log;
     }
-    if (inputs.allowWarnings !== undefined) {
-        inputsValues.allowWarnings = inputs.allowWarnings;
-    }
     if (inputs.failOnNotValid !== undefined) {
         inputsValues.failOnNotValid = inputs.failOnNotValid;
     }
@@ -69720,9 +69686,6 @@ async function getConfig() {
     const mergedConfigWithDefaults = {
         ...mergedConfig,
         log: mergedConfig.log || "info",
-        allowWarnings: mergedConfig.allowWarnings === undefined
-            ? true
-            : mergedConfig.allowWarnings,
         failOnNotValid: mergedConfig.failOnNotValid === undefined
             ? true
             : mergedConfig.failOnNotValid,
@@ -70439,13 +70402,190 @@ function createLogger(level) {
 
 // EXTERNAL MODULE: ./node_modules/license-checker/lib/index.js
 var lib = __nccwpck_require__(1857);
+// EXTERNAL MODULE: ./node_modules/spdx-compare/index.js
+var spdx_compare = __nccwpck_require__(7369);
+// EXTERNAL MODULE: ./node_modules/spdx-expression-parse/index.js
+var spdx_expression_parse = __nccwpck_require__(3326);
+// EXTERNAL MODULE: ./node_modules/spdx-ranges/index.json
+var spdx_ranges = __nccwpck_require__(9344);
+;// CONCATENATED MODULE: ./src/lib/spdx-satisfies/index.js
+// SPDX-License-Identifier: MIT
+
+/*
+ * NOTE: This file is an unpublished version of the spdx-satisfies package.
+ * It seems that the contents in the main branch have not been published to npm.
+ * Latest published version does not support passing an array of valid licenses, that's why this file was created.
+ * The original package is available at https://www.npmjs.com/package/spdx-satisfies
+ */
+
+
+
+
+
+function rangesAreCompatible(first, second) {
+  return (
+    first.license === second.license ||
+    spdx_ranges.some(function (range) {
+      return (
+        licenseInRange(first.license, range) &&
+        licenseInRange(second.license, range)
+      );
+    })
+  );
+}
+
+function licenseInRange(license, range) {
+  return (
+    range.indexOf(license) !== -1 ||
+    range.some(function (element) {
+      return Array.isArray(element) && element.indexOf(license) !== -1;
+    })
+  );
+}
+
+function identifierInRange(identifier, range) {
+  return (
+    identifier.license === range.license ||
+    spdx_compare.gt(identifier.license, range.license) ||
+    spdx_compare.eq(identifier.license, range.license)
+  );
+}
+
+function licensesAreCompatible(first, second) {
+  if (first.exception !== second.exception) {
+    return false;
+  } else if (Object.prototype.hasOwnProperty.call(second, "license")) {
+    if (Object.prototype.hasOwnProperty.call(second, "plus")) {
+      if (Object.prototype.hasOwnProperty.call(first, "plus")) {
+        // first+, second+
+        return rangesAreCompatible(first, second);
+      } else {
+        // first, second+
+        return identifierInRange(first, second);
+      }
+    } else {
+      if (Object.prototype.hasOwnProperty.call(first, "plus")) {
+        // first+, second
+        return identifierInRange(second, first);
+      } else {
+        // first, second
+        return first.license === second.license;
+      }
+    }
+  }
+}
+
+function replaceGPLOnlyOrLaterWithRanges(argument) {
+  var license = argument.license;
+  if (license) {
+    if (endsWith(license, "-or-later")) {
+      argument.license = license.replace("-or-later", "");
+      argument.plus = true;
+    } else if (endsWith(license, "-only")) {
+      argument.license = license.replace("-only", "");
+      delete argument.plus;
+    }
+  } else if (argument.left && argument.right) {
+    argument.left = replaceGPLOnlyOrLaterWithRanges(argument.left);
+    argument.right = replaceGPLOnlyOrLaterWithRanges(argument.right);
+  }
+  return argument;
+}
+
+function endsWith(string, substring) {
+  return string.indexOf(substring) === string.length - substring.length;
+}
+
+function licenseString(e) {
+  if (Object.prototype.hasOwnProperty.call(e, "noassertion"))
+    return "NOASSERTION";
+  if (e.license) {
+    return (
+      e.license +
+      (e.plus ? "+" : "") +
+      (e.exception ? "WITH " + e.exception : "")
+    );
+  }
+}
+
+// Expand the given expression into an equivalent array where each member is an array of licenses AND'd
+// together and the members are OR'd together. For example, `(MIT OR ISC) AND GPL-3.0` expands to
+// `[[GPL-3.0 AND MIT], [ISC AND MIT]]`. Note that within each array of licenses, the entries are
+// normalized (sorted) by license name.
+function expand(expression) {
+  return sort(expandInner(expression));
+}
+
+function expandInner(expression) {
+  if (!expression.conjunction)
+    return [{ [licenseString(expression)]: expression }];
+  if (expression.conjunction === "or")
+    return expandInner(expression.left).concat(expandInner(expression.right));
+  if (expression.conjunction === "and") {
+    var left = expandInner(expression.left);
+    var right = expandInner(expression.right);
+    return left.reduce(function (result, l) {
+      right.forEach(function (r) {
+        result.push(Object.assign({}, l, r));
+      });
+      return result;
+    }, []);
+  }
+}
+
+function sort(licenseList) {
+  var sortedLicenseLists = licenseList
+    .filter(function (e) {
+      return Object.keys(e).length;
+    })
+    .map(function (e) {
+      return Object.keys(e).sort();
+    });
+  return sortedLicenseLists.map(function (list, i) {
+    return list.map(function (license) {
+      return licenseList[i][license];
+    });
+  });
+}
+
+function isANDCompatible(parsedExpression, parsedLicenses) {
+  return parsedExpression.every(function (element) {
+    return parsedLicenses.some(function (approvedLicense) {
+      return licensesAreCompatible(element, approvedLicense);
+    });
+  });
+}
+
+function satisfies(spdxExpression, arrayOfLicenses) {
+  var parsedExpression = expand(
+    replaceGPLOnlyOrLaterWithRanges(spdx_expression_parse(spdxExpression)),
+  );
+  var parsedLicenses = arrayOfLicenses.map(function (l) {
+    return replaceGPLOnlyOrLaterWithRanges(spdx_expression_parse(l));
+  });
+  for (const parsed of parsedLicenses) {
+    if (Object.prototype.hasOwnProperty.call(parsed, "conjunction")) {
+      throw new Error("Approved licenses cannot be AND or OR expressions.");
+    }
+  }
+  return parsedExpression.some(function (o) {
+    return isANDCompatible(o, parsedLicenses);
+  });
+}
+
+/* harmony default export */ const spdx_satisfies = (satisfies);
+
 ;// CONCATENATED MODULE: ./src/lib/Checker.ts
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+
 const ROOT_DIR = (0,external_node_process_namespaceObject.cwd)();
+const UNKNOWN_LICENSE_IDENTIFIER = "UNKNOWN";
 /**
  * Check files for license headers
  */
@@ -70455,22 +70595,41 @@ class Checker {
      * @param options Options for the checker
      */
     constructor(config) {
+        this._others = "forbidden";
+        this._unknown = "warning";
         this._logger = createLogger(config.log);
         this._config = config;
         this._logger.verbose("Checker created with config", config);
+        if (config.packages) {
+            this._packages = config.packages.join(";");
+        }
+        if (config.excludePackages) {
+            this._excludePackages = config.excludePackages.join(";");
+        }
+        if (config.licenses?.others) {
+            this._others = config.licenses.others;
+        }
+        if (config.licenses?.unknown) {
+            this._unknown = config.licenses.unknown;
+        }
     }
     /**
      * Returns an array of packages using a license that is not in the exclusions, or is unknown
      * @returns List of packages using a license that is not in the exclusions
      */
-    async _checkLicensesExcluding(exclusions, licenseCheckerOptions) {
+    async _getLicensesExcluding(exclusions) {
         return new Promise((resolve, reject) => {
             (0,lib.init)({
                 start: ROOT_DIR,
                 // @ts-expect-error The library typing says that requires an array, but it only works with a comma-separated string
                 exclude: exclusions.join(","),
                 relativeLicensePath: true,
-                ...licenseCheckerOptions,
+                packages: this._packages,
+                excludePackages: this._excludePackages,
+                production: this._config.production || false,
+                development: this._config.development || false,
+                direct: this._config.direct || false,
+                excludePrivatePackages: this._config.excludePrivatePackages === false ? false : true,
             }, (err, packages) => {
                 if (err) {
                     reject(err);
@@ -70491,32 +70650,48 @@ class Checker {
             });
         });
     }
-    /**
-     * Returns an array of modules using a forbidden license
-     * @returns Array of modules with forbidden licenses
-     */
-    _checkForbiddenLicenses() {
-        return this._checkLicensesExcluding([
-            ...(this._config.licenses?.allowed || []),
-            ...(this._config.licenses?.warning || []),
-        ], {
-            ...this._config.licenseCheckerOptions?.global,
-            ...this._config.licenseCheckerOptions?.forbidden,
+    _licenseSatisfies(license, licenseIdentifiers) {
+        return licenseIdentifiers.some((licenseIdentifier) => {
+            try {
+                if (spdx_satisfies(license, [licenseIdentifier])) {
+                    this._logger.silly(`${license} satisfies ${licenseIdentifier}.`);
+                    return true;
+                }
+                this._logger.silly(`${license} does not satisfy ${licenseIdentifier}.`);
+                return false;
+            }
+            catch {
+                this._logger.silly(`Error checking if license ${license} satisfies ${licenseIdentifier}. Passing to string comparison`);
+                // Fallback to a simple string comparison in case the SPDX identifier is not valid
+                return licenseIdentifier === license;
+            }
         });
     }
-    /**
-     * Returns an array of modules using licenses that require special attention
-     * @returns Array of modules with licenses that require special attention
-     */
-    _checkWarningLicenses() {
-        return this._checkLicensesExcluding([
-            ...(this._config.licenses?.allowed || []),
-            ...(this._config.licenses?.forbidden || []),
-        ], {
-            unknown: true,
-            ...this._config.licenseCheckerOptions?.global,
-            ...this._config.licenseCheckerOptions?.warning,
+    _isForbidden(licenses) {
+        const result = licenses.some((license) => this._licenseSatisfies(license, this._config.licenses?.forbidden || []));
+        this._logger.verbose("Checking if licenses are forbidden", {
+            licenses,
+            result,
         });
+        return result;
+    }
+    _isWarning(licenses) {
+        const result = licenses.some((license) => this._licenseSatisfies(license, this._config.licenses?.warning || []));
+        this._logger.verbose("Checking if licenses are warning", {
+            licenses,
+            result,
+        });
+        return result;
+    }
+    _isUnknown(licenses) {
+        const result = licenses.some((license) => license === UNKNOWN_LICENSE_IDENTIFIER ||
+            (Array.isArray(license) &&
+                (license.length === 0 || license[0] === UNKNOWN_LICENSE_IDENTIFIER)));
+        this._logger.verbose("Checking if licenses are unknown", {
+            licenses,
+            result,
+        });
+        return result;
     }
     /**
      * Checks all rules
@@ -70524,10 +70699,43 @@ class Checker {
      */
     async check() {
         this._logger.info("Checking Node.js licenses");
-        const forbidden = await this._checkForbiddenLicenses();
-        const warnings = await this._checkWarningLicenses();
-        const warningsWithoutErrors = warnings.filter((warning) => !forbidden.some((forbiddenModule) => forbiddenModule.module === warning.module));
-        return { forbidden, warning: warningsWithoutErrors };
+        const notExplicitlyAllowedLicenses = await this._getLicensesExcluding([
+            ...(this._config.licenses?.allowed || []),
+        ]);
+        let forbidden = [];
+        let warning = [];
+        let unknown = [];
+        let others = [];
+        notExplicitlyAllowedLicenses.forEach((moduleData) => {
+            const licenses = Array.isArray(moduleData.licenses)
+                ? moduleData.licenses
+                : [moduleData.licenses];
+            if (this._isForbidden(licenses)) {
+                forbidden.push(moduleData);
+            }
+            else if (this._isWarning(licenses)) {
+                warning.push(moduleData);
+            }
+            else if (this._isUnknown(licenses)) {
+                unknown.push(moduleData);
+            }
+            else {
+                others.push(moduleData);
+            }
+        });
+        if (this._others === "warning") {
+            warning = warning.concat(others);
+        }
+        else {
+            forbidden = forbidden.concat(others);
+        }
+        if (this._unknown === "warning") {
+            warning = warning.concat(unknown);
+        }
+        else {
+            forbidden = forbidden.concat(unknown);
+        }
+        return { forbidden, warning };
     }
 }
 
@@ -70779,7 +70987,12 @@ async function run() {
         core.debug("Running checker...");
         const checker = new Checker({
             licenses: options.licenses,
-            licenseCheckerOptions: options.licenseCheckerOptions,
+            production: options.production,
+            development: options.development,
+            direct: options.direct,
+            packages: options.packages,
+            excludePackages: options.excludePackages,
+            excludePrivatePackages: options.excludePrivatePackages,
             log: options.log,
         });
         const result = await checker.check();
@@ -70787,7 +71000,7 @@ async function run() {
         const hasForbidden = result.forbidden.length > 0;
         core.setOutput(FOUND_FORBIDDEN, hasForbidden);
         core.setOutput(FOUND_WARNING, hasWarnings);
-        const isValid = !((hasWarnings && !options.allowWarnings) || hasForbidden);
+        const isValid = hasForbidden;
         const report = getReport(options.reporter, result, isValid);
         core.info(report);
         core.setOutput(OUTPUT_REPORT, report);
