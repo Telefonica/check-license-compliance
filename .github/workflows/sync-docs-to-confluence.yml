@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
+# SPDX-License-Identifier: MIT
+
+name: Sync Docs to Confluence
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  sync-docs-to-confluence:
+    environment: production
+    name: Sync Docs to Confluence
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Sync Docs
+        id: sync-docs
+        uses: Telefonica/markdown-confluence-sync-action@feat/id-mode
+        with:
+          mode: id
+          docs-dir: '.'
+          files-pattern: '*.md'
+          files-metadata: |
+            [
+              {
+                "path": "README.md",
+                "id": "${{ vars.CONFLUENCE_README_PAGE_ID }}",
+                "title": "[Cross] Check License Compliance"
+              },
+              {
+                "path": "CHANGELOG.md",
+                "id": "${{ vars.CONFLUENCE_CHANGELOG_PAGE_ID }}",
+                "title": "[Cross] [Check License Compliance] Releases"
+              }
+            ]
+          confluence-url: ${{ vars.CONFLUENCE_URL }}
+          confluence-space-key: ${{ vars.CONFLUENCE_SPACE_KEY }}
+          confluence-personal-access-token: ${{ secrets.CONFLUENCE_PAT }}
