@@ -25,7 +25,7 @@ jobs:
 
       - name: Sync Docs
         id: sync-docs
-        uses: Telefonica/markdown-confluence-sync-action@feat/id-mode
+        uses: Telefonica/markdown-confluence-sync-action@v1
         with:
           mode: id
           docs-dir: '.'
