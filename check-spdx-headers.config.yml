@@ -11,6 +11,7 @@ rules:
         license: "Apache-2.0"
         ignore:
           - "*.config.js"
+          - "src/lib/spdx-satisfies/**"
           - "script/**"
   - name: "Config files"
     headers:
