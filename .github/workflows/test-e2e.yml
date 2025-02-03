@@ -83,6 +83,6 @@ jobs:
           echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
 
       - name: Test - Case 2 - Assert 2 failed
-        if: contains(fromJson(steps.test-02.outputs.report).message, '90 dependencies have forbidden licenses. 660 dependencies have dangerous licenses.') == false
+        if: contains(fromJson(steps.test-02.outputs.report).message, '91 dependencies have forbidden licenses. 666 dependencies have dangerous licenses.') == false
         run: |
-          echo "Test case 2 failed. The check did not found 116 dangerous dependencies" && exit 1    
+          echo "Test case 2 failed. The check did not found 91 forbidden dependencies and 666 dangerous dependency" && exit 1    
