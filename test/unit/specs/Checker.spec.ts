@@ -7,7 +7,6 @@ import { init } from "license-checker";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore We don't want to type the library
 import satisfies from "../../../src/lib/spdx-satisfies";
-import { unknown } from "zod";
 
 jest.mock<typeof import("license-checker")>("license-checker", () => ({
   ...jest.requireActual("license-checker"),
