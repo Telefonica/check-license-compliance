@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * feat: Add `excludePackages` option
 * feat: Add `excludePrivatePackages` option
 
+### Changed
+
+* feat: Report unknown licenses as warnings by default
+
 ### Removed
 
 * feat(BREAKING CHANGE): Remove `allowWarnings` option. It has no sense anymore with the new options.
