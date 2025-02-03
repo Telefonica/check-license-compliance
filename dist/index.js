@@ -70582,7 +70582,7 @@ function satisfies(spdxExpression, arrayOfLicenses) {
 
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-ignore We don't want to type the library fork
 
 const ROOT_DIR = (0,external_node_process_namespaceObject.cwd)();
 const UNKNOWN_LICENSE_IDENTIFIER = "UNKNOWN";
