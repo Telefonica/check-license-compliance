@@ -9,7 +9,7 @@ import { cwd } from "node:process";
 import { init } from "license-checker";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+// @ts-ignore We don't want to type the library fork
 import satisfies from "./spdx-satisfies/index";
 
 const ROOT_DIR = cwd();
