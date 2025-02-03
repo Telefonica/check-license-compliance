@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * feat: Report unknown licenses as warnings by default
+* refactor: Run license-checker only once to get the dependencies ignoring the allowed ones. Use `spdx-satisfies` to check the type of each package license according to the configuration. 
 
 ### Removed
 
