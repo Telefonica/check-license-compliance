@@ -32,7 +32,7 @@ jobs:
 
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
-        uses: ./.github/actions/check-and-comment
+        uses: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
