@@ -80,9 +80,13 @@ export class Checker {
           } else {
             resolve(
               Object.entries(packages).map(([moduleName, result]) => {
+                const licensesResult = result.licenses || [];
                 return {
                   module: moduleName,
-                  licenses: result.licenses || [],
+                  licenses:
+                    typeof licensesResult === "string"
+                      ? [licensesResult]
+                      : licensesResult,
                   repository: result.repository || "",
                   publisher: result.publisher || "",
                   email: result.email || "",
@@ -186,10 +190,7 @@ export class Checker {
    */
   private _isUnknown(licenses: string[]): boolean {
     const result = licenses.some(
-      (license) =>
-        license === UNKNOWN_LICENSE_IDENTIFIER ||
-        (Array.isArray(license) &&
-          (license.length === 0 || license[0] === UNKNOWN_LICENSE_IDENTIFIER)),
+      (license) => license === UNKNOWN_LICENSE_IDENTIFIER,
     );
     this._logger.verbose("Checking if licenses are unknown", {
       licenses,
@@ -221,9 +222,9 @@ export class Checker {
     return licenses.map((moduleData) => {
       return {
         ...moduleData,
-        licenses: Array.isArray(moduleData.licenses)
-          ? moduleData.licenses.map(this._replaceCustomLicenseIdentifier)
-          : this._replaceCustomLicenseIdentifier(moduleData.licenses),
+        licenses: !moduleData.licenses.length
+          ? [UNKNOWN_LICENSE_IDENTIFIER]
+          : moduleData.licenses.map(this._replaceCustomLicenseIdentifier),
       };
     });
   }
@@ -257,9 +258,7 @@ export class Checker {
     });
 
     notExplicitlyAllowedLicenses.forEach((moduleData) => {
-      const licenses = Array.isArray(moduleData.licenses)
-        ? moduleData.licenses
-        : [moduleData.licenses];
+      const licenses = moduleData.licenses;
 
       // NOTE: Even when we exclude allowed licenses in the search, we check them again in order to provide support for custom license identifiers
       if (this._isAllowed(licenses)) {

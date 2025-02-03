@@ -166,6 +166,20 @@ describe("action", () => {
       await expect(() => getConfig()).rejects.toThrow("Invalid boolean value");
     });
 
+    it("should throw when reporter is not valid", async () => {
+      getInputMock.mockImplementation((name: string) => {
+        // eslint-disable-next-line jest/no-conditional-in-test
+        if (name === "reporter") {
+          return "foo";
+        }
+        return "";
+      });
+
+      await expect(() => getConfig()).rejects.toThrow(
+        "Expected 'json' | 'markdown' | 'text'",
+      );
+    });
+
     it("should set reporter as text by default", async () => {
       const config = await getConfig();
 
@@ -185,12 +199,12 @@ describe("action", () => {
       expect(config.reporter).toBe("json");
     });
 
-    it("should throw when no licenses are provided", async () => {
+    it("should not throw when no licenses are provided", async () => {
       jest.mocked(readFile).mockResolvedValueOnce("");
 
-      await expect(() => getConfig()).rejects.toThrow(
-        'Validation error: Required at "licenses"',
-      );
+      const config = await getConfig();
+
+      expect(config.licenses).toBeUndefined();
     });
 
     it("should get config from config input", async () => {
@@ -357,7 +371,7 @@ reporter: json
           forbidden: [
             {
               module: "foo",
-              licenses: "MIT",
+              licenses: ["MIT"],
             },
           ],
           warning: [],
@@ -390,13 +404,13 @@ reporter: json
           forbidden: [
             {
               module: "foo",
-              licenses: "MIT",
+              licenses: ["MIT"],
             },
           ],
           warning: [
             {
               module: "bar",
-              licenses: "GPL",
+              licenses: ["GPL"],
             },
           ],
         }),
@@ -434,13 +448,13 @@ reporter: json
           forbidden: [
             {
               module: "foo",
-              licenses: "MIT",
+              licenses: ["MIT"],
             },
           ],
           warning: [
             {
               module: "bar",
-              licenses: "GPL",
+              licenses: ["GPL"],
             },
           ],
         }),
@@ -457,7 +471,7 @@ reporter: json
       await main.run();
 
       expect(setOutputMock.mock.calls[2][1]).toBe(
-        '{"message":"1 dependency has forbidden licenses. 1 dependency has dangerous licenses.","forbidden":[{"module":"foo","licenses":"MIT"}],"warning":[{"module":"bar","licenses":"GPL"}]}',
+        '{"message":"1 dependency has forbidden licenses. 1 dependency has dangerous licenses.","forbidden":[{"module":"foo","licenses":["MIT"]}],"warning":[{"module":"bar","licenses":["GPL"]}]}',
       );
     });
   });
@@ -470,7 +484,7 @@ reporter: json
           forbidden: [
             {
               module: "foo",
-              licenses: "MIT",
+              licenses: ["MIT"],
             },
           ],
           warning: [],
@@ -502,7 +516,7 @@ reporter: json
     });
   });
 
-  describe("when there are warnings and allowWarnings is true", () => {
+  describe("when there are warnings", () => {
     it("should set as output valid true and the result report", async () => {
       // @ts-expect-error We don't want to mock the whole module
       jest.mocked(Checker).mockImplementation(() => ({
@@ -511,19 +525,11 @@ reporter: json
           warning: [
             {
               module: "foo",
-              licenses: "MIT",
+              licenses: ["MIT"],
             },
           ],
         }),
       }));
-
-      getInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "allow-warnings") {
-          return "true";
-        }
-        return "";
-      });
 
       await main.run();
 
@@ -553,7 +559,7 @@ reporter: json
           warning: [
             {
               module: "bar",
-              licenses: "GPL",
+              licenses: ["GPL"],
             },
             {
               module: "foo",
@@ -564,10 +570,6 @@ reporter: json
       }));
 
       getInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "allow-warnings") {
-          return "true";
-        }
         // eslint-disable-next-line jest/no-conditional-in-test
         if (name === "reporter") {
           return "markdown";
@@ -589,53 +591,6 @@ reporter: json
             
             ✅ Result: Valid
           `),
-      );
-    });
-  });
-
-  describe("when there are warnings and allowWarnings is false", () => {
-    it("should set as output valid false and the result report", async () => {
-      // @ts-expect-error We don't want to mock the whole module
-      jest.mocked(Checker).mockImplementation(() => ({
-        check: jest.fn().mockReturnValue({
-          forbidden: [],
-          warning: [
-            {
-              module: "foo",
-              licenses: "MIT",
-            },
-          ],
-        }),
-      }));
-
-      getMultilineInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "config") {
-          return ['{"allowWarnings": false}'];
-        }
-        return [];
-      });
-
-      await main.run();
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        1,
-        "found-forbidden",
-        false,
-      );
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(2, "found-warning", true);
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        3,
-        "report",
-        "0 dependencies have forbidden licenses.\n1 dependency has dangerous licenses.",
-      );
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", false);
-      expect(setFailedMock).toHaveBeenNthCalledWith(
-        1,
-        "Some dependencies have not acceptable licenses.",
       );
     });
   });

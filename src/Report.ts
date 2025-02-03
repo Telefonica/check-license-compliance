@@ -32,9 +32,7 @@ function getErrorsMarkdown(
       );
     }
     for (const error of errors) {
-      const licensesToPrint = Array.isArray(error.licenses)
-        ? error.licenses.join(", ")
-        : error.licenses;
+      const licensesToPrint = error.licenses.join(", ");
       lines.push(indentString(`* __${error.module}__: ${licensesToPrint}`, 2));
     }
   }
