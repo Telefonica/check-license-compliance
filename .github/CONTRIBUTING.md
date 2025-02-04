@@ -149,8 +149,6 @@ Once the PR is approved and __merged into the release branch__, a project mainta
       in their workflows.
 5. Merge the release branch into the main branch.
 
-
-
 ## License
 
 By contributing to this project, you agree that your contributions will be licensed under the [LICENSE](../LICENSE) file in the root of this repository, and that you agree to the [Contributor License Agreement](#contributor-license-agreement).
