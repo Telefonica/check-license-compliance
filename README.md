@@ -23,7 +23,7 @@ This repository contains a GitHub Action that checks that repository dependencie
 
 For the moment, it supports the following languages:
 
-* Node.js - License check using the [`license-checker` library](https://github.com/davglass/license-checker).
+* Node.js
 
 > [!IMPORTANT]
 > It requires dependencies to be installed in the repository. If you are using a package manager, make sure to run the installation command before running this action. Otherwise, it will simply return a warning.
@@ -33,6 +33,16 @@ For better user experience in PRs, it also includes a Github Composite Action th
 ## Usage
 
 Create a configuration file `check-license-compliance.config.yml` at the root of your repository, containing the [forbidden, allowed, or warning licenses](#configuration).
+
+Then, create a GitHub Actions workflow file that uses the action. The action will check the dependencies according to the configuration file on every push.
+
+The main option is the `licenses` property, which contains the allowed, forbidden, and warning licenses. The licenses can be simple [SPDX license identifiers](https://spdx.dev/learn/handling-license-info/) like _MIT_, plus-ranges like _EPL-2.0+_, or licenses with exceptions like _Apache-2.0 WITH LLVM_. __They may not be compound expressions using AND or OR.__ You can also use not valid SPDX identifiers, and, in such case, the license will be matched simply by a string comparison.
+
+* `allowed`: Dependencies with these licenses are allowed.
+* `warning`: Dependencies with these licenses will produce a warning, but the check will be considered valid. Use it when you want to be notified about the presence of these licenses, but you don't want to fail the check.
+* `forbidden`: Dependencies with these licenses are forbidden, they will make the check fail. Use it when you want to explicitly disallow these licenses (it makes more sense when the `others` property is set to `warning`, otherwise, you can simply not include them in the `allowed` or `warning` lists).
+* `others`: Determines whether dependencies with licenses not defined in the previous lists should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `forbidden`.
+* `unknown`: Determines whether dependencies which license cannot be determined should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `warning`.
 
 > [!NOTE]
 > Using a [configuration file](#configuration-file) is optional. You can also use the [action inputs](#inputs) to define the [configuration](#configuration).
@@ -47,10 +57,8 @@ licenses:
     - LGPL-3.0
     - LGPL-2.0
     - MPL-2.0
-  forbidden:
-    - AGPL-3.0
-    - GPL-2.0
-allowWarnings: false
+  others: "forbidden"
+  unknown: "warning"
 ```
 
 Example of a GitHub Actions workflow file:
@@ -125,15 +133,18 @@ jobs:
 The configuration file is a YAML file that must be placed at the root of your repository by default (you can also change the path by using the [action inputs](#inputs)). It can contain the following properties:
 
 * `licenses`: Object containing details about the licenses that are allowed, forbidden, or should produce a warning. Licenses are identified by their [SPDX identifier](https://spdx.org/licenses/). Read [How it works](#how-it-works) for more information about how the action checks the licenses.
-  * `allowed`: Array of strings with the allowed licenses. 
-  * `forbidden`: Array of strings with the forbidden licenses.
-  * `warning`: Array of strings with the licenses that should produce a warning.
-* `allowWarnings`: Boolean indicating if the check should fail when a warning license is found. Default is `true`.
+  * `allowed`: Dependencies with these licenses are allowed.
+  * `warning`: Dependencies with these licenses will produce a warning, but the check will be considered valid. Use it when you want to be notified about the presence of these licenses, but you don't want to fail the check.
+  * `forbidden`: Dependencies with these licenses are forbidden, they will make the check fail. Use it when you want to explicitly disallow these licenses (it makes more sense when the `others` property is set to `warning`, otherwise, you can simply not include them in the `allowed` or `warning` lists).
+  * `others`: Determines whether dependencies with licenses not defined in the previous lists should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `forbidden`.
+  * `unknown`: Determines whether dependencies which license cannot be determined should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `warning`.
+* `production`: Check only production dependencies. Default is `false`.
+* `development`: Check only development dependencies. Default is `false`.
+* `direct`: Check only direct dependencies. Default is `false`.
+* `packages`: Restrict the check to the specified packages (array of "package@version").
+* `excludePackages`: Exclude the specified packages (array of "package@version").
+* `excludePrivatePackages`: Do not check private packages. Default is `true`.
 * `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid. Default is `true`.
-* `licenseCheckerOptions`: Object with the options that are passed to the [`license-checker` library](https://github.com/davglass/license-checker) on each different type of check. So, __it is only useful when checking Node dependencies__. You can find the available options [here](https://github.com/davglass/license-checker#options).
-  * `global`: Object with the global options. These options are applied both when checking "warning" and "forbidden" licenses.
-  * `warning`: Object with the options that are applied when checking "warning" licenses. They are merged with the global options. By default, the `unknown` option is set to `true`. You should redefine it if you want to not produce a warning for unknown licenses.
-  * `forbidden`: Object with the options that are applied when checking "forbidden" licenses. They are merged with the global options.
 * `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`. Further info in the [Reporters](#reporters) section.
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`. This option enables logs for the headers check. You can also enable logs for the action itself _(useful if you find any problem while the action is loading the configuration, for example)_ by setting the `ACTIONS_STEP_DEBUG` secret to `true`.
 
@@ -145,10 +156,6 @@ The configuration file is a YAML file that must be placed at the root of your re
 The action also allows to set the configuration by using inputs. When defined, they will override the values in the [configuration file](#configuration-file). The inputs are:
 
 * `config-file`: Path to the configuration file. Default is `check-license-compliance.config.yml`.
-* `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`.
-* `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
-* `allow-warnings`: Boolean value to determine if the action should be considered valid when warning dependencies are found. Default is `true`.
-* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
 * `config`: Multiline string with the whole [configuration](#configuration) expressed as a JSON object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here. NOTE: Here you should use JSON instead of YAML to avoid indentation issues.
     Example:
 
@@ -158,9 +165,13 @@ The action also allows to set the configuration by using inputs. When defined, t
         "licenses": {
           "allowed": ["Apache-2.0", "MIT"]
         },
-        "allowWarnings": false
+        "direct": false
       }
     ```
+* `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`.
+* `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
+* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
+
 
 > [!WARNING]
 > Note that some properties are defined in camelCase in the configuration file, while they are defined in kebab-case in the inputs. This is because the configuration file tries to follow NodeJs conventions in order to pass the values directly to the underlying library, while the inputs follow a GitHub Actions convention.
@@ -180,9 +191,7 @@ Example of a complex configuration using both the configuration file and the inp
 
 ```yaml
 # Configuration file
-licenseCheckerOptions:
-  global:
-    production: true
+production: true
 ```
 
 ```yaml
@@ -210,32 +219,15 @@ jobs:
           # Properties defined at input first level will have preference over values defined in any other place
           reporter: "markdown"
           log: "debug"
-          allow-warnings: true
           # This will extend the values in the configuration file
           config: |
             {
               "licenses": {
                 "allowed": ["Apache-2.0", "MIT"]
-              },
-              "allowWarnings": false
+              }
+              "production": false
             }
 ```
-
-## How it works
-
-### Node.js
-
-Node.js licenses are checked using the [`license-checker` library](https://github.com/davglass/license-checker). But it provides a layer on top of it to enable defining licenses as forbidden or warning, and to fail or not the check depending on the result of each one separately.
-
-The action executed the `license-checker` library two times with the following options:
-
-1. Check forbidden: It executes the check, passing as exclusions the licenses in the `allowed` and `warning` arrays.
-2. Check warning: It executes the check, passing as exclusions the licenses in the `allowed` and `forbidden` arrays. If any license is found, it will consider the dependencies not valid if the `allowWarnings` property is set to `false`.
-
-The action will return a report with the details of the check, including the dependencies that are not compliant, their installation path, the license they have, etc.
-
-> [!TIP]
-> You can define the options that are passed to the `license-checker` library on each different type of check by using the `licenseCheckerOptions` property in the [configuration](#configuration).
 
 ## Outputs
 

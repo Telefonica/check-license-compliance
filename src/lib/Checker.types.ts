@@ -6,7 +6,7 @@ export interface LicenseCheckerResult {
   /** The module name */
   module: string;
   /** The licenses used by the module */
-  licenses: string | string[];
+  licenses: string[];
   /** The repository URL */
   repository: string;
   /** The publisher of the module */

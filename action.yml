@@ -28,10 +28,6 @@ inputs:
       - 'text'
     default: 'text'
     required: false
-  allow-warnings:
-    description: 'Consider the check as not valid when there are dangerous licenses or not'
-    type: boolean
-    required: false
   fail-on-not-valid:
     description: 'Fail the action (exit code 1) when the result is not valid'
     type: boolean
@@ -49,7 +45,7 @@ outputs:
   found-warning:
     description: 'Whether dangerous licenses were found'
   valid:
-    description: 'Whether the result is valid or not'
+    description: 'Whether the check is valid or not'
   report:
     description: 'A report containing the results of the check'
 runs:
