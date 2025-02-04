@@ -31,7 +31,7 @@ jobs:
 
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
-        uses: ./.github/actions/check-and-comment
+        uses: ./
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,9 +57,9 @@ jobs:
           echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
 
       - name: Test - Case 1 - Assert 2 failed
-        if: contains(fromJson(steps.test-01.outputs.report).message, '115 dependencies have forbidden licenses. 0 dependencies have dangerous licenses.') == false
+        if: contains(fromJson(steps.test-01.outputs.report).message, '116 dependencies have forbidden licenses. 1 dependency has dangerous licenses.') == false
         run: |
-          echo "Test case 1 failed. The check did not found 115 forbidden dependencies" && exit 1
+          echo "Test case 1 failed. The check did not found 116 forbidden dependencies and 1 dangerous dependency" && exit 1
 
       - name: Test - Case 2
         id: test-02
@@ -82,6 +82,6 @@ jobs:
           echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
 
       - name: Test - Case 2 - Assert 2 failed
-        if: contains(fromJson(steps.test-02.outputs.report).message, '90 dependencies have forbidden licenses. 660 dependencies have dangerous licenses.') == false
+        if: contains(fromJson(steps.test-02.outputs.report).message, '91 dependencies have forbidden licenses. 666 dependencies have dangerous licenses.') == false
         run: |
-          echo "Test case 2 failed. The check did not found 115 dangerous dependencies" && exit 1    
+          echo "Test case 2 failed. The check did not found 91 forbidden dependencies and 666 dangerous dependency" && exit 1    

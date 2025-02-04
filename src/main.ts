@@ -35,7 +35,12 @@ export async function run(): Promise<void> {
     core.debug("Running checker...");
     const checker = new Checker({
       licenses: options.licenses,
-      licenseCheckerOptions: options.licenseCheckerOptions,
+      production: options.production,
+      development: options.development,
+      direct: options.direct,
+      packages: options.packages,
+      excludePackages: options.excludePackages,
+      excludePrivatePackages: options.excludePrivatePackages,
       log: options.log,
     });
     const result = await checker.check();
@@ -46,7 +51,7 @@ export async function run(): Promise<void> {
     core.setOutput(FOUND_FORBIDDEN, hasForbidden);
     core.setOutput(FOUND_WARNING, hasWarnings);
 
-    const isValid = !((hasWarnings && !options.allowWarnings) || hasForbidden);
+    const isValid = !hasForbidden;
 
     const report = getReport(options.reporter, result, isValid);
     core.info(report);

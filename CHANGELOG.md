@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [2.0.0] - 2025-02-03
+
+### Added
+
+* feat: Add `licenses.others` option
+* feat: Add `licenses.unknown` option
+* feat: Add `production` option
+* feat: Add `development` option
+* feat: Add `direct` option
+* feat: Add `packages` option
+* feat: Add `excludePackages` option
+* feat: Add `excludePrivatePackages` option
+
+### Changed
+
+* feat: Report unknown licenses as warnings by default
+* refactor: Run license-checker only once to get the dependencies ignoring the allowed ones. Use `spdx-satisfies` to check the type of each package license according to the configuration. 
+
+### Removed
+
+* feat(BREAKING CHANGE): Remove `allowWarnings` option. It has no sense anymore with the new options.
+* feat(BREAKING CHANGE): Remove `licenseCheckerOptions` option. It has no sense anymore with the new options.
+
 ## [1.0.0] - 2025-01-17
 
 #### Added
