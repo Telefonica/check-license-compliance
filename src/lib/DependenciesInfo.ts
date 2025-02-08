@@ -1,5 +1,5 @@
 import grpc from "@grpc/grpc-js";
-import protoLoader from "@grpc/proto-loader";
+import * as protoLoader from "@grpc/proto-loader";
 import path from "node:path";
 import PQueue from "p-queue";
 import type {
@@ -23,8 +23,8 @@ import {
   DependencyId,
 } from "./DependenciesReader.types";
 import semver from "semver";
+import { ROOT_PATH } from "./Paths";
 
-const ROOT_PATH = path.resolve(import.meta.dirname, "..", "..");
 const SUBMODULES_PATH = path.join(ROOT_PATH, "submodules");
 const DEPS_DEV_PATH = path.join(SUBMODULES_PATH, "deps.dev");
 const API_PROTO_PATH = path.join(DEPS_DEV_PATH, "api", "v3", "api.proto");
@@ -51,10 +51,13 @@ export class DependenciesInfo {
   private _warnings: string[] = [];
 
   // TODO: Add options for the files to read
-  constructor({ logger }: DependenciesInfoOptions) {
+  constructor({ logger, cwd }: DependenciesInfoOptions) {
     this._logger = logger;
     this._initGrpcClient();
-    this._projectDependenciesReader = new ProjectDependenciesReader({ logger });
+    this._projectDependenciesReader = new ProjectDependenciesReader({
+      logger,
+      cwd,
+    });
   }
 
   /**

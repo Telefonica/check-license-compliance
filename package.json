@@ -34,8 +34,8 @@
     "cspell": "cspell . ./.github/**/*.md",
     "lint": "eslint .",
     "lint:staged": "lint-staged",
-    "local-action": "local-action . src/main.ts .env",
-    "package": "ncc build src/index.ts --transpile-only -o dist --source-map --license licenses.txt && node ./script/post-package.js",
+    "local-action": "cross-env NODE_ENV=development local-action . src/main.ts .env",
+    "package": "ncc build src/index.ts --transpile-only -o dist --source-map --license licenses.txt --external @grpc/proto-loader --external @grpc/grpc-js && node ./script/post-package.js",
     "prepare": "husky",
     "test:e2e": "jest --config jest.e2e.config.js",
     "test:unit": "jest --config jest.unit.config.js"
@@ -77,6 +77,7 @@
     "@typescript-eslint/eslint-plugin": "8.14.0",
     "@typescript-eslint/parser": "8.14.0",
     "@vercel/ncc": "0.38.3",
+    "cross-env": "^7.0.3",
     "cspell": "8.17.3",
     "dotenv": "16.4.5",
     "eslint": "9.7.0",

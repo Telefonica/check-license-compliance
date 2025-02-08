@@ -1,0 +1,7 @@
+services:
+  action:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: license-compliance-action
+    env_file: .env

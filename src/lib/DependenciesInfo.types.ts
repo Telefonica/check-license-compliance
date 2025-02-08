@@ -9,6 +9,7 @@ import type {
 
 export interface DependenciesInfoOptions {
   logger: ReturnType<typeof createLogger>;
+  cwd?: string;
 }
 
 export type DirectDependencies = DependencyId[];

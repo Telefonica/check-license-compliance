@@ -48,5 +48,5 @@ outputs:
   report:
     description: 'A report containing the results of the check'
 runs:
-  using: node20
-  main: dist/index.js
+  using: docker
+  image: Dockerfile

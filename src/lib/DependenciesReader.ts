@@ -12,6 +12,8 @@ import type {
   DependencyId,
 } from "./DependenciesReader.types";
 
+import { ROOT_PATH } from "./Paths";
+
 const NODE_SYSTEM = "NPM";
 
 const SYSTEM_IDS = [NODE_SYSTEM];
@@ -37,8 +39,10 @@ export function hasSystemId(dependencyId: DependencyId): boolean {
  */
 export class BaseDependenciesReader implements DependenciesReader {
   protected _logger: DependenciesReaderOptions["logger"];
+  protected cwd: string;
 
-  constructor({ logger }: DependenciesReaderOptions) {
+  constructor({ logger, cwd }: DependenciesReaderOptions) {
+    this.cwd = cwd || ROOT_PATH;
     this._logger = logger;
   }
 
@@ -73,9 +77,9 @@ export class NodeDependenciesReader extends BaseDependenciesReader {
   }
 
   private _getPackageJsonFiles(): string[] {
-    // TODO: Resolve from custom cwd
     return globule.find("**/package.json", {
       ignore: ["node_modules/**"],
+      cwd: this.cwd,
     });
   }
 
@@ -102,7 +106,7 @@ export class NodeDependenciesReader extends BaseDependenciesReader {
         name,
         version,
         // TODO: To be able to use custom cwd
-        origin: path.relative(process.cwd(), packageJsonPath),
+        origin: path.relative(this.cwd, packageJsonPath),
         development: dev,
         production: !dev,
       };
@@ -162,8 +166,8 @@ export class ProjectDependenciesReader {
   private _logger: DependenciesReaderOptions["logger"];
 
   // TODO: Pass here options for each system and files to read
-  constructor({ logger }: DependenciesReaderOptions) {
-    this._nodeDependenciesReader = new NodeDependenciesReader({ logger });
+  constructor({ logger, cwd }: DependenciesReaderOptions) {
+    this._nodeDependenciesReader = new NodeDependenciesReader({ logger, cwd });
     this._logger = logger;
   }
 

@@ -46,6 +46,7 @@ export const configSchema = z
     packages: z.array(z.string()).optional(),
     excludePackages: z.array(z.string()).optional(),
     log: logLevelSchema.optional(),
+    cwd: z.string().optional(),
   })
   .strict();
 

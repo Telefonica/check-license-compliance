@@ -5,9 +5,8 @@ import * as core from "@actions/core";
 
 import { getConfig } from "./Config";
 import { Checker } from "./lib/index";
-import { existsSync } from "fs";
 
-import { getNotInstalledReport, getReport, NOT_INSTALLED } from "./Report";
+import { getReport } from "./Report";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
@@ -15,22 +14,20 @@ const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 
+// TODO: Do not use github actions core library. Use Yargs to get the arguments.
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
   try {
-    core.debug("Getting configuration...");
-    const options = await getConfig();
+    // NOTE: In github container actions, the workspace is mounted in /github/workspace
+    // TODO: Expose a path option to allow the user to specify the path to execute the action inside the workspace
+    const cwd = "/github/workspace";
 
-    if (!existsSync("node_modules")) {
-      core.warning(NOT_INSTALLED);
-      core.setOutput(FOUND_FORBIDDEN, false);
-      core.setOutput(FOUND_WARNING, false);
-      core.setOutput(OUTPUT_REPORT, getNotInstalledReport(options.reporter));
-      return;
-    }
+    core.debug("Getting configuration...");
+    const options = await getConfig(cwd);
 
     core.debug("Running checker...");
     const checker = new Checker({
@@ -41,6 +38,7 @@ export async function run(): Promise<void> {
       packages: options.packages,
       excludePackages: options.excludePackages,
       log: options.log,
+      cwd,
     });
     const result = await checker.check();
 

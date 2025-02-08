@@ -8,6 +8,7 @@ import { existsSync } from "fs";
 import { allConfigSchema } from "./Config.types";
 import type { InputOptions, AllConfig } from "./Config.types";
 import { fromError } from "zod-validation-error";
+import path from "path";
 
 /**
  * Returns the value if it is defined, otherwise returns undefined.
@@ -95,7 +96,7 @@ async function loadConfigFile(configFile: string) {
  * Returns the configuration from the action inputs, loading configuration files if needed and parsing the inputs accordingly.
  * @returns The configuration from the action inputs and configuration files.
  */
-export async function getConfig(): Promise<AllConfig> {
+export async function getConfig(cwd: string): Promise<AllConfig> {
   const inputs = getInputs();
   let config: Partial<AllConfig> = {};
   let configFromFile: Partial<AllConfig> = {};
@@ -107,7 +108,10 @@ export async function getConfig(): Promise<AllConfig> {
   }
 
   configFromFile = await loadConfigFile(
-    inputs.configFile || "check-license-compliance.config.yml",
+    path.resolve(
+      cwd,
+      inputs.configFile || "check-license-compliance.config.yml",
+    ),
   );
 
   const inputsValues: InputOptions = {};

@@ -12,6 +12,7 @@ export interface NodePackageJson {
 
 export interface DependenciesReaderOptions {
   logger: ReturnType<typeof createLogger>;
+  cwd?: string;
 }
 
 export interface DependencyUniqueProps {

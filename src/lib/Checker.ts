@@ -41,6 +41,7 @@ export class Checker {
       this._unknown = config.licenses.unknown;
     }
     this._dependenciesInfo = new DependenciesInfo({
+      cwd: config.cwd,
       logger: this._logger,
     });
   }
