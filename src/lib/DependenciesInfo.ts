@@ -61,6 +61,9 @@ export class DependenciesInfo {
    * Initialize the deps.dev API gRPC client
    */
   private _initGrpcClient() {
+    this._logger.silly("Initializing deps.dev API gRPC client", {
+      protoLoader,
+    });
     const protoDefinition = protoLoader.loadSync(API_PROTO_PATH, {
       keepCase: true,
       longs: String,
