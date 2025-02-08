@@ -27,6 +27,7 @@
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "pnpm@9.4.0",
   "scripts": {
     "check:types": "npm run check:types:code && npm run check:types:test",
     "check:types:code": "tsc --noEmit",
