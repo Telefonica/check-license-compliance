@@ -28,6 +28,6 @@ licenses:
     - EPL-1.0
   others: forbidden
   unknown: warning
-log: silly
+log: info
 # excludePackages:
   #- exit@0.1.2
