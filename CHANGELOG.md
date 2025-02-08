@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * feat(BREAKING CHANGE): Remove `allowWarnings` option. It has no sense anymore with the new options.
 * feat(BREAKING CHANGE): Remove `licenseCheckerOptions` option. It has no sense anymore with the new options.
 
+### Fixed
+
+* fix: Remove default log level from the inputs, so it can be set from the configuration file
+
 ## [1.0.0] - 2025-01-17
 
 #### Added

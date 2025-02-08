@@ -17,7 +17,6 @@ inputs:
       - 'warn'
       - 'error'
       - 'silent'
-    default: 'info'
     required: false
   reporter:
     description: 'Reporter to use'
