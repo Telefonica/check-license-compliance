@@ -11,7 +11,6 @@ rules:
         license: "Apache-2.0"
         ignore:
           - "*.config.js"
-          - "src/lib/spdx-satisfies/**"
           - "script/**"
   - name: "Config files"
     headers:
@@ -29,11 +28,6 @@ rules:
         license:
           - "MIT"
           - "Apache-2.0"
-  - name: "Third party code"
-    headers:
-      - files:
-          - "src/lib/spdx-satisfies/**"
-        license: "MIT"
   - name: "Copyright"
     headers:
       - files:
@@ -45,8 +39,6 @@ rules:
           - "\\d{4}(\\s-\\s\\d{4})? Telefónica Innovación Digital and contributors"
           - "\\d{4}(\\s-\\s\\d{4})? Telefónica Innovación Digital"
           - "\\d{4}(\\s-\\s\\d{4})? Telefónica"
-    ignore:
-      - "src/lib/spdx-satisfies/**"
 ignore:
   - "**/node_modules/**"
   - "dist/**"

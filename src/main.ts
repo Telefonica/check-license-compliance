@@ -40,7 +40,6 @@ export async function run(): Promise<void> {
       direct: options.direct,
       packages: options.packages,
       excludePackages: options.excludePackages,
-      excludePrivatePackages: options.excludePrivatePackages,
       log: options.log,
     });
     const result = await checker.check();

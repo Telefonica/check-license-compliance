@@ -6,7 +6,7 @@ import { init } from "license-checker";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore We don't want to type the library
-import satisfies from "../../../src/lib/spdx-satisfies";
+import satisfies from "spdx-satisfies";
 
 jest.mock<typeof import("license-checker")>("license-checker", () => ({
   ...jest.requireActual("license-checker"),
@@ -394,37 +394,6 @@ describe("checker", () => {
       expect(init).toHaveBeenCalledWith(
         expect.objectContaining({
           excludePackages: "foo;bar",
-        }),
-        expect.any(Function),
-      );
-    });
-
-    it("should pass excludePrivatePackages option to license-checker as true by default", async () => {
-      const checker = new Checker({
-        licenses: {},
-      });
-
-      await checker.check();
-
-      expect(init).toHaveBeenCalledWith(
-        expect.objectContaining({
-          excludePrivatePackages: true,
-        }),
-        expect.any(Function),
-      );
-    });
-
-    it("should pass excludePrivatePackages option to license-checker as false when defined", async () => {
-      const checker = new Checker({
-        licenses: {},
-        excludePrivatePackages: false,
-      });
-
-      await checker.check();
-
-      expect(init).toHaveBeenCalledWith(
-        expect.objectContaining({
-          excludePrivatePackages: false,
         }),
         expect.any(Function),
       );

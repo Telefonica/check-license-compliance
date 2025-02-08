@@ -17,7 +17,13 @@ import importPlugin from "eslint-plugin-import";
 
 export default [
   {
-    ignores: ["node_modules/**", ".husky/**", "package-lock.json", "dist/**"],
+    ignores: [
+      "node_modules/**",
+      ".husky/**",
+      "package-lock.json",
+      "dist/**",
+      "submodules/**",
+    ],
   },
   {
     files: ["**/*.json"],

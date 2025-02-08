@@ -1,7 +1,3 @@
-[submodule "submodules/googleapis"]
-	path = submodules/googleapis
-	url = https://github.com/googleapis/googleapis
-
 [submodule "submodules/deps.dev"]
 	path = submodules/deps.dev
 	url = https://github.com/google/deps.dev

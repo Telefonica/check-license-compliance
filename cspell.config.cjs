@@ -18,6 +18,7 @@ module.exports = {
     "**/.gitignore",
     "**/coverage/**",
     "**/dist/**",
+    "submodules/**",
   ],
   caseSensitive: false,
   // Language - current active spelling language
