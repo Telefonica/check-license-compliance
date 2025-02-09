@@ -67,6 +67,7 @@ function getInputs() {
   });
 
   core.debug(`Inputs: ${JSON.stringify(inputs)}`);
+  process.exit(0);
 
   return inputs;
 }

@@ -31,14 +31,21 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/setup-node
-        id: setup-node
-        with:
-          npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
-
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
         uses: ./
+        with:
+          log: "debug"
+          reporter: "json"
+          fail-on-not-valid: true
+          config: |
+            {
+              "licenses": {
+                "allowed": ["MIT"],
+                "warning": ["Apache-2.0"]
+              },
+            }
+          config-file: "check-license-compliance-fake.config.yml"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
