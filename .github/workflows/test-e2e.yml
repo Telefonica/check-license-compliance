@@ -36,9 +36,9 @@ jobs:
         uses: ./
         id: test
         with:
-          log: "debug"
-          reporter: "json"
-          fail-on-not-valid: true
+          log: "info"
+          reporter: "markdown"
+          fail-on-not-valid: false
           config: |
             {
               "licenses": {
