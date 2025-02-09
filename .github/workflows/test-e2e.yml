@@ -48,7 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test - Assert 1
+      - name: Debug outputs
         run: |
           echo "Output report: ${{ steps.test.outputs.report }}"
           echo "Output valid: ${{ steps.test.outputs.valid }}"
