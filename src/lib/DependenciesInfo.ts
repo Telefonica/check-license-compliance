@@ -63,6 +63,10 @@ export class DependenciesInfo {
     });
   }
 
+  private _getRPCDeadline() {
+    return new Date(Date.now() + 12000);
+  }
+
   /**
    * Initialize the deps.dev API gRPC client
    */
@@ -163,19 +167,23 @@ export class DependenciesInfo {
         // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
       } as unknown as GetVersionRequest;
 
-      this._depsDevInsightsClient.GetVersion(requestData, (error, response) => {
-        if (!timedOut) {
-          clearTimeout(timeout);
-          if (error || !response) {
-            this._logger.error(`Error requesting info of ${id}`, error);
-            reject(error);
-            return;
+      this._depsDevInsightsClient.GetVersion(
+        requestData,
+        { deadline: this._getRPCDeadline() },
+        (error, response) => {
+          if (!timedOut) {
+            clearTimeout(timeout);
+            if (error || !response) {
+              this._logger.error(`Error requesting info of ${id}`, error);
+              reject(error);
+              return;
+            }
+            this._logger.silly(`Response received for info of ${id}`, response);
+            // NOTE: The type is not correct in the proto. The real key is "version_key", while the type is "versionKey". This is corrected in the VersionOutput type
+            resolve(response as unknown as VersionOutput);
           }
-          this._logger.silly(`Response received for info of ${id}`, response);
-          // NOTE: The type is not correct in the proto. The real key is "version_key", while the type is "versionKey". This is corrected in the VersionOutput type
-          resolve(response as unknown as VersionOutput);
-        }
-      });
+        },
+      );
     });
   }
 
@@ -214,6 +222,7 @@ export class DependenciesInfo {
 
       this._depsDevInsightsClient.GetDependencies(
         requestData,
+        { deadline: this._getRPCDeadline() },
         (error, response) => {
           if (!timedOut) {
             clearTimeout(timeout);
