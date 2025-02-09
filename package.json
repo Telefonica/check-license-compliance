@@ -36,8 +36,8 @@
     "lint": "eslint .",
     "lint:staged": "lint-staged",
     "proto:gen-types": "proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --includeDirs= proto/deps.dev/submodules/googleapis --outDir=src/lib/proto proto/deps.dev/api/v3/*.proto",
-    "build": "tsc",
-    "prepare": "husky && pnpm proto:gen-types",
+    "build": "pnpm proto:gen-types && tsc",
+    "prepare": "husky",
     "test:e2e": "jest --config jest.e2e.config.js",
     "test:unit": "jest --config jest.unit.config.js"
   },
