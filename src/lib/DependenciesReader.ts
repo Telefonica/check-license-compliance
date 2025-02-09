@@ -13,8 +13,9 @@ import type {
   DependencyId,
 } from "./DependenciesReader.types";
 import { ROOT_PATH } from "./Paths.js";
+import type { System__Output as SystemOutput } from "./proto/deps_dev/v3/System";
 
-const NODE_SYSTEM = "NPM";
+const NODE_SYSTEM: SystemOutput = "NPM";
 
 const SYSTEM_IDS = [NODE_SYSTEM];
 

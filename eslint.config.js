@@ -188,4 +188,12 @@ export default [
       "jest/require-to-throw-message": [0],
     },
   },
+  {
+    files: ["src/lib/proto/**/*.ts"],
+    rules: {
+      camelcase: [0],
+      "no-redeclare": [0],
+      "@typescript-eslint/no-explicit-any": [0],
+    },
+  },
 ];

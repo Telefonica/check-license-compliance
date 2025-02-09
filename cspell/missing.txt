@@ -2,5 +2,6 @@ commonmark
 frontmatter
 LogForm
 NOASSERTION
+oneofs
 protos
 syncrc

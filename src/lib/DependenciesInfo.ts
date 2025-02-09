@@ -6,15 +6,12 @@ import PQueue from "p-queue";
 import semver from "semver";
 
 import type {
-  DepsDevProto,
-  DepsDevInsightsClient,
   DependenciesInfoOptions,
   GetDependenciesInfoResult,
   DirectDependencies,
   DepsDevPackagesInfo,
   DepsDevDependenciesInfo,
-  DepsDevPackageInfoResponse,
-  DepsDevGetDependenciesResponse,
+  VersionOutput,
 } from "./DependenciesInfo.types";
 import {
   ProjectDependenciesReader,
@@ -26,6 +23,10 @@ import type {
   DependencyId,
 } from "./DependenciesReader.types";
 import { ROOT_PATH } from "./Paths.js";
+import type { ProtoGrpcType } from "./proto/api";
+import type { Dependencies__Output as DependenciesOutput } from "./proto/deps_dev/v3/Dependencies";
+import type { GetVersionRequest } from "./proto/deps_dev/v3/GetVersionRequest";
+import type { InsightsClient } from "./proto/deps_dev/v3/Insights";
 
 const PROTOS_PATH = path.join(ROOT_PATH, "proto");
 const DEPS_DEV_PATH = path.join(PROTOS_PATH, "deps.dev");
@@ -39,7 +40,7 @@ const DEPS_DEV_URL = "api.deps.dev:443";
  */
 export class DependenciesInfo {
   private _logger: DependenciesInfoOptions["logger"];
-  private _depsDevInsightsClient!: DepsDevInsightsClient;
+  private _depsDevInsightsClient!: InsightsClient;
   private _queue = new PQueue({ concurrency: 500 });
   private _depsDevPackagesInfo: DepsDevPackagesInfo = {};
   private _depsDevDependenciesInfo: DepsDevDependenciesInfo = {};
@@ -79,7 +80,7 @@ export class DependenciesInfo {
       includeDirs: API_PROTO_DIRS,
     });
     const proto = (
-      grpc.loadPackageDefinition(protoDefinition) as unknown as DepsDevProto
+      grpc.loadPackageDefinition(protoDefinition) as unknown as ProtoGrpcType
     ).deps_dev.v3;
 
     this._depsDevInsightsClient = new proto.Insights(
@@ -133,7 +134,7 @@ export class DependenciesInfo {
     system,
     name,
     version,
-  }: DependencyUniqueProps): Promise<DepsDevPackageInfoResponse> {
+  }: DependencyUniqueProps): Promise<VersionOutput> {
     const id = getDependencyId({
       system,
       name,
@@ -152,27 +153,29 @@ export class DependenciesInfo {
         this._logger.error(`${message} of ${id}`);
         reject(new Error(message));
       }, 10000);
-      this._depsDevInsightsClient.GetVersion(
-        {
-          version_key: {
-            system,
-            name,
-            version,
-          },
+
+      const requestData = {
+        version_key: {
+          system,
+          name,
+          version,
         },
-        (error, response) => {
-          if (!timedOut) {
-            clearTimeout(timeout);
-            if (error) {
-              this._logger.error(`Error requesting info of ${id}`, error);
-              reject(error);
-              return;
-            }
-            this._logger.silly(`Response received for info of ${id}`, response);
-            resolve(response);
+        // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
+      } as unknown as GetVersionRequest;
+
+      this._depsDevInsightsClient.GetVersion(requestData, (error, response) => {
+        if (!timedOut) {
+          clearTimeout(timeout);
+          if (error || !response) {
+            this._logger.error(`Error requesting info of ${id}`, error);
+            reject(error);
+            return;
           }
-        },
-      );
+          this._logger.silly(`Response received for info of ${id}`, response);
+          // NOTE: The type is not correct in the proto. The real key is "version_key", while the type is "versionKey". This is corrected in the VersionOutput type
+          resolve(response as unknown as VersionOutput);
+        }
+      });
     });
   }
 
@@ -180,7 +183,7 @@ export class DependenciesInfo {
     system,
     name,
     version,
-  }: DependencyUniqueProps): Promise<DepsDevGetDependenciesResponse> {
+  }: DependencyUniqueProps): Promise<DependenciesOutput> {
     const id = getDependencyId({
       system,
       name,
@@ -200,18 +203,21 @@ export class DependenciesInfo {
         reject(new Error(message));
       }, 10000);
 
-      this._depsDevInsightsClient.GetDependencies(
-        {
-          version_key: {
-            system,
-            name,
-            version,
-          },
+      const requestData = {
+        version_key: {
+          system,
+          name,
+          version,
         },
+        // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
+      } as unknown as GetVersionRequest;
+
+      this._depsDevInsightsClient.GetDependencies(
+        requestData,
         (error, response) => {
           if (!timedOut) {
             clearTimeout(timeout);
-            if (error) {
+            if (error || !response) {
               this._logger.error(
                 `Error requesting dependencies of ${id}`,
                 error,
@@ -294,7 +300,15 @@ export class DependenciesInfo {
           version,
           dependencies: dependencies.nodes
             .map((node) => {
+              // @ts-expect-error The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
               const dependencyInfo = node.version_key;
+              if (!dependencyInfo) {
+                this._logger.error(
+                  `No dependency info found for ${id}`,
+                  node.errors,
+                );
+                return;
+              }
               if (
                 dependencyInfo.system !== system ||
                 dependencyInfo.name !== name ||
@@ -302,9 +316,9 @@ export class DependenciesInfo {
               ) {
                 return {
                   id: getDependencyId(dependencyInfo),
-                  system: node.version_key.system,
-                  name: node.version_key.name,
-                  version: node.version_key.version,
+                  system: dependencyInfo.system,
+                  name: dependencyInfo.name,
+                  version: dependencyInfo.version,
                   direct: node.relation === "DIRECT",
                 };
               }
@@ -313,6 +327,7 @@ export class DependenciesInfo {
         };
 
         dependencies.nodes.forEach((dependency) => {
+          // @ts-expect-error The type is not correct in the proto. The real key is "version_key", while the type is "versionKey"
           const dependencyInfo = dependency.version_key;
           this._queue.add(async () => {
             await this._requestPackageAndDependenciesInfo({
@@ -416,9 +431,9 @@ export class DependenciesInfo {
 
       this._dependenciesInfo.push({
         id,
-        system: packageInfo.version_key.system,
-        name: packageInfo.version_key.name,
-        version: packageInfo.version_key.version,
+        system: packageInfo.version_key!.system,
+        name: packageInfo.version_key!.name,
+        version: packageInfo.version_key!.version,
         licenses: packageInfo.licenses,
         direct: isDirect,
         production: isProduction,

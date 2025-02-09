@@ -1,4 +1,5 @@
 import type { createLogger } from "./Logger";
+import type { System__Output as SystemOutput } from "./proto/deps_dev/v3/System";
 
 /**
  * Dependency ID, in the format system:name:version
@@ -16,7 +17,7 @@ export interface DependenciesReaderOptions {
 }
 
 export interface DependencyUniqueProps {
-  system: string;
+  system: SystemOutput;
   name: string;
   version: string;
 }

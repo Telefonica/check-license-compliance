@@ -35,8 +35,9 @@
     "cspell": "cspell . ./.github/**/*.md",
     "lint": "eslint .",
     "lint:staged": "lint-staged",
+    "proto:gen-types": "proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --includeDirs= proto/deps.dev/submodules/googleapis --outDir=src/lib/proto proto/deps.dev/api/v3/*.proto && pnpm lint --fix",
     "build": "tsc",
-    "prepare": "husky",
+    "prepare": "husky && pnpm proto:gen-types",
     "test:e2e": "jest --config jest.e2e.config.js",
     "test:unit": "jest --config jest.unit.config.js"
   },
@@ -49,7 +50,6 @@
     "fs-extra": "11.3.0",
     "globule": "1.3.4",
     "indent-string": "5.0.0",
-    "license-checker": "25.0.1",
     "p-queue": "8.1.0",
     "semver": "7.7.1",
     "spdx-expression-parse": "4.0.0",

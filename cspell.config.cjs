@@ -20,6 +20,7 @@ module.exports = {
     "**/dist/**",
     "submodules/**",
     "proto/**",
+    "src/lib/proto/**",
   ],
   caseSensitive: false,
   // Language - current active spelling language

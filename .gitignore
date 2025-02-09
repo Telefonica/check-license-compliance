@@ -1,6 +1,7 @@
 .npmrc
 .DS_Store
 dist
+src/lib/proto
 
 # Logs
 logs
