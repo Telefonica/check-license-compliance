@@ -36,7 +36,7 @@ jobs:
         uses: ./
         id: check-license-compliance
         with:
-          log: "info"
+          reporter: "markdown"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
