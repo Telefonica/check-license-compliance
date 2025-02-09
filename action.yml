@@ -25,12 +25,11 @@ inputs:
       - 'json'
       - 'markdown'
       - 'text'
-    default: 'text'
     required: false
   fail-on-not-valid:
     description: 'Fail the action (exit code 1) when the result is not valid'
     type: boolean
-    default: 'true'
+    required: false
   config:
     description: 'Configuration object expressed as a JSON string'
     multiline: true
