@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import winston from "winston";
 import chalk from "chalk";
+import winston from "winston";
 const { combine, colorize, timestamp, printf } = winston.format;
 
-import type { LogLevel } from "./Logger.types.js";
+import type { LogLevel } from "./Logger.types";
 
 /**
  * Print extra information to the log. Any object passed as a second argument to the winston logger will be printed as a gray json string due to this function.

@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import stripIndent from "strip-indent";
 import indentString from "indent-string";
+import stripIndent from "strip-indent";
 
-import { LicensesResult, Result } from "./lib/Checker.types";
-import { Reporter } from "./Config.types.js";
+import type { Reporter } from "./Config.types";
+import type { LicensesResult, Result } from "./lib/Checker.types";
 
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";

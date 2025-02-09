@@ -1,7 +1,10 @@
+import path from "node:path";
+
 import grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import path from "node:path";
 import PQueue from "p-queue";
+import semver from "semver";
+
 import type {
   DepsDevProto,
   DepsDevInsightsClient,
@@ -17,12 +20,11 @@ import {
   ProjectDependenciesReader,
   getDependencyId,
 } from "./DependenciesReader.js";
-import {
+import type {
   DependencyDeclaration,
   DependencyUniqueProps,
   DependencyId,
 } from "./DependenciesReader.types";
-import semver from "semver";
 import { ROOT_PATH } from "./Paths.js";
 
 const PROTOS_PATH = path.join(ROOT_PATH, "proto");

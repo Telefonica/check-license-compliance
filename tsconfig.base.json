@@ -18,7 +18,6 @@
     "noUnusedParameters": true,
     "isolatedModules": true,
     "strictPropertyInitialization": false,
-    "resolveJsonModule": true,
     "strictNullChecks": true,
     "skipLibCheck": true,
     "newLine": "lf"

@@ -1,15 +1,16 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { existsSync } from "fs";
+import { readFile } from "fs/promises";
+import path from "node:path";
+
 import * as core from "@actions/core";
 import { parse } from "yaml";
-import { readFile } from "fs/promises";
 import { fromError } from "zod-validation-error";
-import path from "node:path";
-import { existsSync } from "fs";
 
+import type { InputOptions, AllConfig } from "./Config.types";
 import { allConfigSchema } from "./Config.types.js";
-import type { InputOptions, AllConfig } from "./Config.types.js";
 
 /**
  * Returns the value if it is defined, otherwise returns undefined.

@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import * as core from "@actions/core";
-import * as main from "../../../src/main";
-
-import { Checker } from "../../../src/lib/index";
-import { getConfig } from "../../../src/Config";
-import { readFile } from "fs/promises";
 import { existsSync } from "fs";
+import { readFile } from "fs/promises";
+
+import * as core from "@actions/core";
+
+import { getConfig } from "../../../src/Config";
+import { Checker } from "../../../src/lib/index";
+import * as main from "../../../src/main";
 
 jest.mock<typeof import("../../../src/lib/index")>(
   "../../../src/lib/index",

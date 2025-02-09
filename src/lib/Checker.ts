@@ -1,16 +1,17 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { fileURLToPath } from "url";
+
+import fsExtra from "fs-extra";
 import parseSpdx from "spdx-expression-parse";
 import satisfies from "spdx-satisfies";
-import { fileURLToPath } from "url";
-import fsExtra from "fs-extra";
 
-import { Config, OtherLicenses } from "./Config.types.js";
-import { LicensesResult, Result } from "./Checker.types";
-import { createLogger } from "./Logger.js";
+import type { LicensesResult, Result } from "./Checker.types";
+import type { Config, OtherLicenses } from "./Config.types";
 import { DependenciesInfo } from "./DependenciesInfo.js";
 import { hasSystemId, removeSystemId } from "./DependenciesReader.js";
+import { createLogger } from "./Logger.js";
 
 /**
  * Check files for license headers

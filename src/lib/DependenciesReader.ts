@@ -1,6 +1,7 @@
+import path from "node:path";
+
 import fsExtra from "fs-extra";
 import globule from "globule";
-import path from "node:path";
 import semver from "semver";
 
 import type {
@@ -11,7 +12,6 @@ import type {
   DependencyUniqueProps,
   DependencyId,
 } from "./DependenciesReader.types";
-
 import { ROOT_PATH } from "./Paths.js";
 
 const NODE_SYSTEM = "NPM";

@@ -1,9 +1,10 @@
-import { ChannelCredentials } from "@grpc/grpc-js";
-import type { createLogger } from "./Logger";
+import type { ChannelCredentials } from "@grpc/grpc-js";
+
 import type {
   DependencyUniqueProps,
   DependencyId,
 } from "./DependenciesReader.types";
+import type { createLogger } from "./Logger";
 
 // TODO: Use ts-proto or something similar to generate the deps.dev API types from the proto file
 

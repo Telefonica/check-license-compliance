@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from "zod";
+
 import { logLevelSchema } from "./Logger.types.js";
 
 export const allowedLicensesSchema = z.string().array();
