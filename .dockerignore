@@ -3,7 +3,6 @@
 !pnpm-lock.yaml
 !src/
 !submodules/
-!dist/
 !script/
 !tsconfig.base.json
 !tsconfig.json
