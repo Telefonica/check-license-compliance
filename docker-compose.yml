@@ -3,5 +3,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: license-compliance-action
+    container_name: check-license-compliance
     env_file: .env
