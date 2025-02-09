@@ -16,14 +16,14 @@ import type {
 import {
   ProjectDependenciesReader,
   getDependencyId,
-} from "./DependenciesReader";
+} from "./DependenciesReader.js";
 import {
   DependencyDeclaration,
   DependencyUniqueProps,
   DependencyId,
 } from "./DependenciesReader.types";
 import semver from "semver";
-import { ROOT_PATH } from "./Paths";
+import { ROOT_PATH } from "./Paths.js";
 
 const SUBMODULES_PATH = path.join(ROOT_PATH, "submodules");
 const DEPS_DEV_PATH = path.join(SUBMODULES_PATH, "deps.dev");

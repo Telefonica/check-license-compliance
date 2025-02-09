@@ -3,10 +3,10 @@
 
 import * as core from "@actions/core";
 
-import { getConfig } from "./Config";
-import { Checker } from "./lib/index";
+import { Checker } from "./lib/index.js";
 
-import { getReport } from "./Report";
+import { getConfig } from "./Config.js";
+import { getReport } from "./Report.js";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";

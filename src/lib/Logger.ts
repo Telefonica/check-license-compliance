@@ -5,7 +5,7 @@ import winston from "winston";
 import chalk from "chalk";
 const { combine, colorize, timestamp, printf } = winston.format;
 
-import type { LogLevel } from "./Logger.types";
+import type { LogLevel } from "./Logger.types.js";
 
 /**
  * Print extra information to the log. Any object passed as a second argument to the winston logger will be printed as a gray json string due to this function.

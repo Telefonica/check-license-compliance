@@ -12,7 +12,7 @@ import type {
   DependencyId,
 } from "./DependenciesReader.types";
 
-import { ROOT_PATH } from "./Paths";
+import { ROOT_PATH } from "./Paths.js";
 
 const NODE_SYSTEM = "NPM";
 

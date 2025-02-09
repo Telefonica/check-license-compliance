@@ -4,11 +4,12 @@
 import * as core from "@actions/core";
 import { parse } from "yaml";
 import { readFile } from "fs/promises";
-import { existsSync } from "fs";
-import { allConfigSchema } from "./Config.types";
-import type { InputOptions, AllConfig } from "./Config.types";
 import { fromError } from "zod-validation-error";
-import path from "path";
+import path from "node:path";
+import { existsSync } from "fs";
+
+import { allConfigSchema } from "./Config.types.js";
+import type { InputOptions, AllConfig } from "./Config.types.js";
 
 /**
  * Returns the value if it is defined, otherwise returns undefined.

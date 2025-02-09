@@ -1,15 +1,16 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import spdxIds from "spdx-license-ids";
 import parseSpdx from "spdx-expression-parse";
 import satisfies from "spdx-satisfies";
+import { fileURLToPath } from "url";
+import fsExtra from "fs-extra";
 
-import { Config, OtherLicenses } from "./Config.types";
+import { Config, OtherLicenses } from "./Config.types.js";
 import { LicensesResult, Result } from "./Checker.types";
-import { createLogger } from "./Logger";
-import { DependenciesInfo } from "./DependenciesInfo";
-import { hasSystemId, removeSystemId } from "./DependenciesReader";
+import { createLogger } from "./Logger.js";
+import { DependenciesInfo } from "./DependenciesInfo.js";
+import { hasSystemId, removeSystemId } from "./DependenciesReader.js";
 
 /**
  * Check files for license headers
@@ -22,6 +23,7 @@ export class Checker {
   private _dependenciesInfo: DependenciesInfo;
   private _production: boolean;
   private _development: boolean;
+  private _spdxIds!: string[];
 
   /**
    * Create a new checker
@@ -46,8 +48,14 @@ export class Checker {
     });
   }
 
+  private _initialize = async () => {
+    const spdxIdsPath = import.meta.resolve("spdx-license-ids");
+
+    this._spdxIds = await fsExtra.readJson(fileURLToPath(spdxIdsPath));
+  };
+
   private _isValidSpdx(license: string): boolean {
-    if (spdxIds.includes(license)) {
+    if (this._spdxIds.includes(license)) {
       return true;
     }
     try {
@@ -77,7 +85,7 @@ export class Checker {
     const licenseIsValidSpdx = this._isValidSpdx(license);
 
     return licenseIdentifiers.some((licenseIdentifier) => {
-      const identifierIsValidSpdx = spdxIds.includes(licenseIdentifier);
+      const identifierIsValidSpdx = this._spdxIds.includes(licenseIdentifier);
       if (licenseIsValidSpdx && identifierIsValidSpdx) {
         this._logger.silly(
           `Checking if "${license}" satisfies "${licenseIdentifier}" using spdx-satisfies`,
@@ -266,6 +274,7 @@ export class Checker {
    * @returns An object with the result of the check
    */
   public async check(): Promise<Result> {
+    await this._initialize();
     const licensesToCheck = await this._getLicensesToCheck();
 
     this._logger.debug("Licenses to check", {
