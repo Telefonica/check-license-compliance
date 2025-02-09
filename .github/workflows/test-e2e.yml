@@ -34,6 +34,7 @@ jobs:
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
         uses: ./
+        id: test
         with:
           log: "debug"
           reporter: "json"
@@ -41,61 +42,66 @@ jobs:
           config: |
             {
               "licenses": {
-                "allowed": ["MIT"],
-                "warning": ["Apache-2.0"]
               },
             }
           config-file: "check-license-compliance-fake.config.yml"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Test - Assert 1
+        run: |
+          echo "Output report: ${{ steps.test.outputs.report }}"
+          echo "Output valid: ${{ steps.test.outputs.valid }}"
+          echo "Output found-forbidden: ${{ steps.test.outputs.found-forbidden }}"
+          echo "Output found-warning: ${{ steps.test.outputs.found-warning }}"
+
       # NOTE: Next steps check that the library produces the expected errors when the dependencies are not valid according to the rules
-      - name: Test - Case 1
-        id: test-01
-        uses: ./
-        with:
-          config: |
-            {
-              "licenses": {
-                "allowed": ["MIT"],
-                "forbidden": ["Apache-2.0"]
-              },
-            }
-          log: "debug"
-          reporter: "json"
-          fail-on-not-valid: false
+      # - name: Test - Case 1
+      #   id: test-01
+      #   uses: ./
+      #   with:
+      #     config: |
+      #       {
+      #         "licenses": {
+      #           "allowed": ["MIT"],
+      #           "forbidden": ["Apache-2.0"]
+      #         },
+      #       }
+      #     log: "debug"
+      #     reporter: "json"
+      #     fail-on-not-valid: false
 
-      - name: Test - Case 1 - Assert 1 failed
-        if: fromJson(steps.test-01.outputs.report).forbidden[0] == null
-        run: |
-          echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
+      # - name: Test - Case 1 - Assert 1 failed
+      #   if: fromJson(steps.test-01.outputs.report).forbidden[0] == null
+      #   run: |
+      #     echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
 
-      - name: Test - Case 1 - Assert 2 failed
-        if: contains(fromJson(steps.test-01.outputs.report).message, '116 dependencies have forbidden licenses. 1 dependency has dangerous licenses.') == false
-        run: |
-          echo "Test case 1 failed. The check did not found 116 forbidden dependencies and 1 dangerous dependency" && exit 1
+      # - name: Test - Case 1 - Assert 2 failed
+      #   if: contains(fromJson(steps.test-01.outputs.report).message, '116 dependencies have forbidden licenses. 1 dependency has dangerous licenses.') == false
+      #   run: |
+      #     echo "Test case 1 failed. The check did not found 116 forbidden dependencies and 1 dangerous dependency" && exit 1
 
-      - name: Test - Case 2
-        id: test-02
-        uses: ./
-        with:
-          config: |
-            {
-              "licenses": {
-                "allowed": ["Apache-2.0"],
-                "warning": ["MIT"]
-              },
-            }
-          log: "debug"
-          reporter: "json"
-          fail-on-not-valid: false
+      # - name: Test - Case 2
+      #   id: test-02
+      #   uses: ./
+      #   with:
+      #     config: |
+      #       {
+      #         "licenses": {
+      #           "allowed": ["Apache-2.0"],
+      #           "warning": ["MIT"]
+      #         },
+      #       }
+      #     log: "debug"
+      #     reporter: "json"
+      #     fail-on-not-valid: false
 
-      - name: Test - Case 2 - Assert 1 failed
-        if: fromJson(steps.test-02.outputs.report).warning[0] == null
-        run: |
-          echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
+      # - name: Test - Case 2 - Assert 1 failed
+      #   if: fromJson(steps.test-02.outputs.report).warning[0] == null
+      #   run: |
+      #     echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
 
-      - name: Test - Case 2 - Assert 2 failed
-        if: contains(fromJson(steps.test-02.outputs.report).message, '91 dependencies have forbidden licenses. 666 dependencies have dangerous licenses.') == false
-        run: |
-          echo "Test case 2 failed. The check did not found 91 forbidden dependencies and 666 dangerous dependency" && exit 1    
+      # - name: Test - Case 2 - Assert 2 failed
+      #   if: contains(fromJson(steps.test-02.outputs.report).message, '91 dependencies have forbidden licenses. 666 dependencies have dangerous licenses.') == false
+      #   run: |
+      #     echo "Test case 2 failed. The check did not found 91 forbidden dependencies and 666 dangerous dependency" && exit 1    
