@@ -19,6 +19,7 @@ module.exports = {
     "**/coverage/**",
     "**/dist/**",
     "submodules/**",
+    "proto/**",
   ],
   caseSensitive: false,
   // Language - current active spelling language

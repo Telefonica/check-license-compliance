@@ -25,8 +25,8 @@ import {
 import semver from "semver";
 import { ROOT_PATH } from "./Paths.js";
 
-const SUBMODULES_PATH = path.join(ROOT_PATH, "submodules");
-const DEPS_DEV_PATH = path.join(SUBMODULES_PATH, "deps.dev");
+const PROTOS_PATH = path.join(ROOT_PATH, "proto");
+const DEPS_DEV_PATH = path.join(PROTOS_PATH, "deps.dev");
 const API_PROTO_PATH = path.join(DEPS_DEV_PATH, "api", "v3", "api.proto");
 const API_PROTO_DIRS = [path.join(DEPS_DEV_PATH, "submodules", "googleapis")];
 
