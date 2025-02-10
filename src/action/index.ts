@@ -42,13 +42,7 @@ export async function run(): Promise<void> {
 
     core.debug("Running checker...");
     const checker = new Checker({
-      licenses: options.licenses,
-      production: options.production,
-      development: options.development,
-      direct: options.direct,
-      packages: options.packages,
-      excludePackages: options.excludePackages,
-      log: options.log,
+      ...options,
       cwd,
     });
     const result = await checker.check();

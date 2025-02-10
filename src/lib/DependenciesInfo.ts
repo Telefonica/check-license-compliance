@@ -52,12 +52,13 @@ export class DependenciesInfo {
   private _warnings: string[] = [];
 
   // TODO: Add options for the files to read
-  constructor({ logger, cwd }: DependenciesInfoOptions) {
+  constructor({ logger, cwd, npm }: DependenciesInfoOptions) {
     this._logger = logger;
     this._initGrpcClient();
     this._projectDependenciesReader = new DirectDependenciesReader({
       logger,
       cwd,
+      npm,
     });
   }
 
@@ -403,21 +404,25 @@ export class DependenciesInfo {
             this._directDevDependencies.includes(ancestor),
           );
 
-      const origins = isDirect
-        ? projectDependencies
-            .filter((dependency) => {
-              return dependency.id === id;
-            })
-            .map((dependency) => {
-              return dependency.origin;
-            })
-        : projectDependencies
-            .filter((dependency) => {
-              return ancestors.includes(dependency.id);
-            })
-            .map((dependency) => {
-              return dependency.origin;
-            });
+      const origins = Array.from(
+        new Set(
+          isDirect
+            ? projectDependencies
+                .filter((dependency) => {
+                  return dependency.id === id;
+                })
+                .map((dependency) => {
+                  return dependency.origin;
+                })
+            : projectDependencies
+                .filter((dependency) => {
+                  return ancestors.includes(dependency.id);
+                })
+                .map((dependency) => {
+                  return dependency.origin;
+                }),
+        ),
+      );
 
       const errors = [];
       if (packageInfo.error) {
@@ -449,7 +454,7 @@ export class DependenciesInfo {
         ancestors: ancestors,
         origins,
         errors,
-        warnings: [],
+        warnings,
       });
     });
   }

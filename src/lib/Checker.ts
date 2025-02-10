@@ -46,6 +46,7 @@ export class Checker {
     this._dependenciesInfo = new DependenciesInfo({
       cwd: config.cwd,
       logger: this._logger,
+      npm: config.npm,
     });
   }
 

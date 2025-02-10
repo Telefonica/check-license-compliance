@@ -1,6 +1,7 @@
 import type {
   DependencyUniqueProps,
   DependencyId,
+  NpmDependenciesReaderOptions,
 } from "./dependencies-reader/DependenciesReader.types";
 import type { createLogger } from "./Logger";
 import type { Version__Output as DepsDevVersionOutput } from "./proto/deps_dev/v3/Version";
@@ -16,6 +17,7 @@ export type VersionOutput = Omit<DepsDevVersionOutput, "versionKey"> & {
 export interface DependenciesInfoOptions {
   logger: ReturnType<typeof createLogger>;
   cwd?: string;
+  npm?: NpmDependenciesReaderOptions;
 }
 
 export type DirectDependencies = DependencyId[];

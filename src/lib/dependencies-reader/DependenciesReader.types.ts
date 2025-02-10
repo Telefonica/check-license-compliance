@@ -1,15 +1,32 @@
+import { z } from "zod";
+
 import type { createLogger } from "../Logger";
 import type { System__Output as SystemOutput } from "../proto/deps_dev/v3/System";
+
+export const baseSystemDependenciesOptionsSchema = z.object({
+  includeFiles: z.array(z.string()).optional(),
+  excludeFiles: z.array(z.string()).optional(),
+});
+
+export interface BaseSystemDependenciesReaderOptions {
+  defaultInclude?: string[];
+  defaultExclude?: string[];
+  system: SystemOutput;
+}
 
 /**
  * Options for reading system dependencies
  */
-export interface SystemDependenciesOptions {
-  /** Files to include when reading direct dependencies */
-  includeFiles: string[];
-  /** Files to exclude when reading direct dependencies */
-  excludeFiles: string[];
-}
+export type SystemDependenciesOptions = z.infer<
+  typeof baseSystemDependenciesOptionsSchema
+>;
+
+export const npmDependenciesReaderOptionsSchema =
+  baseSystemDependenciesOptionsSchema;
+
+export type NpmDependenciesReaderOptions = z.infer<
+  typeof npmDependenciesReaderOptionsSchema
+>;
 
 /**
  * Options for reading dependencies by system
@@ -18,7 +35,7 @@ export interface OptionsBySystem {
   /**
    * Options for reading npm dependencies
    */
-  npm: SystemDependenciesOptions;
+  npm?: SystemDependenciesOptions;
 }
 
 /**
@@ -26,14 +43,23 @@ export interface OptionsBySystem {
  */
 export type DependencyId = string;
 
-export interface NodePackageJson {
+export interface NpmPackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+}
+
+export interface SystemDependenciesReaderOptions<
+  T extends SystemDependenciesOptions,
+> {
+  logger: ReturnType<typeof createLogger>;
+  cwd?: string;
+  options?: T;
 }
 
 export interface DependenciesReaderOptions {
   logger: ReturnType<typeof createLogger>;
   cwd?: string;
+  npm?: SystemDependenciesOptions;
 }
 
 export interface DependencyUniqueProps {

@@ -1,3 +1,4 @@
+import globule from "globule";
 import semver from "semver";
 
 import { ROOT_PATH } from "../Paths.js";
@@ -9,6 +10,9 @@ import type {
   DependencyDeclaration,
   DependencyUniqueProps,
   DependencyId,
+  SystemDependenciesReaderOptions,
+  SystemDependenciesOptions,
+  BaseSystemDependenciesReaderOptions,
 } from "./DependenciesReader.types";
 
 const NODE_SYSTEM: SystemOutput = "NPM";
@@ -34,17 +38,56 @@ export function hasSystemId(dependencyId: DependencyId): boolean {
 /**
  * Base class for dependencies readers
  */
-export class BaseSystemDependenciesReader implements DependenciesReader {
-  protected _logger: DependenciesReaderOptions["logger"];
+export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
+  implements DependenciesReader
+{
+  protected logger: DependenciesReaderOptions["logger"];
   protected cwd: string;
+  protected options: T;
+  protected system: SystemOutput;
+  private _defaultInclude: string[];
+  private _defaultExclude: string[];
 
-  constructor({ logger, cwd }: DependenciesReaderOptions) {
+  constructor(
+    { logger, cwd, options }: SystemDependenciesReaderOptions<T>,
+    {
+      defaultInclude,
+      defaultExclude,
+      system,
+    }: BaseSystemDependenciesReaderOptions,
+  ) {
+    this.system = system;
     this.cwd = cwd || ROOT_PATH;
-    this._logger = logger;
+    this.options = options || ({} as T);
+    this.logger = logger;
+    this._defaultExclude = defaultExclude || [];
+    if (!defaultInclude) {
+      throw new Error(
+        "defaultInclude is required for system dependencies reader",
+      );
+    }
+    this._defaultInclude = defaultInclude;
   }
 
   public async getDependencies(): Promise<DependencyDeclaration[]> {
     throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Returns a list of files to read, relative to the cwd
+   * @returns List of files to read
+   */
+  protected findFiles(): string[] {
+    const includeFiles = this.options.includeFiles || this._defaultInclude;
+    const excludeFiles = this.options.excludeFiles || this._defaultExclude;
+    this.logger.debug(`Finding files to read for ${this.system} dependencies`, {
+      includeFiles,
+      excludeFiles,
+    });
+    return globule.find(includeFiles, {
+      ignore: excludeFiles,
+      cwd: this.cwd,
+    });
   }
 
   protected getVersionFromSemverRange(
@@ -56,7 +99,7 @@ export class BaseSystemDependenciesReader implements DependenciesReader {
       const version = semverVersion ? semverVersion.toString() : semverRange;
       return version;
     } catch (error) {
-      this._logger.error(
+      this.logger.error(
         `Error parsing semver range ${semverRange} of dependency ${packageName}`,
         error,
       );

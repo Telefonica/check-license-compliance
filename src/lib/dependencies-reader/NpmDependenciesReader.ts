@@ -1,33 +1,32 @@
 import path from "node:path";
 
 import fsExtra from "fs-extra";
-import globule from "globule";
 
-import { BaseSystemDependenciesReader } from "./BaseSystemDependenciesReader";
+import { BaseSystemDependenciesReader } from "./BaseSystemDependenciesReader.js";
 import type {
-  DependenciesReaderOptions,
+  SystemDependenciesReaderOptions,
   DependencyDeclaration,
-  NodePackageJson,
+  NpmPackageJson,
+  NpmDependenciesReaderOptions,
 } from "./DependenciesReader.types";
-import { NPM_SYSTEM, getDependencyId } from "./Helpers";
+import { NPM_SYSTEM, getDependencyId } from "./Helpers.js";
 
 /**
  * Read the NPM dependencies from the package.json files in the project
  */
-export class NpmDependenciesReader extends BaseSystemDependenciesReader {
-  constructor(options: DependenciesReaderOptions) {
-    super(options);
-  }
-
-  private _getPackageJsonFiles(): string[] {
-    return globule.find("**/package.json", {
-      ignore: ["node_modules/**"],
-      cwd: this.cwd,
+export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDependenciesReaderOptions> {
+  constructor(
+    options: SystemDependenciesReaderOptions<NpmDependenciesReaderOptions>,
+  ) {
+    super(options, {
+      system: NPM_SYSTEM,
+      defaultInclude: ["**/package.json"],
+      defaultExclude: ["**/node_modules/**"],
     });
   }
 
   private _getPackageJsonDependenciesInfo(
-    packageJson: NodePackageJson,
+    packageJson: NpmPackageJson,
     packageJsonPath: string,
     dev: boolean = false,
   ) {
@@ -48,7 +47,6 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader {
         }),
         name,
         version,
-        // TODO: To be able to use custom cwd
         origin: path.relative(this.cwd, packageJsonPath),
         development: dev,
         production: !dev,
@@ -60,23 +58,24 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader {
   private async _getPackageJsonDependencies(
     packageJsonPath: string,
   ): Promise<DependencyDeclaration[]> {
-    this._logger.info(`Reading dependencies from ${packageJsonPath}`);
+    this.logger.info(`Reading dependencies from ${packageJsonPath}`);
+    const resolvedPath = path.resolve(this.cwd, packageJsonPath);
 
     const packageJson = (await fsExtra.readJson(
-      packageJsonPath,
-    )) as NodePackageJson;
+      resolvedPath,
+    )) as NpmPackageJson;
 
     const packageProductionDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
-      packageJsonPath,
+      resolvedPath,
     );
     const packageDevDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
-      packageJsonPath,
+      resolvedPath,
       true,
     );
 
-    this._logger.debug(`Dependencies found in ${packageJsonPath}`, {
+    this.logger.debug(`Dependencies found in ${packageJsonPath}`, {
       production: packageProductionDependencies,
       development: packageDevDependencies,
     });
@@ -85,18 +84,18 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader {
   }
 
   public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this._logger.info("Reading Node.js dependencies");
-    const packageJsonFiles = this._getPackageJsonFiles();
+    this.logger.info("Reading Node.js dependencies");
+    const packageJsonFiles = this.findFiles();
     const dependencies = await Promise.all(
       packageJsonFiles.map((packageJsonPath) =>
         this._getPackageJsonDependencies(packageJsonPath),
       ),
     );
     const flatDependencies = dependencies.flat();
-    this._logger.info(
+    this.logger.info(
       `Found ${flatDependencies.length} Node.js direct dependencies in the project`,
     );
-    this._logger.debug(`Node.js dependencies`, flatDependencies);
+    this.logger.debug(`Node.js dependencies`, flatDependencies);
     return flatDependencies;
   }
 }

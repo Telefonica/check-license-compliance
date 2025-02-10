@@ -28,6 +28,9 @@ licenses:
     - EPL-1.0
   others: forbidden
   unknown: warning
-log: info
+log: debug
+#npm:
+  #excludeFiles:
+    #- "**/node_modules/**"
 # excludePackages:
   #- exit@0.1.2

@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 
+import { npmDependenciesReaderOptionsSchema } from "./dependencies-reader/DependenciesReader.types.js";
 import { logLevelSchema } from "./Logger.types.js";
 
 export const allowedLicensesSchema = z.string().array();
@@ -48,6 +49,7 @@ export const configSchema = z
     excludePackages: z.array(z.string()).optional(),
     log: logLevelSchema.optional(),
     cwd: z.string().optional(),
+    npm: npmDependenciesReaderOptionsSchema.optional(),
   })
   .strict();
 

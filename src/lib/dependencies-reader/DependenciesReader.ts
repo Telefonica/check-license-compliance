@@ -2,7 +2,7 @@ import type {
   DependenciesReaderOptions,
   DependencyDeclaration,
 } from "./DependenciesReader.types";
-import { NpmDependenciesReader } from "./NpmDependenciesReader";
+import { NpmDependenciesReader } from "./NpmDependenciesReader.js";
 
 /**
  * Read all direct dependencies, from any system
@@ -11,9 +11,12 @@ export class DirectDependenciesReader {
   private _nodeDependenciesReader: NpmDependenciesReader;
   private _logger: DependenciesReaderOptions["logger"];
 
-  // TODO: Pass here options for each system and files to read
-  constructor({ logger, cwd }: DependenciesReaderOptions) {
-    this._nodeDependenciesReader = new NpmDependenciesReader({ logger, cwd });
+  constructor({ logger, cwd, npm }: DependenciesReaderOptions) {
+    this._nodeDependenciesReader = new NpmDependenciesReader({
+      logger,
+      cwd,
+      options: npm,
+    });
     this._logger = logger;
   }
 
