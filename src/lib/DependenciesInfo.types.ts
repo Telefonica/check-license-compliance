@@ -1,7 +1,7 @@
 import type {
   DependencyUniqueProps,
   DependencyId,
-} from "./DependenciesReader.types";
+} from "./dependencies-reader/DependenciesReader.types";
 import type { createLogger } from "./Logger";
 import type { Version__Output as DepsDevVersionOutput } from "./proto/deps_dev/v3/Version";
 

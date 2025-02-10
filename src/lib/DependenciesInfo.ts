@@ -5,6 +5,13 @@ import * as protoLoader from "@grpc/proto-loader";
 import PQueue from "p-queue";
 import semver from "semver";
 
+import { DirectDependenciesReader } from "./dependencies-reader/DependenciesReader.js";
+import type {
+  DependencyDeclaration,
+  DependencyUniqueProps,
+  DependencyId,
+} from "./dependencies-reader/DependenciesReader.types";
+import { getDependencyId } from "./dependencies-reader/Helpers.js";
 import type {
   DependenciesInfoOptions,
   GetDependenciesInfoResult,
@@ -13,15 +20,6 @@ import type {
   DepsDevDependenciesInfo,
   VersionOutput,
 } from "./DependenciesInfo.types";
-import {
-  ProjectDependenciesReader,
-  getDependencyId,
-} from "./DependenciesReader.js";
-import type {
-  DependencyDeclaration,
-  DependencyUniqueProps,
-  DependencyId,
-} from "./DependenciesReader.types";
 import { ROOT_PATH } from "./Paths.js";
 import type { ProtoGrpcType } from "./proto/api";
 import type { Dependencies__Output as DependenciesOutput } from "./proto/deps_dev/v3/Dependencies";
@@ -49,7 +47,7 @@ export class DependenciesInfo {
   private _directDevDependencies: DirectDependencies = [];
   private _directProdDependencies: DirectDependencies = [];
   private _dependenciesInfo: GetDependenciesInfoResult = [];
-  private _projectDependenciesReader: ProjectDependenciesReader;
+  private _projectDependenciesReader: DirectDependenciesReader;
   private _errors: Error[] = [];
   private _warnings: string[] = [];
 
@@ -57,7 +55,7 @@ export class DependenciesInfo {
   constructor({ logger, cwd }: DependenciesInfoOptions) {
     this._logger = logger;
     this._initGrpcClient();
-    this._projectDependenciesReader = new ProjectDependenciesReader({
+    this._projectDependenciesReader = new DirectDependenciesReader({
       logger,
       cwd,
     });

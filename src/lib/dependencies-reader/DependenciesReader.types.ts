@@ -1,5 +1,25 @@
-import type { createLogger } from "./Logger";
-import type { System__Output as SystemOutput } from "./proto/deps_dev/v3/System";
+import type { createLogger } from "../Logger";
+import type { System__Output as SystemOutput } from "../proto/deps_dev/v3/System";
+
+/**
+ * Options for reading system dependencies
+ */
+export interface SystemDependenciesOptions {
+  /** Files to include when reading direct dependencies */
+  includeFiles: string[];
+  /** Files to exclude when reading direct dependencies */
+  excludeFiles: string[];
+}
+
+/**
+ * Options for reading dependencies by system
+ */
+export interface OptionsBySystem {
+  /**
+   * Options for reading npm dependencies
+   */
+  npm: SystemDependenciesOptions;
+}
 
 /**
  * Dependency ID, in the format system:name:version

@@ -2,77 +2,19 @@ import path from "node:path";
 
 import fsExtra from "fs-extra";
 import globule from "globule";
-import semver from "semver";
 
+import { BaseSystemDependenciesReader } from "./BaseSystemDependenciesReader";
 import type {
   DependenciesReaderOptions,
-  DependenciesReader,
   DependencyDeclaration,
   NodePackageJson,
-  DependencyUniqueProps,
-  DependencyId,
 } from "./DependenciesReader.types";
-import { ROOT_PATH } from "./Paths.js";
-import type { System__Output as SystemOutput } from "./proto/deps_dev/v3/System";
-
-const NODE_SYSTEM: SystemOutput = "NPM";
-
-const SYSTEM_IDS = [NODE_SYSTEM];
-
-export function getDependencyId(
-  dependency: DependencyUniqueProps,
-): DependencyId {
-  return `${dependency.system}:${dependency.name}@${dependency.version}`;
-}
-
-export function removeSystemId(dependencyId: DependencyId): string {
-  return SYSTEM_IDS.reduce((acc, system) => {
-    return acc.replace(`${system}:`, "");
-  }, dependencyId);
-}
-
-export function hasSystemId(dependencyId: DependencyId): boolean {
-  return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
-}
+import { NPM_SYSTEM, getDependencyId } from "./Helpers";
 
 /**
- * Base class for dependencies readers
+ * Read the NPM dependencies from the package.json files in the project
  */
-export class BaseDependenciesReader implements DependenciesReader {
-  protected _logger: DependenciesReaderOptions["logger"];
-  protected cwd: string;
-
-  constructor({ logger, cwd }: DependenciesReaderOptions) {
-    this.cwd = cwd || ROOT_PATH;
-    this._logger = logger;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    throw new Error("Method not implemented.");
-  }
-
-  protected getVersionFromSemverRange(
-    semverRange: string,
-    packageName: string,
-  ): string {
-    try {
-      const semverVersion = semver.minVersion(semverRange);
-      const version = semverVersion ? semverVersion.toString() : semverRange;
-      return version;
-    } catch (error) {
-      this._logger.error(
-        `Error parsing semver range ${semverRange} of dependency ${packageName}`,
-        error,
-      );
-      return semverRange;
-    }
-  }
-}
-
-/**
- * Read the Node.js dependencies from the package.json files in the project
- */
-export class NodeDependenciesReader extends BaseDependenciesReader {
+export class NpmDependenciesReader extends BaseSystemDependenciesReader {
   constructor(options: DependenciesReaderOptions) {
     super(options);
   }
@@ -98,9 +40,9 @@ export class NodeDependenciesReader extends BaseDependenciesReader {
     const dependenciesFormatted = Object.keys(dependencies).map((name) => {
       const version = this.getVersionFromSemverRange(dependencies[name], name);
       return {
-        system: NODE_SYSTEM,
+        system: NPM_SYSTEM,
         id: getDependencyId({
-          system: NODE_SYSTEM,
+          system: NPM_SYSTEM,
           name,
           version,
         }),
@@ -156,25 +98,5 @@ export class NodeDependenciesReader extends BaseDependenciesReader {
     );
     this._logger.debug(`Node.js dependencies`, flatDependencies);
     return flatDependencies;
-  }
-}
-
-/**
- * Read all dependencies from the project, from any system
- */
-export class ProjectDependenciesReader {
-  private _nodeDependenciesReader: NodeDependenciesReader;
-  private _logger: DependenciesReaderOptions["logger"];
-
-  // TODO: Pass here options for each system and files to read
-  constructor({ logger, cwd }: DependenciesReaderOptions) {
-    this._nodeDependenciesReader = new NodeDependenciesReader({ logger, cwd });
-    this._logger = logger;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this._logger.info("Reading project dependencies");
-    // TODO, add readers for other systems
-    return this._nodeDependenciesReader.getDependencies();
   }
 }

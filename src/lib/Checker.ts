@@ -9,8 +9,8 @@ import satisfies from "spdx-satisfies";
 
 import type { LicensesResult, Result } from "./Checker.types";
 import type { CheckerConfig, OtherLicenses } from "./Config.types";
+import { hasSystemId, removeSystemId } from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
-import { hasSystemId, removeSystemId } from "./DependenciesReader.js";
 import { createLogger } from "./Logger.js";
 
 /**
