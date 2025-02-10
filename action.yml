@@ -37,6 +37,9 @@ inputs:
   config-file:
     description: 'Path to a configuration file'
     default: 'check-license-compliance.config.yml'
+  path:
+    description: 'Path to the directory where the check will be performed. config-file and other options will be relative to this path'
+    default: '.'
 outputs:
   found-forbidden:
     description: 'Whether forbidden licenses were found'

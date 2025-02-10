@@ -16,6 +16,7 @@ export const inputOptionsSchema = z
     log: logLevelSchema.optional(),
     reporter: reporterSchema.optional(),
     failOnNotValid: z.boolean().optional(),
+    path: z.string().optional(),
   })
   .strict();
 

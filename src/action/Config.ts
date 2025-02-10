@@ -3,7 +3,7 @@
 
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
-import path from "node:path";
+import path, { isAbsolute } from "node:path";
 
 import * as core from "@actions/core";
 import { parse } from "yaml";
@@ -51,6 +51,7 @@ function getInputs() {
   const reporter = core.getInput("reporter");
   const config = core.getMultilineInput("config").join("\n");
   const configFile = core.getInput("config-file");
+  const pathInput = core.getInput("path");
 
   const inputs = {
     log: valueIfDefined(log),
@@ -58,6 +59,7 @@ function getInputs() {
     reporter: valueIfDefined(reporter),
     config: valueIfDefined(config),
     configFile: valueIfDefined(configFile),
+    path: valueIfDefined(pathInput),
   };
 
   (Object.keys(inputs) as (keyof typeof inputs)[]).forEach((key) => {
@@ -109,9 +111,17 @@ export async function getConfig(cwd: string): Promise<AllConfig> {
     core.debug(`Parsed config option from inputs: ${JSON.stringify(config)}`);
   }
 
+  if (inputs.path && isAbsolute(inputs.path)) {
+    throw new Error(
+      "The path input must be a relative path, because it is resolved from the workspace directory",
+    );
+  }
+
+  const cwdWithPath = inputs.path ? path.resolve(cwd, inputs.path) : cwd;
+
   configFromFile = await loadConfigFile(
     path.resolve(
-      cwd,
+      cwdWithPath,
       inputs.configFile || "check-license-compliance.config.yml",
     ),
   );
@@ -159,5 +169,8 @@ export async function getConfig(cwd: string): Promise<AllConfig> {
     throw new Error(fromError(result.error).toString());
   }
 
-  return result.data;
+  return {
+    ...result.data,
+    cwd: cwdWithPath,
+  };
 }

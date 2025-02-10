@@ -33,17 +33,13 @@ process.on("uncaughtException", (err) => {
  */
 export async function run(): Promise<void> {
   try {
-    // NOTE: In github container actions, the workspace is mounted in /github/workspace
-    // TODO: Expose a path option to allow the user to specify the path to execute the action inside the workspace
-    const cwd = "/github/workspace";
-
     core.debug("Getting configuration...");
-    const options = await getConfig(cwd);
+    // NOTE: In github container actions, the workspace is mounted in /github/workspace
+    const options = await getConfig("/github/workspace");
 
     core.debug("Running checker...");
     const checker = new Checker({
       ...options,
-      cwd,
     });
     const result = await checker.check();
 

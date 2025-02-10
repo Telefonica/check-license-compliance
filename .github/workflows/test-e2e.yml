@@ -37,6 +37,7 @@ jobs:
         id: check-license-compliance
         with:
           reporter: "markdown"
+          path: "test-path"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
