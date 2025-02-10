@@ -10,7 +10,7 @@ import type { Reporter } from "./Reporter.types";
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";
 const CAVEATS_TITLE =
-  "There were some problems while checking the licenses. This may happen when the dependencies graph is not correctly detected because of some recent releases have not been detected by the devs.dep API yet.";
+  "There were some problems while checking the licenses. This sometimes happens when dependencies releases are very recent, so the dependencies graph is not fully updated yet.";
 const BOLD = "__";
 const NOT_VALID_RESULT = "Result: Not valid licenses";
 const VALID_RESULT = "Result: Valid licenses";

@@ -21,6 +21,7 @@ module.exports = {
     "submodules/**",
     "proto/**",
     "src/lib/proto/**",
+    "**/pom.xml",
   ],
   caseSensitive: false,
   // Language - current active spelling language

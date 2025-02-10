@@ -22,7 +22,7 @@ export interface Result {
   /**  Modules using licenses that require special attention */
   warning: LicensesResult[];
 
-  /** Contains information about problems that happened while retrieving packages info. This may imply some errors in the dependencies graph, like not detecting correctly whether a package is a production or development dependency, etc. */
+  /** Contains information about problems that happened while retrieving modules info. This may imply some errors in the dependencies graph, like not detecting correctly whether a module is a production or development dependency, etc. */
   caveats: {
     errors: Error[];
     warnings: string[];

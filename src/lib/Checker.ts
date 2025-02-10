@@ -47,6 +47,9 @@ export class Checker {
       cwd: config.cwd,
       logger: this._logger,
       npm: config.npm,
+      maven: config.maven,
+      go: config.go,
+      python: config.python,
     });
   }
 
@@ -131,19 +134,19 @@ export class Checker {
     );
   }
 
-  private _packageIdIsInList(list: string[], packageId: string): boolean {
+  private _moduleIdIsInList(list: string[], moduleId: string): boolean {
     return list.some((id) => {
       const idHasSystem = hasSystemId(id);
       if (idHasSystem) {
-        return id === packageId;
+        return id === moduleId;
       }
-      return id === removeSystemId(packageId);
+      return id === removeSystemId(moduleId);
     });
   }
 
   /**
-   * Returns an array of packages using a license that is not in the exclusions, or is unknown
-   * @returns List of packages using a license that is not in the exclusions
+   * Returns an array of modules using a license that is not in the exclusions, or is unknown
+   * @returns List of modules using a license that is not in the exclusions
    */
   private async _getLicensesToCheck(): Promise<LicensesResult[]> {
     const dependencies = await this._dependenciesInfo.getDependencies();
@@ -153,20 +156,20 @@ export class Checker {
     return dependencies
       .filter((dependency) => {
         if (
-          this._config.packages &&
-          !this._packageIdIsInList(this._config.packages, dependency.id)
+          this._config.modules &&
+          !this._moduleIdIsInList(this._config.modules, dependency.id)
         ) {
           this._logger.debug(
-            `Excluding dependency ${dependency.id} because it is not in the list of packages to check`,
+            `Excluding dependency ${dependency.id} because it is not in the list of modules to check`,
           );
           return false;
         }
         if (
-          this._config.excludePackages &&
-          this._packageIdIsInList(this._config.excludePackages, dependency.id)
+          this._config.excludeModules &&
+          this._moduleIdIsInList(this._config.excludeModules, dependency.id)
         ) {
           this._logger.debug(
-            `Excluding dependency ${dependency.id} because it is in the list of packages to exclude`,
+            `Excluding dependency ${dependency.id} because it is in the list of modules to exclude`,
           );
           return false;
         }

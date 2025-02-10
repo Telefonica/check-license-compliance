@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import type { createLogger } from "../Logger";
-import type { System__Output as SystemOutput } from "../proto/deps_dev/v3/System";
+
+// cspell:disable-next-line
+export type System = "NPM" | "MAVEN" | "PYPI" | "GO";
 
 export const baseSystemDependenciesOptionsSchema = z.object({
   includeFiles: z.array(z.string()).optional(),
@@ -11,7 +13,7 @@ export const baseSystemDependenciesOptionsSchema = z.object({
 export interface BaseSystemDependenciesReaderOptions {
   defaultInclude?: string[];
   defaultExclude?: string[];
-  system: SystemOutput;
+  system: System;
 }
 
 /**
@@ -28,6 +30,27 @@ export type NpmDependenciesReaderOptions = z.infer<
   typeof npmDependenciesReaderOptionsSchema
 >;
 
+export const mavenDependenciesReaderOptionsSchema =
+  baseSystemDependenciesOptionsSchema;
+
+export type MavenDependenciesReaderOptions = z.infer<
+  typeof mavenDependenciesReaderOptionsSchema
+>;
+
+export const pythonDependenciesReaderOptionsSchema =
+  baseSystemDependenciesOptionsSchema;
+
+export type PythonDependenciesReaderOptions = z.infer<
+  typeof pythonDependenciesReaderOptionsSchema
+>;
+
+export const goDependenciesReaderOptionsSchema =
+  baseSystemDependenciesOptionsSchema;
+
+export type GoDependenciesReaderOptions = z.infer<
+  typeof goDependenciesReaderOptionsSchema
+>;
+
 /**
  * Options for reading dependencies by system
  */
@@ -35,7 +58,10 @@ export interface OptionsBySystem {
   /**
    * Options for reading npm dependencies
    */
-  npm?: SystemDependenciesOptions;
+  npm?: NpmDependenciesReaderOptions;
+  maven?: MavenDependenciesReaderOptions;
+  python?: PythonDependenciesReaderOptions;
+  go?: GoDependenciesReaderOptions;
 }
 
 /**
@@ -46,6 +72,22 @@ export type DependencyId = string;
 export interface NpmPackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+}
+
+export interface MavenPomDependency {
+  groupId?: string;
+  artifactId?: string;
+  version?: string;
+  scope?: "compile" | "provided" | "runtime" | "test";
+}
+
+export interface MavenPom {
+  project: {
+    properties?: Record<string, string>;
+    dependencies?: {
+      dependency: MavenPomDependency[];
+    };
+  };
 }
 
 export interface SystemDependenciesReaderOptions<
@@ -59,16 +101,27 @@ export interface SystemDependenciesReaderOptions<
 export interface DependenciesReaderOptions {
   logger: ReturnType<typeof createLogger>;
   cwd?: string;
-  npm?: SystemDependenciesOptions;
+  npm?: NpmDependenciesReaderOptions;
+  maven?: MavenDependenciesReaderOptions;
+  python?: PythonDependenciesReaderOptions;
+  go?: GoDependenciesReaderOptions;
 }
 
-export interface DependencyUniqueProps {
-  system: SystemOutput;
+export interface DependencyNameUniqueProps {
+  system: System;
   name: string;
-  version: string;
 }
 
-export interface DependencyDeclaration extends DependencyUniqueProps {
+export type DependencyDeclarationUniqueProps = DependencyNameUniqueProps & {
+  version?: string;
+};
+
+export type DependencyUniqueProps = DependencyDeclarationUniqueProps & {
+  version: string;
+};
+
+export interface DependencyDeclaration
+  extends DependencyDeclarationUniqueProps {
   id: DependencyId;
   production: boolean;
   development: boolean;

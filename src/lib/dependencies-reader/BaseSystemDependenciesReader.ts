@@ -1,8 +1,6 @@
 import globule from "globule";
-import semver from "semver";
 
 import { ROOT_PATH } from "../Paths.js";
-import type { System__Output as SystemOutput } from "../proto/deps_dev/v3/System";
 
 import type {
   DependenciesReaderOptions,
@@ -13,9 +11,11 @@ import type {
   SystemDependenciesReaderOptions,
   SystemDependenciesOptions,
   BaseSystemDependenciesReaderOptions,
+  System,
 } from "./DependenciesReader.types";
+import { resolveVersion } from "./Helpers.js";
 
-const NODE_SYSTEM: SystemOutput = "NPM";
+const NODE_SYSTEM: System = "NPM";
 
 const SYSTEM_IDS = [NODE_SYSTEM];
 
@@ -44,7 +44,7 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   protected logger: DependenciesReaderOptions["logger"];
   protected cwd: string;
   protected options: T;
-  protected system: SystemOutput;
+  protected system: System;
   private _defaultInclude: string[];
   private _defaultExclude: string[];
 
@@ -90,20 +90,18 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     });
   }
 
-  protected getVersionFromSemverRange(
-    semverRange: string,
-    packageName: string,
-  ): string {
+  protected resolveVersion(
+    moduleName: string,
+    version?: string,
+  ): string | undefined {
     try {
-      const semverVersion = semver.minVersion(semverRange);
-      const version = semverVersion ? semverVersion.toString() : semverRange;
-      return version;
+      return resolveVersion(this.system, version);
     } catch (error) {
-      this.logger.error(
-        `Error parsing semver range ${semverRange} of dependency ${packageName}`,
+      this.logger.warn(
+        `Error resolving version "${version}" of dependency ${moduleName}`,
         error,
       );
-      return semverRange;
+      return version;
     }
   }
 }

@@ -1,7 +1,11 @@
 import type {
   DependencyUniqueProps,
+  DependencyDeclarationUniqueProps,
   DependencyId,
   NpmDependenciesReaderOptions,
+  MavenDependenciesReaderOptions,
+  PythonDependenciesReaderOptions,
+  GoDependenciesReaderOptions,
 } from "./dependencies-reader/DependenciesReader.types";
 import type { createLogger } from "./Logger";
 import type { Version__Output as DepsDevVersionOutput } from "./proto/deps_dev/v3/Version";
@@ -18,6 +22,9 @@ export interface DependenciesInfoOptions {
   logger: ReturnType<typeof createLogger>;
   cwd?: string;
   npm?: NpmDependenciesReaderOptions;
+  maven?: MavenDependenciesReaderOptions;
+  python?: PythonDependenciesReaderOptions;
+  go?: GoDependenciesReaderOptions;
 }
 
 export type DirectDependencies = DependencyId[];
@@ -26,7 +33,8 @@ export interface DependencyInfo {
   id: DependencyId;
   system: string;
   name: string;
-  version: string;
+  version?: string;
+  resolvedVersion?: string;
   dependencies: DependencyUniqueProps[];
   licenses: string[];
   direct: boolean;
@@ -47,18 +55,21 @@ export interface DepsDevDependencyNode {
   errors: string[];
 }
 
-export interface DepsDevPackagesInfo {
-  [key: DependencyId]: Pick<VersionOutput, "version_key" | "licenses"> & {
-    error?: Error;
-  };
+export interface DepsDevModulesInfo {
+  [key: DependencyId]: DependencyDeclarationUniqueProps &
+    Pick<VersionOutput, "licenses"> & {
+      error?: Error;
+      resolvedVersion?: string;
+    };
 }
 
 export interface DepsDevDependenciesInfo {
-  [key: DependencyId]: DependencyUniqueProps & {
+  [key: DependencyId]: DependencyDeclarationUniqueProps & {
     dependencies: (DependencyUniqueProps & {
       id: DependencyId;
       direct: boolean;
     })[];
     error?: Error;
+    resolvedVersion?: string;
   };
 }

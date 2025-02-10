@@ -3,7 +3,12 @@
 
 import { z } from "zod";
 
-import { npmDependenciesReaderOptionsSchema } from "./dependencies-reader/DependenciesReader.types.js";
+import {
+  npmDependenciesReaderOptionsSchema,
+  mavenDependenciesReaderOptionsSchema,
+  pythonDependenciesReaderOptionsSchema,
+  goDependenciesReaderOptionsSchema,
+} from "./dependencies-reader/DependenciesReader.types.js";
 import { logLevelSchema } from "./Logger.types.js";
 
 export const allowedLicensesSchema = z.string().array();
@@ -45,11 +50,14 @@ export const configSchema = z
     production: z.boolean().optional(),
     development: z.boolean().optional(),
     direct: z.boolean().optional(),
-    packages: z.array(z.string()).optional(),
-    excludePackages: z.array(z.string()).optional(),
+    modules: z.array(z.string()).optional(),
+    excludeModules: z.array(z.string()).optional(),
     log: logLevelSchema.optional(),
     cwd: z.string().optional(),
     npm: npmDependenciesReaderOptionsSchema.optional(),
+    maven: mavenDependenciesReaderOptionsSchema.optional(),
+    python: pythonDependenciesReaderOptionsSchema.optional(),
+    go: goDependenciesReaderOptionsSchema.optional(),
   })
   .strict();
 

@@ -37,7 +37,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
       return [];
     }
     const dependenciesFormatted = Object.keys(dependencies).map((name) => {
-      const version = this.getVersionFromSemverRange(dependencies[name], name);
+      const version = this.resolveVersion(name, dependencies[name]);
       return {
         system: NPM_SYSTEM,
         id: getDependencyId({
@@ -84,7 +84,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
   }
 
   public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this.logger.info("Reading Node.js dependencies");
+    this.logger.info(`Reading ${this.system} dependencies`);
     const packageJsonFiles = this.findFiles();
     const dependencies = await Promise.all(
       packageJsonFiles.map((packageJsonPath) =>
@@ -93,9 +93,9 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     );
     const flatDependencies = dependencies.flat();
     this.logger.info(
-      `Found ${flatDependencies.length} Node.js direct dependencies in the project`,
+      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );
-    this.logger.debug(`Node.js dependencies`, flatDependencies);
+    this.logger.debug(`${this.system} dependencies`, flatDependencies);
     return flatDependencies;
   }
 }
