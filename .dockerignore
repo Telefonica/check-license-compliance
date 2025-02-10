@@ -4,6 +4,7 @@
 !src/
 !submodules/
 !proto/
+!bin/
 !script/
 !tsconfig.base.json
 !tsconfig.json

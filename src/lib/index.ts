@@ -2,5 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * from "./Checker.js";
+export * from "./Reporter.js";
 export * from "./Config.types.js";
 export * from "./Logger.types.js";
+export * from "./Reporter.types.js";

@@ -8,7 +8,7 @@ import parseSpdx from "spdx-expression-parse";
 import satisfies from "spdx-satisfies";
 
 import type { LicensesResult, Result } from "./Checker.types";
-import type { Config, OtherLicenses } from "./Config.types";
+import type { CheckerConfig, OtherLicenses } from "./Config.types";
 import { DependenciesInfo } from "./DependenciesInfo.js";
 import { hasSystemId, removeSystemId } from "./DependenciesReader.js";
 import { createLogger } from "./Logger.js";
@@ -18,7 +18,7 @@ import { createLogger } from "./Logger.js";
  */
 export class Checker {
   private _logger: ReturnType<typeof createLogger>;
-  private _config: Config;
+  private _config: CheckerConfig;
   private _others: OtherLicenses = "forbidden";
   private _unknown: OtherLicenses = "warning";
   private _dependenciesInfo: DependenciesInfo;
@@ -30,7 +30,7 @@ export class Checker {
    * Create a new checker
    * @param options Options for the checker
    */
-  constructor(config: Config) {
+  constructor(config: CheckerConfig) {
     this._logger = createLogger(config.log);
     this._config = config;
     this._logger.verbose("Checker created with config", config);

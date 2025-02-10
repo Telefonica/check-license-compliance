@@ -27,6 +27,15 @@
   "engines": {
     "node": ">=18"
   },
+  "files": [
+    "dist",
+    "bin",
+    "proto"
+  ],
+  "bin": {
+    "check-license-compliance": "./bin/check-license-compliance.js",
+    "check-license-compliance-action": "./bin/check-license-compliance-action.js"
+  },
   "packageManager": "pnpm@9.4.0",
   "scripts": {
     "check:types": "npm run check:types:code && npm run check:types:test",

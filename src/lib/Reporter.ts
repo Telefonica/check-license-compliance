@@ -4,8 +4,8 @@
 import indentString from "indent-string";
 import stripIndent from "strip-indent";
 
-import type { Reporter } from "./Config.types";
-import type { LicensesResult, Result } from "./lib/Checker.types";
+import type { LicensesResult, Result } from "./Checker.types";
+import type { Reporter } from "./Reporter.types";
 
 const TITLE = "Check License Compliance";
 export const ALL_VALID = "All dependencies have acceptable licenses.";
@@ -162,7 +162,7 @@ function getCaveatsMessage(
  * @param result The result of the check
  * @returns The report in the specified format
  */
-export function successReport(reporter: Reporter, result: Result): string {
+function successReport(reporter: Reporter, result: Result): string {
   const textMessage = `${ALL_VALID}\n${getCaveatsMessage(result.caveats, false).join("\n")}`;
 
   switch (reporter) {
@@ -188,7 +188,7 @@ export function successReport(reporter: Reporter, result: Result): string {
  * @param result The result of the check
  * @returns The report in the specified format
  */
-export function errorReport(
+function errorReport(
   reporter: Reporter,
   result: Result,
   isValid: boolean,

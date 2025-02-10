@@ -52,4 +52,4 @@ export const configSchema = z
   .strict();
 
 /** Options **/
-export type Config = z.infer<typeof configSchema>;
+export type CheckerConfig = z.infer<typeof configSchema>;

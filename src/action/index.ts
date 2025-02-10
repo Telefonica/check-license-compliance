@@ -3,9 +3,9 @@
 
 import * as core from "@actions/core";
 
+import { Checker, getReport } from "../lib/index.js";
+
 import { getConfig } from "./Config.js";
-import { Checker } from "./lib/index.js";
-import { getReport } from "./Report.js";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
@@ -13,7 +13,19 @@ const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 
-// TODO: Do not use github actions core library. Use Yargs to get the arguments.
+const shutdown = (signal: string, exitCode: number) => {
+  // eslint-disable-next-line no-console
+  console.log(`Received ${signal}. Cleaning up...`);
+  process.exit(exitCode);
+};
+
+process.on("SIGINT", () => shutdown("SIGINT", 130));
+process.on("SIGTERM", () => shutdown("SIGTERM", 143));
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+  process.exit(1);
+});
 
 /**
  * The main function for the action.

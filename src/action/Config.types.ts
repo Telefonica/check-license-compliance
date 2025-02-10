@@ -3,12 +3,9 @@
 
 import { z } from "zod";
 
-import { configSchema } from "./lib/Config.types.js";
-import { logLevelSchema } from "./lib/Logger.types.js";
-
-export const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
-/** Formatter of the response */
-export type Reporter = z.infer<typeof reporterSchema>;
+import { configSchema } from "../lib/Config.types.js";
+import { logLevelSchema } from "../lib/Logger.types.js";
+import { reporterSchema } from "../lib/Reporter.types.js";
 
 export const allowWarningsSchema = z.boolean().optional();
 /** Allow warnings */
