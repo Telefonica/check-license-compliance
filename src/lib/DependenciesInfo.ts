@@ -516,7 +516,7 @@ export class DependenciesInfo {
     };
 
     await Promise.all([getModuleInfo(), getDependenciesInfo()]);
-    this._logger.info(
+    this._logger.silly(
       `Finished requesting module and dependencies info of ${id}`,
       {
         queue: this._queue.size,
@@ -550,7 +550,7 @@ export class DependenciesInfo {
       });
     });
     if (!result.length) {
-      this._logger.warn(
+      this._logger.silly(
         `No ancestors found for dependency ${dependency} in direct dependencies. Searching traversing the dependencies tree`,
       );
       const searchAncestors = (dependencyId: DependencyId): string[] => {

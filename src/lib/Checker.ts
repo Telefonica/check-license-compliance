@@ -25,6 +25,7 @@ export class Checker {
   private _production: boolean;
   private _development: boolean;
   private _spdxIds!: string[];
+  private _loggedInvalidSpdxFromConfig: string[] = [];
 
   /**
    * Create a new checker
@@ -53,6 +54,15 @@ export class Checker {
     });
   }
 
+  private _logInvalidSpdxInConfig(licenseIdentifier: string): void {
+    if (!this._loggedInvalidSpdxFromConfig.includes(licenseIdentifier)) {
+      this._loggedInvalidSpdxFromConfig.push(licenseIdentifier);
+      this._logger.warn(
+        `License identifier "${licenseIdentifier}" from config is not a valid SPDX identifier. Using a string comparison to check it.`,
+      );
+    }
+  }
+
   private _initialize = async () => {
     const spdxIdsPath = import.meta.resolve("spdx-license-ids");
 
@@ -71,6 +81,26 @@ export class Checker {
     }
   }
 
+  private _logSatisfies(
+    license: string,
+    licenseIdentifier: string,
+    moduleName: string,
+  ): void {
+    this._logger.silly(
+      `"${license}" from "${moduleName}" satisfies "${licenseIdentifier}".`,
+    );
+  }
+
+  private _logNotSatisfies(
+    license: string,
+    licenseIdentifier: string,
+    moduleName: string,
+  ): void {
+    this._logger.silly(
+      `"${license}" from "${moduleName}" does not satisfy "${licenseIdentifier}".`,
+    );
+  }
+
   /**
    * Determines if a license satisfies a list of license identifiers
    * @param license The license to check
@@ -80,12 +110,13 @@ export class Checker {
   private _licenseSatisfies(
     license: string,
     licenseIdentifiers: string[],
+    moduleData: LicensesResult,
   ): boolean {
     if (licenseIdentifiers.length === 0) {
       return false;
     }
-    this._logger.debug(
-      `Checking if ${license} satisfies ${licenseIdentifiers}`,
+    this._logger.verbose(
+      `Checking if ${license} from ${moduleData.module} satisfies ${licenseIdentifiers}`,
     );
     const licenseIsValidSpdx = this._isValidSpdx(license);
 
@@ -93,34 +124,30 @@ export class Checker {
       const identifierIsValidSpdx = this._spdxIds.includes(licenseIdentifier);
       if (licenseIsValidSpdx && identifierIsValidSpdx) {
         this._logger.silly(
-          `Checking if "${license}" satisfies "${licenseIdentifier}" using spdx-satisfies`,
+          `Checking if "${license}" from "${moduleData.module}" satisfies "${licenseIdentifier}" using spdx-satisfies`,
         );
         //@ts-expect-error Types library is not updated. From 6.0 version it supports passing an array of licenses
         if (satisfies(license, [licenseIdentifier])) {
-          this._logger.verbose(`${license} satisfies ${licenseIdentifier}.`);
+          this._logSatisfies(license, licenseIdentifier, moduleData.module);
           return true;
         }
-        this._logger.verbose(
-          `${license} does not satisfy ${licenseIdentifier}.`,
-        );
+        this._logNotSatisfies(license, licenseIdentifier, moduleData.module);
         return false;
       }
       if (!licenseIsValidSpdx) {
         this._logger.silly(
-          `License "${licenseIdentifier}" from a dependency is not a valid SPDX expression. Using a string comparison to check it.`,
+          `License "${licenseIdentifier}" from ${moduleData.module} is not a valid SPDX expression. Using a string comparison to check it.`,
         );
       }
       if (!identifierIsValidSpdx) {
-        this._logger.warn(
-          `License identifier "${licenseIdentifier}" from config is not a valid SPDX identifier. Using a string comparison to check it.`,
-        );
+        this._logInvalidSpdxInConfig(licenseIdentifier);
       }
       const licenseIsEqual = license === licenseIdentifier;
       if (licenseIsEqual) {
-        this._logger.verbose(`${license} satisfies ${licenseIdentifier}.`);
+        this._logSatisfies(license, licenseIdentifier, moduleData.module);
         return true;
       }
-      this._logger.verbose(`${license} does not satisfy ${licenseIdentifier}.`);
+      this._logNotSatisfies(license, licenseIdentifier, moduleData.module);
       return false;
     });
   }
@@ -128,9 +155,10 @@ export class Checker {
   private _allLicensesSatisfies(
     licenses: string[],
     licenseIdentifiers: string[],
+    moduleData: LicensesResult,
   ): boolean {
     return licenses.every((license) =>
-      this._licenseSatisfies(license, licenseIdentifiers),
+      this._licenseSatisfies(license, licenseIdentifiers, moduleData),
     );
   }
 
@@ -220,16 +248,20 @@ export class Checker {
    * @param licenses The licenses to check
    * @returns True if the licenses are allowed, false otherwise
    */
-  private _isAllowed(licenses: string[]): boolean {
+  private _isAllowed(licenses: string[], moduleData: LicensesResult): boolean {
     const result = this._allLicensesSatisfies(
       licenses,
       this._config.licenses?.allowed || [],
+      moduleData,
     );
 
-    this._logger.verbose("Checked if licenses are allowed", {
-      licenses,
-      result,
-    });
+    this._logger.debug(
+      `Checked if licenses of ${moduleData.module} are allowed`,
+      {
+        licenses,
+        result,
+      },
+    );
     return result;
   }
 
@@ -238,15 +270,22 @@ export class Checker {
    * @param licenses The licenses to check
    * @returns True if the licenses are forbidden, false otherwise
    */
-  private _isForbidden(licenses: string[]): boolean {
+  private _isForbidden(
+    licenses: string[],
+    moduleData: LicensesResult,
+  ): boolean {
     const result = this._allLicensesSatisfies(
       licenses,
       this._config.licenses?.forbidden || [],
+      moduleData,
     );
-    this._logger.verbose("Checked if licenses are forbidden", {
-      licenses,
-      result,
-    });
+    this._logger.debug(
+      `Checked if licenses of ${moduleData.module} are forbidden`,
+      {
+        licenses,
+        result,
+      },
+    );
     return result;
   }
 
@@ -255,15 +294,19 @@ export class Checker {
    * @param licenses The licenses to check
    * @returns True if the licenses are warning, false otherwise
    */
-  private _isWarning(licenses: string[]): boolean {
+  private _isWarning(licenses: string[], moduleData: LicensesResult): boolean {
     const result = this._allLicensesSatisfies(
       licenses,
       this._config.licenses?.warning || [],
+      moduleData,
     );
-    this._logger.verbose("Checked if licenses are warning", {
-      licenses,
-      result,
-    });
+    this._logger.debug(
+      `Checked if licenses of ${moduleData.module} are warning`,
+      {
+        licenses,
+        result,
+      },
+    );
     return result;
   }
 
@@ -288,6 +331,7 @@ export class Checker {
       licenses: licensesToCheck,
     });
 
+    let allowed: LicensesResult[] = [];
     let forbidden: LicensesResult[] = [];
     let warning: LicensesResult[] = [];
     let unknown: LicensesResult[] = [];
@@ -316,17 +360,17 @@ export class Checker {
           ...moduleData,
           licenses: ["unknown"],
         });
-      } else if (this._isAllowed(licenses)) {
+      } else if (this._isAllowed(licenses, moduleData)) {
         this._logger.verbose(
           `Licenses of ${moduleData.module} are allowed explicitly`,
         );
-        return;
-      } else if (this._isForbidden(licenses)) {
+        allowed.push(moduleData);
+      } else if (this._isForbidden(licenses, moduleData)) {
         this._logger.verbose(
           `Licenses of ${moduleData.module} are forbidden explicitly`,
         );
         forbidden.push(moduleData);
-      } else if (this._isWarning(licenses)) {
+      } else if (this._isWarning(licenses, moduleData)) {
         this._logger.verbose(
           `Licenses of ${moduleData.module} are warning explicitly`,
         );
@@ -368,8 +412,12 @@ export class Checker {
       warnings: this._dependenciesInfo.warnings,
     };
 
-    this._logger.debug("Result", { forbidden, warning, caveats });
+    this._logger.debug("Result", { forbidden, warning, allowed, caveats });
 
-    return { forbidden, warning, caveats };
+    this._logger.info(`Found ${allowed.length} allowed licenses`);
+    this._logger.info(`Found ${warning.length} warning licenses`);
+    this._logger.info(`Found ${forbidden.length} forbidden licenses`);
+
+    return { forbidden, warning, allowed, caveats };
   }
 }

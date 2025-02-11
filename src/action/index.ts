@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as core from "@actions/core";
-import path from "path";
 
 import { Checker, getReport } from "../lib/index.js";
 
@@ -36,8 +35,7 @@ export async function run(): Promise<void> {
   try {
     core.debug("Getting configuration...");
     // NOTE: In github container actions, the workspace is mounted in /github/workspace
-    //const options = await getConfig("/github/workspace");
-    const options = await getConfig(path.resolve(process.cwd(), "debug-maven"));
+    const options = await getConfig("/github/workspace");
 
     core.debug("Running checker...");
     const checker = new Checker({

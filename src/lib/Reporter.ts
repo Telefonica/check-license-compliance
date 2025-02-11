@@ -59,11 +59,28 @@ function removeBlankLines(text: string): string {
   return text.replace(/\n/gm, " ");
 }
 
+function getAllowedMessage(
+  allowed: LicensesResult[],
+  markdown = true,
+): string[] {
+  const lines = [];
+  if (allowed.length > 0) {
+    lines.push("");
+    const message =
+      allowed.length === 1
+        ? "There is one dependency with allowed licenses."
+        : `There are ${allowed.length} dependencies with allowed licenses.`;
+    lines.push(messageWithEmoji("✅", message, markdown));
+    lines.push("");
+  }
+  return lines;
+}
+
 /**
  * Returns a markdown message with the dependencies that failed the check
  * @returns The markdown message
  */
-function getErrorsMessage(
+function getForbiddenOrWarningMessage(
   errors: LicensesResult[],
   type: "dangerous" | "forbidden",
   emoji: string,
@@ -169,7 +186,7 @@ function getCaveatsMessage(
  * @returns The report in the specified format
  */
 function successReport(reporter: Reporter, result: Result): string {
-  const textMessage = `${ALL_VALID}\n${getCaveatsMessage(result.caveats, false).join("\n")}`;
+  const textMessage = `${getAllowedMessage(result.allowed, false).join("\n")}\n${getCaveatsMessage(result.caveats, false).join("\n")}`;
 
   switch (reporter) {
     case "json":
@@ -181,7 +198,7 @@ function successReport(reporter: Reporter, result: Result): string {
       return stripIndent(`
         __${TITLE}__
 
-        ✅ ${ALL_VALID + indentMarkdownBlock(getCaveatsMessage(result.caveats))}
+        ${indentMarkdownBlock(getAllowedMessage(result.allowed), false) + indentMarkdownBlock(getCaveatsMessage(result.caveats))}
       `);
     default:
       return textMessage;
@@ -211,12 +228,12 @@ function errorReport(
       return stripIndent(`
         __${TITLE}__
         ${
+          indentMarkdownBlock(getAllowedMessage(result.allowed), false) +
           indentMarkdownBlock(
-            getErrorsMessage(result.forbidden, "forbidden", "❌"),
-            false,
+            getForbiddenOrWarningMessage(result.warning, "dangerous", "⚠️"),
           ) +
           indentMarkdownBlock(
-            getErrorsMessage(result.warning, "dangerous", "⚠️"),
+            getForbiddenOrWarningMessage(result.forbidden, "forbidden", "❌"),
           ) +
           indentMarkdownBlock(getCaveatsMessage(result.caveats))
         }
@@ -224,7 +241,7 @@ function errorReport(
         ${!isValid ? messageWithEmoji("❌", NOT_VALID_RESULT, true) : messageWithEmoji("✅", VALID_RESULT, true)}
       `);
     default:
-      return `${textTitle}\n${getErrorsMessage(result.forbidden, "forbidden", "", false).join("\n")}\n${getErrorsMessage(result.warning, "dangerous", "", false).join("\n")}\n${getCaveatsMessage(result.caveats, false).join("\n")}`;
+      return `${textTitle}\n${getAllowedMessage(result.allowed, false).join("\n")}${getForbiddenOrWarningMessage(result.warning, "dangerous", "", false).join("\n")}\n${getForbiddenOrWarningMessage(result.forbidden, "forbidden", "", false).join("\n")}\n${getCaveatsMessage(result.caveats, false).join("\n")}`;
   }
 }
 
