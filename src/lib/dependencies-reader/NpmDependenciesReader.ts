@@ -99,7 +99,9 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );
-    this.logger.debug(`${this.system} dependencies`, flatDependencies);
+    this.logger.debug(`${this.system} dependencies`, {
+      dependencies: flatDependencies,
+    });
 
     return flatDependencies;
   }

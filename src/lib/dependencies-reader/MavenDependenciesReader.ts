@@ -65,7 +65,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
       return version;
     };
 
-    return dependencies.map((dep) => {
+    const deps = dependencies.map((dep) => {
       const name = `${dep.groupId}:${dep.artifactId}`;
       const version = resolveVersionFromProperties(dep.version);
       const resolvedVersion = this.resolveVersion(name, version);
@@ -86,6 +86,11 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         production: scope === COMPILE,
       };
     });
+
+    this.logger.debug(`Dependencies found in ${filePath}`, {
+      dependencies: deps,
+    });
+    return deps;
   }
 
   private async _getPomDependencies(
@@ -115,7 +120,9 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );
-    this.logger.debug(`${this.system} dependencies`, flatDependencies);
+    this.logger.debug(`${this.system} dependencies`, {
+      dependencies: flatDependencies,
+    });
     return flatDependencies;
   }
 }

@@ -2,6 +2,7 @@ import type {
   DependenciesReaderOptions,
   DependencyDeclaration,
 } from "./DependenciesReader.types";
+import { GoDependenciesReader } from "./GoDependenciesReader.js";
 import { MavenDependenciesReader } from "./MavenDependenciesReader.js";
 import { NpmDependenciesReader } from "./NpmDependenciesReader.js";
 import { PythonDependenciesReader } from "./PythonDependenciesReader.js";
@@ -13,9 +14,17 @@ export class DirectDependenciesReader {
   private _nodeDependenciesReader: NpmDependenciesReader;
   private _mavenDependenciesReader: MavenDependenciesReader;
   private _pythonDependenciesReader: PythonDependenciesReader;
+  private _goDependenciesReader: GoDependenciesReader;
   private _logger: DependenciesReaderOptions["logger"];
 
-  constructor({ logger, cwd, npm, maven, python }: DependenciesReaderOptions) {
+  constructor({
+    logger,
+    cwd,
+    npm,
+    maven,
+    python,
+    go,
+  }: DependenciesReaderOptions) {
     this._nodeDependenciesReader = new NpmDependenciesReader({
       logger,
       cwd,
@@ -31,6 +40,11 @@ export class DirectDependenciesReader {
       cwd,
       options: python,
     });
+    this._goDependenciesReader = new GoDependenciesReader({
+      logger,
+      cwd,
+      options: go,
+    });
     this._logger = logger;
   }
 
@@ -41,6 +55,7 @@ export class DirectDependenciesReader {
       this._nodeDependenciesReader.getDependencies(),
       this._mavenDependenciesReader.getDependencies(),
       this._pythonDependenciesReader.getDependencies(),
+      this._goDependenciesReader.getDependencies(),
     ]);
 
     return dependencies.flat();

@@ -115,7 +115,7 @@ function getForbiddenOrWarningMessage(
         : "Not able to determine the file where it is defined";
       const ancestorsToPrint = error.ancestors.length
         ? error.ancestors.join(", ")
-        : " undetermined ancestors";
+        : "undetermined ancestors";
       const directMessage = error.direct
         ? "Direct dependency"
         : `Transitive dependency of ${ancestorsToPrint}`;

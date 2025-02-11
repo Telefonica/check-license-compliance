@@ -57,12 +57,22 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
         );
         dependencies.push(...includedDependencies);
       } else {
-        let [name, version] = line.split("==");
+        const match = line.match(/(.*?)(==|>=|<=|!=|~=)(.*)/);
+        if (!match) {
+          this.logger.warn(`Invalid dependency format: ${line}`);
+          continue;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let [_, name, operator, version] = match;
+        let versionToAssign: string | undefined = version;
         if (name.includes("[")) {
           this.logger.warn(
             `Removing extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}`,
           );
           name = name.split("[")[0];
+        }
+        if (operator === "!=") {
+          versionToAssign = undefined;
         }
         const resolvedVersion = this.resolveVersion(name, version);
         dependencies.push({
@@ -70,10 +80,10 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           id: getDependencyId({
             system: PYTHON_SYSTEM,
             name,
-            version,
+            version: versionToAssign,
           }),
           name,
-          version,
+          version: versionToAssign,
           resolvedVersion,
           origin: path.relative(this.cwd, requirementsTxtPath),
           development: false,
@@ -82,10 +92,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
       }
     }
 
-    this.logger.debug(
-      `Dependencies found in ${requirementsTxtPath}`,
+    this.logger.debug(`Dependencies found in ${requirementsTxtPath}`, {
       dependencies,
-    );
+    });
 
     return dependencies;
   }
@@ -104,7 +113,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );
-    this.logger.debug(`${this.system} dependencies`, flatDependencies);
+    this.logger.debug(`${this.system} dependencies`, {
+      dependencies: flatDependencies,
+    });
 
     return flatDependencies;
   }

@@ -14,18 +14,26 @@ export const GO_SYSTEM: System = "GO";
 
 const SYSTEM_IDS = [NPM_SYSTEM, MAVEN_SYSTEM, PYTHON_SYSTEM, GO_SYSTEM];
 
-const SYSTEM_VERSION_SETTINGS: Record<System, { useSemver: boolean }> = {
+const NUMERIC_VERSION_REGEX = /^\d+(\.\d+)*(\S*)$/;
+
+const SYSTEM_VERSION_SETTINGS: Record<
+  System,
+  { useSemver: boolean; validVersionRegex?: RegExp }
+> = {
   [NPM_SYSTEM]: {
     useSemver: true,
   },
   [MAVEN_SYSTEM]: {
     useSemver: false,
+    validVersionRegex: NUMERIC_VERSION_REGEX,
   },
   [PYTHON_SYSTEM]: {
-    useSemver: true,
+    useSemver: false,
+    validVersionRegex: NUMERIC_VERSION_REGEX,
   },
   [GO_SYSTEM]: {
-    useSemver: true,
+    useSemver: false,
+    validVersionRegex: /^v\d+(\.\d+)*(\S*)$/,
   },
 };
 
@@ -74,9 +82,11 @@ export function hasSystemId(dependencyId: DependencyId): boolean {
   return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
 }
 
-function isValidStringVersion(version: string): boolean {
-  // Check if version is a range of numbers and dots, continued by any other string
-  return /^\d+(\.\d+)*(\S*)$/.test(version);
+function isValidStringVersion(version: string, system: System): boolean {
+  if (!SYSTEM_VERSION_SETTINGS[system].validVersionRegex) {
+    return false;
+  }
+  return SYSTEM_VERSION_SETTINGS[system].validVersionRegex.test(version);
 }
 
 export function isValidSemverVersion(version: string): boolean {
@@ -89,7 +99,7 @@ export function isValidVersion(system: System, version?: string): boolean {
   }
   return SYSTEM_VERSION_SETTINGS[system].useSemver
     ? isValidSemverVersion(version)
-    : isValidStringVersion(version);
+    : isValidStringVersion(version, system);
 }
 
 export function resolveVersion(

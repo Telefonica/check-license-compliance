@@ -59,6 +59,7 @@ export interface DepsDevModulesInfo {
     Pick<VersionOutput, "licenses"> & {
       error?: Error;
       resolvedVersion?: string;
+      requestAncestor?: DependencyId;
     };
 }
 

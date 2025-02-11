@@ -59,6 +59,9 @@ export class DependenciesInfo {
   private _getDependenciesPromise?: Promise<GetDependenciesInfoResult> | null;
   private _errors: Error[] = [];
   private _warnings: string[] = [];
+  private _moduleVersionRequests: Record<string, Promise<string | undefined>> =
+    {};
+  private _parents: Record<DependencyId, DependencyId[]> = {};
 
   constructor({
     logger,
@@ -120,6 +123,8 @@ export class DependenciesInfo {
     this._requestedModules = [];
     this._errors = [];
     this._warnings = [];
+    this._moduleVersionRequests = {};
+    this._parents = {};
   }
 
   private async _readProjectDependencies(): Promise<
@@ -210,6 +215,19 @@ export class DependenciesInfo {
 
     //@ts-expect-error The type defines "versionKey" but the real key is "version_key"
     return defaultVersion?.version_key?.version;
+  }
+
+  private _getModuleDefaultVersionFromCache({
+    system,
+    name,
+  }: DependencyNameUniqueProps): Promise<string | undefined> {
+    if (!this._moduleVersionRequests[name]) {
+      this._moduleVersionRequests[name] = this._getModuleDefaultVersion({
+        system,
+        name,
+      });
+    }
+    return this._moduleVersionRequests[name];
   }
 
   private _requestModuleVersionInfo(
@@ -336,17 +354,18 @@ export class DependenciesInfo {
     ) as Promise<DependenciesOutput>;
   }
 
-  private async _requestModuleAndDependenciesInfo({
-    system,
-    name,
-    version,
-    resolvedVersion,
-  }: DependencyUniqueProps) {
+  private async _requestModuleAndDependenciesInfo(
+    { system, name, version, resolvedVersion }: DependencyUniqueProps,
+    { isDirect = false, ancestor = "" },
+  ) {
     const id = getDependencyId({
       system,
       name,
       version,
     });
+
+    const ancestorToPass = isDirect ? id : ancestor;
+    const ancestorToSet = isDirect ? undefined : ancestor;
 
     if (this._requestedModules.includes(id)) {
       this._logger.silly(
@@ -367,14 +386,13 @@ export class DependenciesInfo {
       );
     }
 
-    // TODO: Avoid two different invalid versions requesting always the default version
-
     const getModuleDefaultVersion = async () => {
       try {
-        const moduleDefaultVersion = await this._getModuleDefaultVersion({
-          system,
-          name,
-        });
+        const moduleDefaultVersion =
+          await this._getModuleDefaultVersionFromCache({
+            system,
+            name,
+          });
         if (!moduleDefaultVersion) {
           const message = `No default version found to request data of ${id}`;
           this._logger.error(message);
@@ -393,6 +411,7 @@ export class DependenciesInfo {
           version,
           licenses: [],
           error: errorToReport,
+          requestAncestor: ancestorToSet,
         };
         this._depsDevDependenciesInfo[id] = {
           system,
@@ -425,6 +444,7 @@ export class DependenciesInfo {
           version,
           resolvedVersion: versionToRequest,
           licenses: moduleInfo.licenses,
+          requestAncestor: ancestorToSet,
         };
       } catch (error) {
         const err = error as Error;
@@ -470,6 +490,12 @@ export class DependenciesInfo {
                 dependencyInfo.system !== system ||
                 dependencyInfo.name !== name
               ) {
+                const dependencyId = getDependencyId(dependencyInfo);
+                if (!this._parents[dependencyId]) {
+                  this._parents[dependencyId] = [id];
+                } else {
+                  this._parents[dependencyId].push(id);
+                }
                 return {
                   id: getDependencyId(dependencyInfo),
                   system: dependencyInfo.system,
@@ -490,11 +516,17 @@ export class DependenciesInfo {
               dependencyInfo.system !== system ||
               dependencyInfo.name !== name
             ) {
-              return this._requestModuleAndDependenciesInfo({
-                system: dependencyInfo.system,
-                name: dependencyInfo.name,
-                version: dependencyInfo.version,
-              });
+              return this._requestModuleAndDependenciesInfo(
+                {
+                  system: dependencyInfo.system,
+                  name: dependencyInfo.name,
+                  version: dependencyInfo.version,
+                },
+                {
+                  isDirect: false,
+                  ancestor: ancestorToPass,
+                },
+              );
             }
             return Promise.resolve();
           }),
@@ -530,50 +562,41 @@ export class DependenciesInfo {
     this._logger.info("Getting dependencies info from deps.dev API");
     return Promise.all([
       ...projectDependencies.map((dependency) => {
-        return this._requestModuleAndDependenciesInfo(dependency);
+        return this._requestModuleAndDependenciesInfo(dependency, {
+          isDirect: true,
+        });
       }),
     ]);
   }
 
   private _getAncestors(dependency: DependencyId) {
-    let result: string[] = [];
-    result = this._directDependencies.filter((directDependency) => {
-      const directDependencyInfo =
-        this._depsDevDependenciesInfo[directDependency];
-      if (!directDependencyInfo) {
-        throw new Error(
-          `No dependencies info found for direct dependency ${directDependency}. This should not happen`,
+    const searchAncestors = (
+      dependencyId: DependencyId,
+      deep = 0,
+    ): string[] => {
+      if (deep > 2) {
+        this._logger.silly(
+          `Too deep dependency tree for ${dependency}. Will use only the ancestor that triggered the request in order to avoid performance issues`,
         );
+        const ancestor = this._depsDevModulesInfo[dependency].requestAncestor;
+        if (!ancestor) {
+          return [];
+        }
+        return [ancestor];
       }
-      return directDependencyInfo.dependencies.some((dependencyInfo) => {
-        return dependencyInfo.id === dependency;
+      const ancestors = this._parents[dependencyId].filter((parent) => {
+        return this._directDependencies.includes(parent);
       });
-    });
-    if (!result.length) {
-      this._logger.silly(
-        `No ancestors found for dependency ${dependency} in direct dependencies. Searching traversing the dependencies tree`,
-      );
-      const searchAncestors = (dependencyId: DependencyId): string[] => {
-        const ancestors = Object.keys(this._depsDevDependenciesInfo).filter(
-          (id) => {
-            return this._depsDevDependenciesInfo[id].dependencies.some(
-              (dependencyInfo) => {
-                return dependencyInfo.id === dependencyId;
-              },
-            );
-          },
-        );
-        return ancestors
-          .map((ancestor) => {
-            if (this._directDependencies.includes(ancestor)) {
-              return ancestor;
-            }
-            return searchAncestors(ancestor);
+      if (!ancestors.length) {
+        return this._parents[dependencyId]
+          .map((parent) => {
+            return searchAncestors(parent, deep + 1);
           })
           .flat();
-      };
-      result = searchAncestors(dependency);
-    }
+      }
+      return ancestors;
+    };
+    const result = searchAncestors(dependency);
     return Array.from(new Set(result));
   }
 
@@ -713,13 +736,13 @@ export class DependenciesInfo {
       await this._requestDependenciesInfo(projectDependencies);
     }
     if (projectDependencies) {
+      this._logger.info(
+        `Retrieved information about ${Object.keys(this._depsDevModulesInfo).length} dependencies`,
+      );
       this._fillDependenciesInfo(projectDependencies);
     }
     this._getErrors();
     this._getWarnings();
-    this._logger.info(
-      `Retrieved information about ${this._dependenciesInfo.length} dependencies`,
-    );
     this._logger.debug("Dependencies info", {
       dependencies: this._dependenciesInfo,
     });
