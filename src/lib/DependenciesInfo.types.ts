@@ -1,6 +1,5 @@
 import type {
   DependencyUniqueProps,
-  DependencyDeclarationUniqueProps,
   DependencyId,
   NpmDependenciesReaderOptions,
   MavenDependenciesReaderOptions,
@@ -56,7 +55,7 @@ export interface DepsDevDependencyNode {
 }
 
 export interface DepsDevModulesInfo {
-  [key: DependencyId]: DependencyDeclarationUniqueProps &
+  [key: DependencyId]: DependencyUniqueProps &
     Pick<VersionOutput, "licenses"> & {
       error?: Error;
       resolvedVersion?: string;
@@ -64,7 +63,7 @@ export interface DepsDevModulesInfo {
 }
 
 export interface DepsDevDependenciesInfo {
-  [key: DependencyId]: DependencyDeclarationUniqueProps & {
+  [key: DependencyId]: DependencyUniqueProps & {
     dependencies: (DependencyUniqueProps & {
       id: DependencyId;
       direct: boolean;

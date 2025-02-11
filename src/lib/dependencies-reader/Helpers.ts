@@ -3,7 +3,6 @@ import semver from "semver";
 import type {
   System,
   DependencyUniqueProps,
-  DependencyDeclarationUniqueProps,
   DependencyId,
 } from "./DependenciesReader.types";
 
@@ -54,7 +53,7 @@ export function getDependencyId({
   system,
   name,
   version,
-}: DependencyDeclarationUniqueProps): DependencyId {
+}: DependencyUniqueProps): DependencyId {
   const fullName = getDependencyName({
     system: system,
     name: name,

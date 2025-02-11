@@ -9,7 +9,6 @@ import type {
   DependencyDeclaration,
   DependencyUniqueProps,
   DependencyId,
-  DependencyDeclarationUniqueProps,
   DependencyNameUniqueProps,
   System,
 } from "./dependencies-reader/DependenciesReader.types";
@@ -126,24 +125,22 @@ export class DependenciesInfo {
   private async _readProjectDependencies(): Promise<
     DependencyDeclaration[] | void
   > {
-    return this._queue.add(async () => {
-      const dependencies =
-        await this._projectDependenciesReader.getDependencies();
-      dependencies.forEach((dependency) => {
-        // NOTE: Store each local dependency type in a different array for easier access later to improve performance
-        if (dependency.production) {
-          this._directProdDependencies.push(dependency.id);
-        }
-        if (dependency.development) {
-          this._directDevDependencies.push(dependency.id);
-        }
-        this._directDependencies.push(dependency.id);
-      });
-      return dependencies;
+    const dependencies =
+      await this._projectDependenciesReader.getDependencies();
+    dependencies.forEach((dependency) => {
+      // NOTE: Store each local dependency type in a different array for easier access later to improve performance
+      if (dependency.production) {
+        this._directProdDependencies.push(dependency.id);
+      }
+      if (dependency.development) {
+        this._directDevDependencies.push(dependency.id);
+      }
+      this._directDependencies.push(dependency.id);
     });
+    return dependencies;
   }
 
-  private async _requestModuleVersions(
+  private _requestModuleVersions(
     { system, name }: DependencyNameUniqueProps,
     retry = 0,
   ): Promise<PackageOutput> {
@@ -151,40 +148,46 @@ export class DependenciesInfo {
       system,
       name,
     });
-    return new Promise((resolve, reject) => {
-      const requestData = {
-        package_key: {
-          system,
-          name,
-        },
-        // NOTE: The type is not correct in the proto. It expects a "packageKey" object, while the real key is "package_key"
-      } as unknown as GetPackageRequest;
+    return this._queue.add(
+      () =>
+        new Promise((resolve, reject) => {
+          const requestData = {
+            package_key: {
+              system,
+              name,
+            },
+            // NOTE: The type is not correct in the proto. It expects a "packageKey" object, while the real key is "package_key"
+          } as unknown as GetPackageRequest;
 
-      this._logger.debug(`Requesting versions of ${id}`);
+          this._logger.debug(`Requesting versions of ${id}`);
 
-      this._depsDevInsightsClient.GetPackage(
-        requestData,
-        { deadline: this._getRPCDeadline() },
-        (error, response) => {
-          if (error || !response) {
-            // Detect if error is due to deadline exceeded, then retry
-            if (error?.code === grpc.status.DEADLINE_EXCEEDED && retry < 3) {
-              this._logger.warn(
-                `Retrying versions request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
-              );
-              this._requestModuleVersions({ system, name }, retry + 1)
-                .then(resolve)
-                .catch(reject);
-              return;
-            }
-            this._logger.error(`Error requesting versions of ${id}`, error);
-            reject(error);
-            return;
-          }
-          resolve(response);
-        },
-      );
-    });
+          this._depsDevInsightsClient.GetPackage(
+            requestData,
+            { deadline: this._getRPCDeadline() },
+            (error, response) => {
+              if (error || !response) {
+                // Detect if error is due to deadline exceeded, then retry
+                if (
+                  error?.code === grpc.status.DEADLINE_EXCEEDED &&
+                  retry < 3
+                ) {
+                  this._logger.warn(
+                    `Retrying versions request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
+                  );
+                  this._requestModuleVersions({ system, name }, retry + 1)
+                    .then(resolve)
+                    .catch(reject);
+                  return;
+                }
+                this._logger.error(`Error requesting versions of ${id}`, error);
+                reject(error);
+                return;
+              }
+              resolve(response);
+            },
+          );
+        }),
+    ) as Promise<PackageOutput>;
   }
 
   private async _getModuleDefaultVersion({
@@ -196,7 +199,7 @@ export class DependenciesInfo {
       name,
     });
     const moduleVersions = await this._requestModuleVersions({ system, name });
-    this._logger.silly(
+    this._logger.debug(
       `Response received for versions of ${id}`,
       moduleVersions,
     );
@@ -209,7 +212,7 @@ export class DependenciesInfo {
     return defaultVersion?.version_key?.version;
   }
 
-  private async _requestModuleVersionInfo(
+  private _requestModuleVersionInfo(
     { system, name, version }: DependencyUniqueProps,
     retry = 0,
   ): Promise<VersionOutput> {
@@ -219,49 +222,58 @@ export class DependenciesInfo {
       version,
     });
 
-    return new Promise((resolve, reject) => {
-      const requestData = {
-        version_key: {
-          system,
-          name,
-          version,
-        },
-        // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
-      } as unknown as GetVersionRequest;
+    return this._queue.add(
+      () =>
+        new Promise((resolve, reject) => {
+          const requestData = {
+            version_key: {
+              system,
+              name,
+              version,
+            },
+            // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
+          } as unknown as GetVersionRequest;
 
-      this._logger.debug(`Requesting info of ${id}`);
+          this._logger.debug(`Requesting info of ${id}`);
 
-      this._depsDevInsightsClient.GetVersion(
-        requestData,
-        { deadline: this._getRPCDeadline() },
-        (error, response) => {
-          if (error || !response) {
-            // Detect if error is due to deadline exceeded, then retry
-            if (error?.code === grpc.status.DEADLINE_EXCEEDED && retry < 3) {
-              this._logger.warn(
-                `Retrying info request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
+          this._depsDevInsightsClient.GetVersion(
+            requestData,
+            { deadline: this._getRPCDeadline() },
+            (error, response) => {
+              if (error || !response) {
+                // Detect if error is due to deadline exceeded, then retry
+                if (
+                  error?.code === grpc.status.DEADLINE_EXCEEDED &&
+                  retry < 3
+                ) {
+                  this._logger.warn(
+                    `Retrying info request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
+                  );
+                  this._requestModuleVersionInfo(
+                    { system, name, version },
+                    retry + 1,
+                  )
+                    .then(resolve)
+                    .catch(reject);
+                  return;
+                }
+                this._logger.error(`Error requesting info of ${id}`, error);
+                reject(error);
+                return;
+              }
+              this._logger.debug(
+                `Response received for info of ${id}`,
+                response,
               );
-              this._requestModuleVersionInfo(
-                { system, name, version },
-                retry + 1,
-              )
-                .then(resolve)
-                .catch(reject);
-              return;
-            }
-            this._logger.error(`Error requesting info of ${id}`, error);
-            reject(error);
-            return;
-          }
-          this._logger.silly(`Response received for info of ${id}`, response);
-          // NOTE: The type is not correct in the proto. The real key is "version_key", while the type is "versionKey". This is corrected in the VersionOutput type
-          resolve(response as unknown as VersionOutput);
-        },
-      );
-    });
+              // NOTE: The type is not correct in the proto. The real key is "version_key", while the type is "versionKey". This is corrected in the VersionOutput type
+              resolve(response as unknown as VersionOutput);
+            },
+          );
+        }),
+    ) as Promise<VersionOutput>;
   }
 
-  private async _requestModuleDependencies(
+  private _requestModuleDependencies(
     { system, name, version }: DependencyUniqueProps,
     retry = 0,
   ): Promise<DependenciesOutput> {
@@ -271,66 +283,72 @@ export class DependenciesInfo {
       version,
     });
 
-    return new Promise((resolve, reject) => {
-      const requestData = {
-        version_key: {
-          system,
-          name,
-          version,
-        },
-        // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
-      } as unknown as GetVersionRequest;
+    return this._queue.add(
+      () =>
+        new Promise((resolve, reject) => {
+          const requestData = {
+            version_key: {
+              system,
+              name,
+              version,
+            },
+            // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
+          } as unknown as GetVersionRequest;
 
-      this._logger.debug(`Requesting dependencies of ${id}`);
+          this._logger.debug(`Requesting dependencies of ${id}`);
 
-      this._depsDevInsightsClient.GetDependencies(
-        requestData,
-        { deadline: this._getRPCDeadline() },
-        (error, response) => {
-          if (error || !response) {
-            // Detect if error is due to deadline exceeded, then retry
-            if (error?.code === grpc.status.DEADLINE_EXCEEDED && retry < 3) {
-              this._logger.warn(
-                `Retrying dependencies request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
+          this._depsDevInsightsClient.GetDependencies(
+            requestData,
+            { deadline: this._getRPCDeadline() },
+            (error, response) => {
+              if (error || !response) {
+                // Detect if error is due to deadline exceeded, then retry
+                if (
+                  error?.code === grpc.status.DEADLINE_EXCEEDED &&
+                  retry < 3
+                ) {
+                  this._logger.warn(
+                    `Retrying dependencies request of ${id} due to deadline exceeded. Retry ${retry + 1}/3`,
+                  );
+                  this._requestModuleDependencies(
+                    { system, name, version },
+                    retry + 1,
+                  )
+                    .then(resolve)
+                    .catch(reject);
+                  return;
+                }
+                this._logger.error(
+                  `Error requesting dependencies of ${id}`,
+                  error,
+                );
+                reject(error);
+                return;
+              }
+              this._logger.debug(
+                `Response received for dependencies of ${id}`,
+                response,
               );
-              this._requestModuleDependencies(
-                { system, name, version },
-                retry + 1,
-              )
-                .then(resolve)
-                .catch(reject);
-              return;
-            }
-            this._logger.error(`Error requesting dependencies of ${id}`, error);
-            reject(error);
-            return;
-          }
-          this._logger.silly(
-            `Response received for dependencies of ${id}`,
-            response,
+              resolve(response);
+            },
           );
-          resolve(response);
-        },
-      );
-    });
+        }),
+    ) as Promise<DependenciesOutput>;
   }
 
   private async _requestModuleAndDependenciesInfo({
     system,
     name,
     version,
-  }: DependencyDeclarationUniqueProps) {
+    resolvedVersion,
+  }: DependencyUniqueProps) {
     const id = getDependencyId({
       system,
       name,
       version,
     });
 
-    if (
-      this._requestedModules.includes(
-        getDependencyId({ system, name, version }),
-      )
-    ) {
+    if (this._requestedModules.includes(id)) {
       this._logger.silly(
         `The module ${id} has already been requested. Skipping`,
       );
@@ -340,7 +358,9 @@ export class DependenciesInfo {
     this._requestedModules.push(id);
     this._logger.debug(`Requesting module and dependencies info for ${id}`);
 
-    const versionIsValid = isValidVersion(system, version);
+    const versionToCheck = resolvedVersion || version;
+
+    const versionIsValid = isValidVersion(system, versionToCheck);
     if (!versionIsValid) {
       this._logger.debug(
         `Invalid version "${version}" while requesting info of ${id}. Searching the default version available for use it`,
@@ -349,48 +369,50 @@ export class DependenciesInfo {
 
     // TODO: Avoid two different invalid versions requesting always the default version
 
-    const versionToRequest = versionIsValid
-      ? version
-      : await this._queue.add(async () => {
-          try {
-            const moduleDefaultVersion = await this._getModuleDefaultVersion({
-              system,
-              name,
-            });
-            if (!moduleDefaultVersion) {
-              const message = `No default version found to request data of ${id}`;
-              this._logger.error(message);
-              throw new Error(message);
-            }
-            return moduleDefaultVersion;
-          } catch (error) {
-            const err = error as Error;
-            const errorToReport = {
-              ...err,
-              message: `Error requesting module default version: ${err.message}`,
-            };
-            this._depsDevModulesInfo[id] = {
-              system,
-              name,
-              version,
-              licenses: [],
-              error: errorToReport,
-            };
-            this._depsDevDependenciesInfo[id] = {
-              system,
-              name,
-              version,
-              dependencies: [],
-              error: errorToReport,
-            };
-          }
+    const getModuleDefaultVersion = async () => {
+      try {
+        const moduleDefaultVersion = await this._getModuleDefaultVersion({
+          system,
+          name,
         });
+        if (!moduleDefaultVersion) {
+          const message = `No default version found to request data of ${id}`;
+          this._logger.error(message);
+          throw new Error(message);
+        }
+        return moduleDefaultVersion;
+      } catch (error) {
+        const err = error as Error;
+        const errorToReport = {
+          ...err,
+          message: `Error requesting module default version: ${err.message}`,
+        };
+        this._depsDevModulesInfo[id] = {
+          system,
+          name,
+          version,
+          licenses: [],
+          error: errorToReport,
+        };
+        this._depsDevDependenciesInfo[id] = {
+          system,
+          name,
+          version,
+          dependencies: [],
+          error: errorToReport,
+        };
+      }
+    };
+
+    const versionToRequest = versionIsValid
+      ? versionToCheck
+      : await getModuleDefaultVersion();
 
     if (!versionToRequest) {
       return;
     }
 
-    const moduleInfoPromise = this._queue.add(async () => {
+    const getModuleInfo = async () => {
       try {
         const moduleInfo = await this._requestModuleVersionInfo({
           system,
@@ -418,9 +440,9 @@ export class DependenciesInfo {
           },
         };
       }
-    });
+    };
 
-    const dependenciesInfoPromise = this._queue.add(async () => {
+    const getDependenciesInfo = async () => {
       try {
         const dependencies = await this._requestModuleDependencies({
           system,
@@ -468,14 +490,13 @@ export class DependenciesInfo {
               dependencyInfo.system !== system ||
               dependencyInfo.name !== name
             ) {
-              return this._queue.add(async () => {
-                await this._requestModuleAndDependenciesInfo({
-                  system: dependencyInfo.system,
-                  name: dependencyInfo.name,
-                  version: dependencyInfo.version,
-                });
+              return this._requestModuleAndDependenciesInfo({
+                system: dependencyInfo.system,
+                name: dependencyInfo.name,
+                version: dependencyInfo.version,
               });
             }
+            return Promise.resolve();
           }),
         );
       } catch (error) {
@@ -492,9 +513,15 @@ export class DependenciesInfo {
           },
         };
       }
-    });
+    };
 
-    await Promise.all([moduleInfoPromise, dependenciesInfoPromise]);
+    await Promise.all([getModuleInfo(), getDependenciesInfo()]);
+    this._logger.info(
+      `Finished requesting module and dependencies info of ${id}`,
+      {
+        queue: this._queue.size,
+      },
+    );
   }
 
   private async _requestDependenciesInfo(

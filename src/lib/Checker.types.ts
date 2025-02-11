@@ -7,7 +7,7 @@ export interface LicensesResult {
   module: string;
   /** The original version of the module */
   version?: string;
-  /** The version of the module that has been resolved to check the licenses */
+  /** The version of the module used to get information when version is not defined locally */
   resolvedVersion?: string;
   /** The licenses used by the module */
   licenses: string[];

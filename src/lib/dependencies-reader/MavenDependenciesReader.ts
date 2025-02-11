@@ -67,10 +67,8 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
 
     return dependencies.map((dep) => {
       const name = `${dep.groupId}:${dep.artifactId}`;
-      const version = this.resolveVersion(
-        name,
-        resolveVersionFromProperties(dep.version),
-      );
+      const version = resolveVersionFromProperties(dep.version);
+      const resolvedVersion = this.resolveVersion(name, version);
       const scope = dep.scope || COMPILE;
       return {
         system: MAVEN_SYSTEM,
@@ -81,6 +79,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
           version,
         }),
         version,
+        resolvedVersion,
         origin: path.relative(this.cwd, filePath),
         development:
           scope === "test" || scope === "provided" || scope === "runtime",

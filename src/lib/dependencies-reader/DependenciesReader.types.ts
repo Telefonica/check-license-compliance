@@ -112,21 +112,18 @@ export interface DependencyNameUniqueProps {
   name: string;
 }
 
-export type DependencyDeclarationUniqueProps = DependencyNameUniqueProps & {
+export type DependencyUniqueProps = DependencyNameUniqueProps & {
   version?: string;
+  resolvedVersion?: string;
 };
 
-export type DependencyUniqueProps = DependencyDeclarationUniqueProps & {
-  version: string;
-};
-
-export interface DependencyDeclaration
-  extends DependencyDeclarationUniqueProps {
+export type DependencyDeclaration = DependencyUniqueProps & {
   id: DependencyId;
   production: boolean;
+  resolvedVersion?: string;
   development: boolean;
   origin: string;
-}
+};
 
 export interface DependenciesReader {
   getDependencies(): Promise<DependencyDeclaration[]>;
