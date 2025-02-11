@@ -24,26 +24,36 @@ export class DirectDependenciesReader {
     maven,
     python,
     go,
+    development,
+    production,
   }: DependenciesReaderOptions) {
     this._nodeDependenciesReader = new NpmDependenciesReader({
       logger,
       cwd,
       options: npm,
+      development,
+      production,
     });
     this._mavenDependenciesReader = new MavenDependenciesReader({
       logger,
       cwd,
       options: maven,
+      development,
+      production,
     });
     this._pythonDependenciesReader = new PythonDependenciesReader({
       logger,
       cwd,
       options: python,
+      production,
+      development,
     });
     this._goDependenciesReader = new GoDependenciesReader({
       logger,
       cwd,
       options: go,
+      development,
+      production,
     });
     this._logger = logger;
   }

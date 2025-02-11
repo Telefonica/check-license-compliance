@@ -59,6 +59,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
 
   private async _getPackageJsonDependencies(
     packageJsonPath: string,
+    isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading dependencies from ${packageJsonPath}`);
     const resolvedPath = path.resolve(this.cwd, packageJsonPath);
@@ -70,6 +71,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     const packageProductionDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
       resolvedPath,
+      isDevelopment,
     );
     const packageDevDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
@@ -77,24 +79,35 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
       true,
     );
 
+    const dependencies = [
+      ...packageProductionDependencies,
+      ...packageDevDependencies,
+    ];
+
     this.logger.debug(`Dependencies found in ${packageJsonPath}`, {
-      production: packageProductionDependencies,
-      development: packageDevDependencies,
+      dependencies,
     });
 
-    return [...packageProductionDependencies, ...packageDevDependencies];
+    return dependencies;
   }
 
   public async getDependencies(): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading ${this.system} dependencies`);
 
-    const packageJsonFiles = this.findFiles();
+    const { dev, any } = this.findFiles();
     const dependencies = await Promise.all(
-      packageJsonFiles.map((packageJsonPath) =>
+      any.map((packageJsonPath) =>
         this._getPackageJsonDependencies(packageJsonPath),
       ),
     );
-    const flatDependencies = dependencies.flat();
+    const devDependencies = this.development
+      ? await Promise.all(
+          dev.map((packageJsonPath) =>
+            this._getPackageJsonDependencies(packageJsonPath, true),
+          ),
+        )
+      : [];
+    const flatDependencies = [...dependencies, ...devDependencies].flat();
 
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,

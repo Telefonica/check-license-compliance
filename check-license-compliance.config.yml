@@ -29,8 +29,22 @@ licenses:
   others: forbidden
   unknown: warning
 log: info
-#npm:
-  #excludeFiles:
-    #- "**/node_modules/**"
+npm:
+  excludeFiles:
+    - "**/node_modules/**"
+  developmentFiles:
+    - "**/package.json"
+  excludeModules:
+    - exit@0.1.2
+go:
+  excludeFiles:
+    - "**"
+maven:
+  excludeFiles:
+    - "**"
+python:
+  excludeFiles:
+    - "**"
+development: true
 # excludeModules:
   #- exit@0.1.2

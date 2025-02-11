@@ -20,6 +20,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     super(options, {
       system: PYTHON_SYSTEM,
       defaultInclude: ["**/requirements.txt"],
+      defaultDevelopment: ["**/requirements-dev.txt"],
       // cspell: disable-next-line
       defaultExclude: ["**/venv/**"],
     });
@@ -27,6 +28,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
 
   private async _getRequirementsTxtDependencies(
     requirementsTxtPath: string,
+    isDevelopment = false,
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading dependencies from ${requirementsTxtPath}`);
@@ -53,6 +55,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
         );
         const includedDependencies = await this._getRequirementsTxtDependencies(
           includedFilePath,
+          isDevelopment,
           processedFiles,
         );
         dependencies.push(...includedDependencies);
@@ -67,7 +70,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
         let versionToAssign: string | undefined = version;
         if (name.includes("[")) {
           this.logger.warn(
-            `Removing extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}`,
+            `Removing extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}. You should add the corresponding extra modules manually to the configuration file`,
           );
           name = name.split("[")[0];
         }
@@ -86,8 +89,8 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           version: versionToAssign,
           resolvedVersion,
           origin: path.relative(this.cwd, requirementsTxtPath),
-          development: false,
-          production: true,
+          development: isDevelopment,
+          production: !isDevelopment,
         });
       }
     }
@@ -102,13 +105,20 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
   public async getDependencies(): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading ${this.system} dependencies`);
 
-    const requirementsTxtFiles = this.findFiles();
-    const dependencies = await Promise.all(
-      requirementsTxtFiles.map((requirementsTxtPath) =>
+    const { dev, any } = this.findFiles();
+    const prodDependencies = await Promise.all(
+      any.map((requirementsTxtPath) =>
         this._getRequirementsTxtDependencies(requirementsTxtPath),
       ),
     );
-    const flatDependencies = dependencies.flat();
+    const devDependencies = this.development
+      ? await Promise.all(
+          dev.map((requirementsTxtPath) =>
+            this._getRequirementsTxtDependencies(requirementsTxtPath, true),
+          ),
+        )
+      : [];
+    const flatDependencies = [...prodDependencies, ...devDependencies].flat();
 
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,

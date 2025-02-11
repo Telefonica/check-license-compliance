@@ -45,14 +45,24 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   protected cwd: string;
   protected options: T;
   protected system: System;
+  protected production: boolean;
+  protected development: boolean;
   private _defaultInclude: string[];
   private _defaultExclude: string[];
+  private _defaultDevelopment: string[];
 
   constructor(
-    { logger, cwd, options }: SystemDependenciesReaderOptions<T>,
+    {
+      logger,
+      cwd,
+      options,
+      development,
+      production,
+    }: SystemDependenciesReaderOptions<T>,
     {
       defaultInclude,
       defaultExclude,
+      defaultDevelopment,
       system,
     }: BaseSystemDependenciesReaderOptions,
   ) {
@@ -60,7 +70,10 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     this.cwd = cwd || ROOT_PATH;
     this.options = options || ({} as T);
     this.logger = logger;
+    this.production = production;
+    this.development = development;
     this._defaultExclude = defaultExclude || [];
+    this._defaultDevelopment = defaultDevelopment || [];
     if (!defaultInclude) {
       throw new Error(
         "defaultInclude is required for system dependencies reader",
@@ -75,19 +88,33 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
 
   /**
    * Returns a list of files to read, relative to the cwd
-   * @returns List of files to read
+   * @returns List of files to read, separated by files containing only development dependencies and files containing any type of dependencies
    */
-  protected findFiles(): string[] {
+  protected findFiles(): {
+    dev: string[];
+    any: string[];
+  } {
     const includeFiles = this.options.includeFiles || this._defaultInclude;
     const excludeFiles = this.options.excludeFiles || this._defaultExclude;
+    const developmentFiles =
+      this.options.developmentFiles || this._defaultDevelopment || [];
+
     this.logger.debug(`Finding files to read for ${this.system} dependencies`, {
       includeFiles,
       excludeFiles,
     });
-    return globule.find(includeFiles, {
+    const allFiles = globule.find(includeFiles, {
       ignore: excludeFiles,
       cwd: this.cwd,
     });
+    const devFiles = globule.find(developmentFiles, {
+      ignore: excludeFiles,
+      cwd: this.cwd,
+    });
+    return {
+      dev: devFiles,
+      any: allFiles.filter((file) => !devFiles.includes(file)),
+    };
   }
 
   protected resolveVersion(

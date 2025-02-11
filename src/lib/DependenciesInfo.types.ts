@@ -24,6 +24,9 @@ export interface DependenciesInfoOptions {
   maven?: MavenDependenciesReaderOptions;
   python?: PythonDependenciesReaderOptions;
   go?: GoDependenciesReaderOptions;
+  onlyDirect: boolean;
+  production: boolean;
+  development: boolean;
 }
 
 export type DirectDependencies = DependencyId[];

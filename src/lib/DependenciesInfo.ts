@@ -62,6 +62,9 @@ export class DependenciesInfo {
   private _moduleVersionRequests: Record<string, Promise<string | undefined>> =
     {};
   private _parents: Record<DependencyId, DependencyId[]> = {};
+  private _onlyDirect: boolean;
+  private _production: boolean;
+  private _development: boolean;
 
   constructor({
     logger,
@@ -70,6 +73,9 @@ export class DependenciesInfo {
     maven,
     python,
     go,
+    onlyDirect,
+    production,
+    development,
   }: DependenciesInfoOptions) {
     this._logger = logger;
     this._initGrpcClient();
@@ -80,7 +86,12 @@ export class DependenciesInfo {
       maven,
       python,
       go,
+      production,
+      development,
     });
+    this._onlyDirect = onlyDirect;
+    this._production = production;
+    this._development = development;
   }
 
   private _getRPCDeadline() {
@@ -356,7 +367,7 @@ export class DependenciesInfo {
 
   private async _requestModuleAndDependenciesInfo(
     { system, name, version, resolvedVersion }: DependencyUniqueProps,
-    { isDirect = false, ancestor = "" },
+    { isDirect = false, ancestor = "", development = true, production = true },
   ) {
     const id = getDependencyId({
       system,
@@ -464,11 +475,18 @@ export class DependenciesInfo {
 
     const getDependenciesInfo = async () => {
       try {
-        const dependencies = await this._requestModuleDependencies({
-          system,
-          name,
-          version: versionToRequest,
-        });
+        const skipRequestDependencies =
+          this._onlyDirect ||
+          (isDirect && development && !this._development) ||
+          (isDirect && production && !this._production);
+
+        const dependencies = !skipRequestDependencies
+          ? await this._requestModuleDependencies({
+              system,
+              name,
+              version: versionToRequest,
+            })
+          : { nodes: [] };
 
         this._depsDevDependenciesInfo[id] = {
           system,
@@ -564,6 +582,8 @@ export class DependenciesInfo {
       ...projectDependencies.map((dependency) => {
         return this._requestModuleAndDependenciesInfo(dependency, {
           isDirect: true,
+          development: dependency.development,
+          production: dependency.production,
         });
       }),
     ]);

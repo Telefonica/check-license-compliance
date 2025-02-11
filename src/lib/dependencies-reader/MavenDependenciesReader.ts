@@ -32,7 +32,11 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     });
   }
 
-  private _getPomDependenciesInfo(pom: string, filePath: string) {
+  private _getPomDependenciesInfo(
+    pom: string,
+    filePath: string,
+    isDevelopment = false,
+  ): DependencyDeclaration[] {
     const pomData = new XMLParser().parse(pom) as MavenPom;
 
     const properties = pomData.project.properties || {};
@@ -82,8 +86,11 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         resolvedVersion,
         origin: path.relative(this.cwd, filePath),
         development:
-          scope === "test" || scope === "provided" || scope === "runtime",
-        production: scope === COMPILE,
+          isDevelopment ||
+          scope === "test" ||
+          scope === "provided" ||
+          scope === "runtime",
+        production: !isDevelopment && scope === COMPILE,
       };
     });
 
@@ -95,6 +102,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
 
   private async _getPomDependencies(
     pomPath: string,
+    isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading dependencies from ${pomPath}`);
     const resolvedPath = path.resolve(this.cwd, pomPath);
@@ -103,7 +111,11 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     const pomXml = await fsExtra.readFile(resolvedPath, "utf8");
 
     // Parse the pom.xml file to get the dependencies
-    const dependencies = this._getPomDependenciesInfo(pomXml, resolvedPath);
+    const dependencies = this._getPomDependenciesInfo(
+      pomXml,
+      resolvedPath,
+      isDevelopment,
+    );
 
     this.logger.debug(`Dependencies found in ${pomPath}`, dependencies);
 
@@ -112,11 +124,16 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
 
   public async getDependencies(): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading ${this.system} dependencies`);
-    const pomFiles = this.findFiles();
+    const { dev, any } = this.findFiles();
     const dependencies = await Promise.all(
-      pomFiles.map((pomPath) => this._getPomDependencies(pomPath)),
+      any.map((pomPath) => this._getPomDependencies(pomPath)),
     );
-    const flatDependencies = dependencies.flat();
+    const devDependencies = this.development
+      ? await Promise.all(
+          dev.map((pomPath) => this._getPomDependencies(pomPath, true)),
+        )
+      : [];
+    const flatDependencies = [...dependencies, ...devDependencies].flat();
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );

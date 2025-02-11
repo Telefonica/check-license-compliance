@@ -8,11 +8,16 @@ export type System = "NPM" | "MAVEN" | "PYPI" | "GO";
 export const baseSystemDependenciesOptionsSchema = z.object({
   includeFiles: z.array(z.string()).optional(),
   excludeFiles: z.array(z.string()).optional(),
+  modules: z.array(z.string()).optional(),
+  excludeModules: z.array(z.string()).optional(),
+  extraModules: z.array(z.string()).optional(),
+  developmentFiles: z.array(z.string()).optional(),
 });
 
 export interface BaseSystemDependenciesReaderOptions {
   defaultInclude?: string[];
   defaultExclude?: string[];
+  defaultDevelopment?: string[];
   system: System;
 }
 
@@ -95,6 +100,8 @@ export interface SystemDependenciesReaderOptions<
 > {
   logger: ReturnType<typeof createLogger>;
   cwd?: string;
+  production: boolean;
+  development: boolean;
   options?: T;
 }
 
@@ -105,6 +112,8 @@ export interface DependenciesReaderOptions {
   maven?: MavenDependenciesReaderOptions;
   python?: PythonDependenciesReaderOptions;
   go?: GoDependenciesReaderOptions;
+  production: boolean;
+  development: boolean;
 }
 
 export interface DependencyNameUniqueProps {

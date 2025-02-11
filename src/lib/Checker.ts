@@ -13,6 +13,10 @@ import { hasSystemId, removeSystemId } from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
 import { createLogger } from "./Logger.js";
 
+function trueIfNotUndefined(value?: boolean): boolean {
+  return value !== undefined ? value : true;
+}
+
 /**
  * Check files for license headers
  */
@@ -23,6 +27,7 @@ export class Checker {
   private _unknown: OtherLicenses = "warning";
   private _dependenciesInfo: DependenciesInfo;
   private _production: boolean;
+  private _onlyDirect: boolean;
   private _development: boolean;
   private _spdxIds!: string[];
   private _loggedInvalidSpdxFromConfig: string[] = [];
@@ -35,8 +40,9 @@ export class Checker {
     this._logger = createLogger(config.log);
     this._config = config;
     this._logger.verbose("Checker created with config", config);
-    this._production = config.production || true;
-    this._development = config.development || true;
+    this._production = trueIfNotUndefined(config.production);
+    this._onlyDirect = config.onlyDirect || false;
+    this._development = trueIfNotUndefined(config.development);
 
     if (config.licenses?.others) {
       this._others = config.licenses.others;
@@ -51,6 +57,9 @@ export class Checker {
       maven: config.maven,
       go: config.go,
       python: config.python,
+      onlyDirect: this._onlyDirect,
+      production: this._production,
+      development: this._development,
     });
   }
 
@@ -224,7 +233,7 @@ export class Checker {
           return false;
         }
 
-        if (!dependency.direct && this._config.direct) {
+        if (!dependency.direct && this._onlyDirect) {
           this._logger.debug(`Excluding indirect dependency ${dependency.id}`);
           return false;
         }

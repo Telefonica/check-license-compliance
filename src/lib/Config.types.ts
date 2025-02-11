@@ -49,7 +49,7 @@ export const configSchema = z
     licenses: licensesConfigSchema.optional(),
     production: z.boolean().optional(),
     development: z.boolean().optional(),
-    direct: z.boolean().optional(),
+    onlyDirect: z.boolean().optional(),
     modules: z.array(z.string()).optional(),
     excludeModules: z.array(z.string()).optional(),
     log: logLevelSchema.optional(),
