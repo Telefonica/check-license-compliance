@@ -4,6 +4,7 @@ import type {
 } from "./DependenciesReader.types";
 import { MavenDependenciesReader } from "./MavenDependenciesReader.js";
 import { NpmDependenciesReader } from "./NpmDependenciesReader.js";
+import { PythonDependenciesReader } from "./PythonDependenciesReader.js";
 
 /**
  * Read all direct dependencies, from any system
@@ -11,9 +12,10 @@ import { NpmDependenciesReader } from "./NpmDependenciesReader.js";
 export class DirectDependenciesReader {
   private _nodeDependenciesReader: NpmDependenciesReader;
   private _mavenDependenciesReader: MavenDependenciesReader;
+  private _pythonDependenciesReader: PythonDependenciesReader;
   private _logger: DependenciesReaderOptions["logger"];
 
-  constructor({ logger, cwd, npm, maven }: DependenciesReaderOptions) {
+  constructor({ logger, cwd, npm, maven, python }: DependenciesReaderOptions) {
     this._nodeDependenciesReader = new NpmDependenciesReader({
       logger,
       cwd,
@@ -24,6 +26,11 @@ export class DirectDependenciesReader {
       cwd,
       options: maven,
     });
+    this._pythonDependenciesReader = new PythonDependenciesReader({
+      logger,
+      cwd,
+      options: python,
+    });
     this._logger = logger;
   }
 
@@ -33,6 +40,7 @@ export class DirectDependenciesReader {
     const dependencies = await Promise.all([
       this._nodeDependenciesReader.getDependencies(),
       this._mavenDependenciesReader.getDependencies(),
+      this._pythonDependenciesReader.getDependencies(),
     ]);
 
     return dependencies.flat();

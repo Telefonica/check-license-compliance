@@ -22,6 +22,7 @@ module.exports = {
     "proto/**",
     "src/lib/proto/**",
     "**/pom.xml",
+    "**/requirements.txt",
   ],
   caseSensitive: false,
   // Language - current active spelling language
