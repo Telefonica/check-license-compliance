@@ -36,7 +36,10 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     const pomData = new XMLParser().parse(pom) as MavenPom;
 
     const properties = pomData.project.properties || {};
-    const dependencies = pomData.project.dependencies?.dependency || [];
+    const pomDependencies = pomData.project.dependencies?.dependency || [];
+    const dependencies = Array.isArray(pomDependencies)
+      ? pomDependencies
+      : [pomDependencies];
 
     const resolveVersionFromProperties = (
       version?: string | number,

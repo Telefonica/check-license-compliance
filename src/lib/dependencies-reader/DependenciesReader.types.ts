@@ -85,7 +85,7 @@ export interface MavenPom {
   project: {
     properties?: Record<string, string>;
     dependencies?: {
-      dependency: MavenPomDependency[];
+      dependency: MavenPomDependency[] | MavenPomDependency;
     };
   };
 }

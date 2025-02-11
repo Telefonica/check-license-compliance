@@ -5,6 +5,7 @@ import indentString from "indent-string";
 import stripIndent from "strip-indent";
 
 import type { LicensesResult, Result } from "./Checker.types";
+import { getDependencyDisplayName } from "./dependencies-reader/Helpers.js";
 import type { Reporter } from "./Reporter.types";
 
 const TITLE = "Check License Compliance";
@@ -101,10 +102,15 @@ function getErrorsMessage(
       const directMessage = error.direct
         ? "Direct dependency"
         : `Transitive dependency of ${ancestorsToPrint}`;
+      const displayName = getDependencyDisplayName({
+        id: error.module,
+        version: error.version,
+        resolvedVersion: error.resolvedVersion,
+      });
 
       lines.push(
         indentString(
-          `${listSymbol} ${bold(error.module, markdown)}: ${licensesToPrint}`,
+          `${listSymbol} ${bold(displayName, markdown)}: ${licensesToPrint}`,
           2,
         ),
       );

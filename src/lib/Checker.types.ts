@@ -3,8 +3,12 @@
 
 /** Licenses result for one module */
 export interface LicensesResult {
-  /** The module name */
+  /** The module name and version */
   module: string;
+  /** The original version of the module */
+  version?: string;
+  /** The version of the module that has been resolved to check the licenses */
+  resolvedVersion?: string;
   /** The licenses used by the module */
   licenses: string[];
   /** If the module is a direct dependency of the project */

@@ -17,6 +17,7 @@ import {
   getDependencyId,
   getDependencyName,
   isValidVersion,
+  getDependencyDisplayName,
 } from "./dependencies-reader/Helpers.js";
 import type {
   DependenciesInfoOptions,
@@ -56,6 +57,7 @@ export class DependenciesInfo {
   private _directProdDependencies: DirectDependencies = [];
   private _dependenciesInfo: GetDependenciesInfoResult = [];
   private _projectDependenciesReader: DirectDependenciesReader;
+  private _getDependenciesPromise?: Promise<GetDependenciesInfoResult> | null;
   private _errors: Error[] = [];
   private _warnings: string[] = [];
 
@@ -107,15 +109,6 @@ export class DependenciesInfo {
       DEPS_DEV_URL,
       grpc.credentials.createSsl(),
     );
-  }
-
-  private async _waitForQueueToFinish() {
-    await new Promise((resolve: (value: void) => void) => {
-      this._queue.onIdle().then(() => {
-        this._logger.debug("Tasks queue is empty");
-        resolve();
-      });
-    });
   }
 
   private _clearCache() {
@@ -397,7 +390,7 @@ export class DependenciesInfo {
       return;
     }
 
-    this._queue.add(async () => {
+    const moduleInfoPromise = this._queue.add(async () => {
       try {
         const moduleInfo = await this._requestModuleVersionInfo({
           system,
@@ -427,7 +420,7 @@ export class DependenciesInfo {
       }
     });
 
-    this._queue.add(async () => {
+    const dependenciesInfoPromise = this._queue.add(async () => {
       try {
         const dependencies = await this._requestModuleDependencies({
           system,
@@ -467,22 +460,24 @@ export class DependenciesInfo {
             .filter((d) => !!d),
         };
 
-        dependencies.nodes.forEach((dependency) => {
-          // @ts-expect-error The type is not correct in the proto. The real key is "version_key", while the type is "versionKey"
-          const dependencyInfo = dependency.version_key;
-          if (
-            dependencyInfo.system !== system ||
-            dependencyInfo.name !== name
-          ) {
-            this._queue.add(async () => {
-              await this._requestModuleAndDependenciesInfo({
-                system: dependencyInfo.system,
-                name: dependencyInfo.name,
-                version: dependencyInfo.version,
+        await Promise.all(
+          dependencies.nodes.map((dependency) => {
+            // @ts-expect-error The type is not correct in the proto. The real key is "version_key", while the type is "versionKey"
+            const dependencyInfo = dependency.version_key;
+            if (
+              dependencyInfo.system !== system ||
+              dependencyInfo.name !== name
+            ) {
+              return this._queue.add(async () => {
+                await this._requestModuleAndDependenciesInfo({
+                  system: dependencyInfo.system,
+                  name: dependencyInfo.name,
+                  version: dependencyInfo.version,
+                });
               });
-            });
-          }
-        });
+            }
+          }),
+        );
       } catch (error) {
         const err = error as Error;
         this._depsDevDependenciesInfo[id] = {
@@ -498,15 +493,19 @@ export class DependenciesInfo {
         };
       }
     });
+
+    await Promise.all([moduleInfoPromise, dependenciesInfoPromise]);
   }
 
-  private _requestDependenciesInfo(
+  private async _requestDependenciesInfo(
     projectDependencies: DependencyDeclaration[],
   ) {
     this._logger.info("Getting dependencies info from deps.dev API");
-    projectDependencies.forEach((dependency) => {
-      this._requestModuleAndDependenciesInfo(dependency);
-    });
+    return Promise.all([
+      ...projectDependencies.map((dependency) => {
+        return this._requestModuleAndDependenciesInfo(dependency);
+      }),
+    ]);
   }
 
   private _getAncestors(dependency: DependencyId) {
@@ -645,10 +644,17 @@ export class DependenciesInfo {
   private _getErrors() {
     this._errors = this._dependenciesInfo.reduce((errors, dependencyInfo) => {
       return errors.concat(
-        dependencyInfo.errors.map((error) => ({
-          ...error,
-          message: `${dependencyInfo.id}: ${error.message}`,
-        })),
+        dependencyInfo.errors.map((error) => {
+          const displayName = getDependencyDisplayName({
+            id: dependencyInfo.id,
+            version: dependencyInfo.version,
+            resolvedVersion: dependencyInfo.resolvedVersion,
+          });
+          return {
+            ...error,
+            message: `${displayName}: ${error.message}`,
+          };
+        }),
       );
     }, [] as Error[]);
   }
@@ -656,9 +662,14 @@ export class DependenciesInfo {
   private _getWarnings() {
     this._warnings = this._dependenciesInfo.reduce(
       (warnings, dependencyInfo) => {
+        const displayName = getDependencyDisplayName({
+          id: dependencyInfo.id,
+          version: dependencyInfo.version,
+          resolvedVersion: dependencyInfo.resolvedVersion,
+        });
         return warnings.concat(
           dependencyInfo.warnings.map(
-            (warning) => `${dependencyInfo.id}: ${warning}`,
+            (warning) => `${displayName}: ${warning}`,
           ),
         );
       },
@@ -666,20 +677,14 @@ export class DependenciesInfo {
     );
   }
 
-  /**
-   * Look for the dependency files, read them and return the dependencies information using the deps.dev API
-   * If any other execution is in progress, it waits for it to finish. Then, it clears the cache and starts the new execution
-   */
-  public async getDependencies(): Promise<GetDependenciesInfoResult> {
-    await this._waitForQueueToFinish();
+  private async _getDependencies(): Promise<GetDependenciesInfoResult> {
     this._clearCache();
 
     const projectDependencies = await this._readProjectDependencies();
     // NOTE: Defensively check if the dependencies are not undefined just in case the queue is cancelled.
     if (projectDependencies) {
-      this._requestDependenciesInfo(projectDependencies);
+      await this._requestDependenciesInfo(projectDependencies);
     }
-    await this._waitForQueueToFinish();
     if (projectDependencies) {
       this._fillDependenciesInfo(projectDependencies);
     }
@@ -692,6 +697,18 @@ export class DependenciesInfo {
       dependencies: this._dependenciesInfo,
     });
     return this._dependenciesInfo;
+  }
+
+  /**
+   * Look for the dependency files, read them and return the dependencies information using the deps.dev API
+   * If any other execution is in progress, it waits for it to finish. Then, it clears the cache and starts the new execution
+   */
+  public async getDependencies(): Promise<GetDependenciesInfoResult> {
+    if (this._getDependenciesPromise) {
+      await this._getDependenciesPromise;
+    }
+    this._getDependenciesPromise = this._getDependencies();
+    return this._getDependenciesPromise;
   }
 
   public get errors() {

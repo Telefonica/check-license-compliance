@@ -30,6 +30,20 @@ const SYSTEM_VERSION_SETTINGS: Record<System, { useSemver: boolean }> = {
   },
 };
 
+export function getDependencyDisplayName({
+  id,
+  version,
+  resolvedVersion,
+}: {
+  id: string;
+  version?: string;
+  resolvedVersion?: string;
+}): string {
+  return resolvedVersion && resolvedVersion !== version
+    ? `${id} (${resolvedVersion})`
+    : id;
+}
+
 export function getDependencyName(
   dependency: Omit<DependencyUniqueProps, "version">,
 ): DependencyId {

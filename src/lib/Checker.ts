@@ -205,6 +205,8 @@ export class Checker {
       .map((dependency) => {
         return {
           module: dependency.id,
+          version: dependency.version,
+          resolvedVersion: dependency.resolvedVersion,
           licenses: dependency.licenses,
           origins: dependency.origins,
           ancestors: dependency.ancestors,
