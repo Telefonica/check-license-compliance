@@ -65,7 +65,12 @@ jobs:
         run: |
           echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
 
-      - name: Test - Case 1 - Assert 2 failed
+      - name: Test - Case 1 - Assert 1 failed
+        if: fromJson(steps.test-01.outputs.report).warning[0] == null
+        run: |
+          echo "Test case 1 failed. The check did not found warning dependencies" && exit 1
+
+      - name: Test - Case 1 - Assert 3 failed
         if: contains(fromJson(steps.test-01.outputs.report).message, 'Not valid licenses') == false
         run: |
           echo "Test case 1 failed. Read logs for further details" && exit 1
@@ -90,6 +95,11 @@ jobs:
           echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
 
       - name: Test - Case 2 - Assert 2 failed
+        if: fromJson(steps.test-02.outputs.report).forbidden[0] == null
+        run: |
+          echo "Test case 2 failed. The check did not found forbidden dependencies" && exit 1
+
+      - name: Test - Case 2 - Assert 3 failed
         if: contains(fromJson(steps.test-02.outputs.report).message, 'Not valid licenses') == false
         run: |
           echo "Test case 2 failed. Read logs for further details" && exit 1    
