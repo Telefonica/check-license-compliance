@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * feat: Support Python, Maven, and Go projects
+* feat: Support monorepos. Any projects with multiple `package.json`, `requirements.txt`, `requirements.dev.txt`, `go.mod`, or `pom.xml` files will be analyzed
+* feat: Support customizing files to be analyzed by language
+* feat: Use the deps.dev API to get the licenses information. So, dependencies installation is not needed anymore
 * feat: Add `npm`, `maven`, `python` and `go` options to set specific configuration for each language
 * feat: Add `licenses.others` option
 * feat: Add `licenses.unknown` option
@@ -26,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* feat: Packages installation prior to running the action is not needed anymore
 * feat: Report unknown licenses as warnings by default
 
 ### Removed
