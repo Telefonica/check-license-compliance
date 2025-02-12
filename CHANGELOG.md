@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * feat: Report unknown licenses as warnings by default
 * chore: Use a Docker container to run the action in order to avoid issues when bundling the grpc dependencies
-* chore: Use Pnpm as package manager for the action
+* chore: Use Pnpm as package manager
 
 ### Removed
 
