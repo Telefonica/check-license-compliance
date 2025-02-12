@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-License-Identifier: Apache-2.0
+
 function shutdown(signal: string, exitCode: number) {
   // eslint-disable-next-line no-console
   console.log(`Received ${signal}. Cleaning up...`);
