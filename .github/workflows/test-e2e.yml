@@ -28,8 +28,6 @@ jobs:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
