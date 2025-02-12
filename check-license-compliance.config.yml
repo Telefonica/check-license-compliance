@@ -37,19 +37,3 @@ npm:
   excludeFiles:
     - "**/node_modules/**"
     - "submodules/**"
-# npm:
-#   excludeFiles:
-#     - "**/node_modules/**"
-# go:
-#   excludeFiles:
-#     - "**"
-# maven:
-#   excludeFiles:
-#     - "**"
-# python:
-#   excludeFiles:
-#     - "**"
-#development: true
-# onlyDirect: true
-# excludeModules:
-  #- exit@0.1.2
