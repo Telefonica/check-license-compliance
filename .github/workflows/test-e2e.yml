@@ -102,3 +102,9 @@ jobs:
         if: contains(fromJson(steps.test-02.outputs.report).message, 'Not valid licenses') == false
         run: |
           echo "Test case 2 failed. Read logs for further details" && exit 1    
+
+      # NOTE: This checks the composite action
+      - name: Check license compliance
+        uses: ./.github/actions/check-and-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
