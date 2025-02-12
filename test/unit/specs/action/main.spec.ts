@@ -510,7 +510,8 @@ reporter: json
 
       expect(setOutputMock.mock.calls[2][1]).toBe(
         JSON.stringify({
-          message: "Result: Not valid licenses. Found 0 allowed, 1 forbidden and 1 dangerous licenses.",
+          message:
+            "Result: Not valid licenses. Found 0 allowed, 1 forbidden and 1 dangerous licenses.",
           ...result,
         }),
       );
