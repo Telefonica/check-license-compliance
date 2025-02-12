@@ -1,19 +1,24 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+/* eslint-disable jest/max-expects */
+
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 
 import * as core from "@actions/core";
 
-import { getConfig } from "../../../src/Config";
-import { Checker } from "../../../src/lib/index";
-import * as main from "../../../src/main";
+import { getConfig } from "../../../../src/action/Config";
+import * as main from "../../../../src/action/index";
+import { Checker } from "../../../../src/lib/index";
 
-jest.mock<typeof import("../../../src/lib/index")>(
-  "../../../src/lib/index",
+jest.mock("@actions/core");
+jest.mock("../../../../src/action/Config");
+
+jest.mock<typeof import("../../../../src/lib/index")>(
+  "../../../../src/lib/index",
   () => ({
-    ...jest.requireActual("../../../src/lib/index"),
+    ...jest.requireActual("../../../../src/lib/index"),
     Checker: jest.fn().mockImplementation(),
   }),
 );
@@ -150,7 +155,7 @@ describe("action", () => {
 
   describe("configuration", () => {
     it("should set failOnNotValid as true by default", async () => {
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.failOnNotValid).toBe(true);
     });
@@ -164,7 +169,9 @@ describe("action", () => {
         return "";
       });
 
-      await expect(() => getConfig()).rejects.toThrow("Invalid boolean value");
+      await expect(() => getConfig("/github/workspace")).rejects.toThrow(
+        "Invalid boolean value",
+      );
     });
 
     it("should throw when reporter is not valid", async () => {
@@ -176,13 +183,13 @@ describe("action", () => {
         return "";
       });
 
-      await expect(() => getConfig()).rejects.toThrow(
+      await expect(() => getConfig("/github/workspace")).rejects.toThrow(
         "Expected 'json' | 'markdown' | 'text'",
       );
     });
 
     it("should set reporter as text by default", async () => {
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.reporter).toBe("text");
     });
@@ -195,7 +202,7 @@ describe("action", () => {
         }
         return "";
       });
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.reporter).toBe("json");
     });
@@ -203,7 +210,7 @@ describe("action", () => {
     it("should not throw when no licenses are provided", async () => {
       jest.mocked(readFile).mockResolvedValueOnce("");
 
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.licenses).toBeUndefined();
     });
@@ -219,7 +226,7 @@ describe("action", () => {
         return [];
       });
 
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.licenses).toEqual({
         allowed: ["MIT"],
@@ -252,7 +259,7 @@ reporter: json
         return "";
       });
 
-      const config = await getConfig();
+      const config = await getConfig("/github/workspace");
 
       expect(config.licenses).toEqual({
         allowed: ["MIT"],
@@ -610,6 +617,147 @@ reporter: json
       expect(runMock).toHaveReturned();
 
       expect(setFailedMock).toHaveBeenNthCalledWith(1, "Foo error");
+    });
+  });
+});
+
+describe("get config", () => {
+  const defaultCwd = "/github/workspace";
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  describe("config file", () => {
+    beforeEach(() => {
+      process.env.INPUT_CONFIG = "";
+      process.env.INPUT_CONFIG_FILE = "";
+      process.env.INPUT_FAIL_ON_NOT_VALID = "";
+      process.env.INPUT_LOG = "";
+      process.env.INPUT_REPORTER = "";
+      process.env.INPUT_PATH = "";
+    });
+
+    it("should create a configuration with default values", async () => {
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
+      expect(config).toMatchObject({
+        log: "info",
+        reporter: "text",
+        failOnNotValid: true,
+      });
+    });
+
+    it("should throw error when fail-on-not-valid is not a boolean", async () => {
+      process.env.INPUT_FAIL_ON_NOT_VALID = "invalid";
+
+      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
+        "Invalid boolean value",
+      );
+    });
+
+    it("should throw error when the path input is absolute", async () => {
+      process.env.INPUT_PATH = "/absolute/path";
+
+      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
+        "The path input must be a relative path, because it is resolved from the workspace directory",
+      );
+    });
+
+    it("should use values from inputs", async () => {
+      process.env.INPUT_LOG = "debug";
+      process.env.INPUT_FAIL_ON_NOT_VALID = "false";
+      process.env.INPUT_PATH = "relative/path";
+
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
+      expect(config.log).toBe("debug");
+      expect(config.failOnNotValid).toBe(false);
+      expect(config.cwd).toBe("/github/workspace/relative/path");
+    });
+
+    it("should use values from yaml config", async () => {
+      process.env.INPUT_CONFIG = `
+log: debug
+failOnNotValid: false
+licenses:
+  allowed:
+    - MIT
+`;
+
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
+      expect(config.log).toBe("debug");
+      expect(config.failOnNotValid).toBe(false);
+      expect(config.licenses).toBeDefined();
+      expect(config.licenses?.allowed).toBeDefined();
+      expect(Array.isArray(config.licenses?.allowed)).toBe(true);
+      expect(config.licenses?.allowed).toHaveLength(1);
+      expect(config.licenses?.allowed?.[0]).toBe("MIT");
+    });
+
+    it("should merge values from yaml config and inputs", async () => {
+      process.env.INPUT_LOG = "debug";
+      process.env.INPUT_CONFIG = `
+failOnNotValid: false
+licenses:
+  allowed:
+    - MIT
+`;
+
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
+      expect(config.log).toBe("debug");
+      expect(config.failOnNotValid).toBe(false);
+      expect(config.licenses).toBeDefined();
+      expect(config.licenses?.allowed).toBeDefined();
+      expect(Array.isArray(config.licenses?.allowed)).toBe(true);
+      expect(config.licenses?.allowed).toHaveLength(1);
+      expect(config.licenses?.allowed?.[0]).toBe("MIT");
+    });
+  });
+
+  describe("errors", () => {
+    it("should throw error with invalid license configuration", async () => {
+      process.env.INPUT_CONFIG = `
+licenses:
+  allowed:
+    27: MIT
+`;
+
+      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
+        "At path: licenses.allowed - Expected array, received object",
+      );
+    });
+  });
+
+  describe("default config file", () => {
+    it("should load from default config file", async () => {
+      process.env.INPUT_CONFIG = "";
+      process.env.INPUT_CONFIG_FILE = "";
+
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
+    });
+
+    it("should load from the specified config file", async () => {
+      process.env.INPUT_CONFIG = "";
+      process.env.INPUT_CONFIG_FILE = "my-config.yml";
+
+      const config = await getConfig(defaultCwd);
+
+      expect(config).toBeDefined();
+      expect(typeof config).toBe("object");
     });
   });
 });

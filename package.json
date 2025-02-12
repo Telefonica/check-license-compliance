@@ -76,6 +76,7 @@
     "@eslint/json": "0.6.0",
     "@eslint/markdown": "6.2.1",
     "@github/local-action": "2.2.0",
+    "@jest/globals": "^29.7.0",
     "@types/fs-extra": "11.0.4",
     "@types/globule": "1.1.9",
     "@types/jest": "29.5.14",

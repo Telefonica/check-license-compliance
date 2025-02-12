@@ -14,6 +14,7 @@ import { hasSystemId, removeSystemId } from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
 import type { DependencyInfo } from "./DependenciesInfo.types";
 import { createLogger } from "./Logger.js";
+import { SPDX_LICENSE_IDS_PATH } from "./Paths.js";
 
 function trueIfNotUndefined(value?: boolean): boolean {
   return value !== undefined ? value : true;
@@ -79,9 +80,9 @@ export class Checker {
   }
 
   private _initialize = async () => {
-    const spdxIdsPath = import.meta.resolve("spdx-license-ids");
-
-    this._spdxIds = await fsExtra.readJson(fileURLToPath(spdxIdsPath));
+    this._spdxIds = await fsExtra.readJson(
+      fileURLToPath(SPDX_LICENSE_IDS_PATH),
+    );
   };
 
   private _isValidSpdx(license: string): boolean {
