@@ -19,14 +19,18 @@ function trueIfNotUndefined(value?: boolean): boolean {
   return value !== undefined ? value : true;
 }
 
+const FORBIDDEN = "forbidden";
+const WARNING = "warning";
+const UNKNOWN = "unknown";
+
 /**
  * Check files for license headers
  */
 export class Checker {
   private _logger: ReturnType<typeof createLogger>;
   private _config: CheckerConfig;
-  private _others: OtherLicenses = "forbidden";
-  private _unknown: OtherLicenses = "warning";
+  private _others: OtherLicenses = FORBIDDEN;
+  private _unknown: OtherLicenses = WARNING;
   private _dependenciesInfo: DependenciesInfo;
   private _production: boolean;
   private _onlyDirect: boolean;
@@ -380,11 +384,11 @@ export class Checker {
 
       if (this._isUnknown(licenses)) {
         this._logger.warn(
-          `No licenses info found for ${moduleData.module}. Adding it to "unknown"`,
+          `No licenses info found for ${moduleData.module}. Adding it to "${UNKNOWN}"`,
         );
         unknown.push({
           ...moduleData,
-          licenses: ["unknown"],
+          licenses: [UNKNOWN],
         });
       } else if (this._isAllowed(licenses, moduleData)) {
         this._logger.verbose(
@@ -409,7 +413,7 @@ export class Checker {
       }
     });
 
-    if (this._others === "warning") {
+    if (this._others === WARNING) {
       this._logger.verbose(
         "Adding others as warning according to the configuration",
       );
@@ -421,7 +425,7 @@ export class Checker {
       forbidden = forbidden.concat(others);
     }
 
-    if (this._unknown === "warning") {
+    if (this._unknown === WARNING) {
       this._logger.verbose(
         "Adding unknown as warning according to the configuration",
       );

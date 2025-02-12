@@ -28,14 +28,14 @@ licenses:
     - EPL-1.0
   others: forbidden
   unknown: warning
-log: verbose
+log: debug
 npm:
   excludeFiles:
     - "**/node_modules/**"
-  developmentFiles:
-    - "**/package.json"
+  # developmentFiles:
+  #   - "**/package.json"
   modules:
-    - exit@0.1.2
+    - foo@0.1.2
 go:
   excludeFiles:
     - "**"
@@ -45,7 +45,7 @@ maven:
 python:
   excludeFiles:
     - "**"
-development: true
+#development: true
 # onlyDirect: true
 # excludeModules:
   #- exit@0.1.2

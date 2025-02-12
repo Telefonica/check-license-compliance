@@ -13,7 +13,10 @@ import type {
   BaseSystemDependenciesReaderOptions,
   System,
 } from "./DependenciesReader.types";
-import { resolveVersion } from "./Helpers.js";
+import {
+  resolveVersion,
+  getDependencyNameAndVersionFromId,
+} from "./Helpers.js";
 
 const NODE_SYSTEM: System = "NPM";
 
@@ -93,6 +96,30 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     );
   }
 
+  private _getExtraModulesInfo(
+    extraModules: string[],
+  ): DependencyDeclaration[] {
+    return extraModules.map((moduleNameAndVersion) => {
+      const { name, version } =
+        getDependencyNameAndVersionFromId(moduleNameAndVersion);
+      const resolvedVersion = this.resolveVersion(name, version);
+      return {
+        system: this.system,
+        id: getDependencyId({
+          system: this.system,
+          name,
+          version,
+        }),
+        name,
+        version,
+        resolvedVersion,
+        origin: "extraModules",
+        development: true,
+        production: true,
+      };
+    });
+  }
+
   public async readDependencies(): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading ${this.system} dependencies`);
 
@@ -115,11 +142,24 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     this.logger.info(
       `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
     );
+
+    let finalDependencies: DependencyDeclaration[] = flatDependencies;
+
+    if (this.options.extraModules) {
+      this.logger.info(
+        `Adding extra modules to ${this.system} dependencies: ${this.options.extraModules.join(", ")}`,
+      );
+      finalDependencies = [
+        ...flatDependencies,
+        ...this._getExtraModulesInfo(this.options.extraModules),
+      ].flat();
+    }
+
     this.logger.debug(`${this.system} dependencies`, {
-      dependencies: flatDependencies,
+      dependencies: finalDependencies,
     });
 
-    return flatDependencies;
+    return finalDependencies;
   }
 
   /**

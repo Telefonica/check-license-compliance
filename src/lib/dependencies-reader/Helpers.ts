@@ -90,6 +90,16 @@ export function hasSystemId(dependencyId: DependencyId): boolean {
   return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
 }
 
+export function getDependencyNameAndVersionFromId(
+  dependency: DependencyId,
+): Omit<DependencyUniqueProps, "system"> {
+  const dependencyWithoutSystem = removeSystemId(dependency);
+  const lastAtIndex = dependencyWithoutSystem.lastIndexOf("@");
+  const name = dependencyWithoutSystem.substring(0, lastAtIndex);
+  const version = dependencyWithoutSystem.substring(lastAtIndex + 1);
+  return { name, version };
+}
+
 function isValidStringVersion(version: string, system: System): boolean {
   if (!SYSTEM_VERSION_SETTINGS[system].validVersionRegex) {
     return false;
