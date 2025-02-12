@@ -31,7 +31,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     isDevelopment = false,
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading dependencies from ${requirementsTxtPath}`);
+    this.logger.verbose(`Reading dependencies from ${requirementsTxtPath}`);
     const resolvedPath = path.resolve(this.cwd, requirementsTxtPath);
 
     if (processedFiles.has(resolvedPath)) {
@@ -95,6 +95,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
       }
     }
 
+    this.logger.verbose(
+      `Found ${dependencies.length} dependencies in ${requirementsTxtPath}`,
+    );
     this.logger.debug(`Dependencies found in ${requirementsTxtPath}`, {
       dependencies,
     });

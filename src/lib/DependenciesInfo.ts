@@ -175,7 +175,7 @@ export class DependenciesInfo {
             // NOTE: The type is not correct in the proto. It expects a "packageKey" object, while the real key is "package_key"
           } as unknown as GetPackageRequest;
 
-          this._logger.debug(`Requesting versions of ${id}`);
+          this._logger.verbose(`Requesting versions of ${id}`);
 
           this._depsDevInsightsClient.GetPackage(
             requestData,
@@ -199,6 +199,10 @@ export class DependenciesInfo {
                 reject(error);
                 return;
               }
+              this._logger.silly(
+                `Response received for versions of ${id}`,
+                response,
+              );
               resolve(response);
             },
           );
@@ -215,7 +219,7 @@ export class DependenciesInfo {
       name,
     });
     const moduleVersions = await this._requestModuleVersions({ system, name });
-    this._logger.debug(
+    this._logger.silly(
       `Response received for versions of ${id}`,
       moduleVersions,
     );
@@ -263,7 +267,7 @@ export class DependenciesInfo {
             // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
           } as unknown as GetVersionRequest;
 
-          this._logger.debug(`Requesting info of ${id}`);
+          this._logger.verbose(`Requesting info of ${id}`);
 
           this._depsDevInsightsClient.GetVersion(
             requestData,
@@ -290,7 +294,7 @@ export class DependenciesInfo {
                 reject(error);
                 return;
               }
-              this._logger.debug(
+              this._logger.silly(
                 `Response received for info of ${id}`,
                 response,
               );
@@ -324,7 +328,7 @@ export class DependenciesInfo {
             // NOTE: The type is not correct in the proto. It expects a "versionKey" object, while the real key is "version_key"
           } as unknown as GetVersionRequest;
 
-          this._logger.debug(`Requesting dependencies of ${id}`);
+          this._logger.verbose(`Requesting dependencies of ${id}`);
 
           this._depsDevInsightsClient.GetDependencies(
             requestData,
@@ -354,7 +358,7 @@ export class DependenciesInfo {
                 reject(error);
                 return;
               }
-              this._logger.debug(
+              this._logger.silly(
                 `Response received for dependencies of ${id}`,
                 response,
               );
@@ -386,7 +390,7 @@ export class DependenciesInfo {
     }
 
     this._requestedModules.push(id);
-    this._logger.debug(`Requesting module and dependencies info for ${id}`);
+    this._logger.verbose(`Requesting module and dependencies info for ${id}`);
 
     const versionToCheck = resolvedVersion || version;
 

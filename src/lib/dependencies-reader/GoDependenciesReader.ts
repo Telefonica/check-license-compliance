@@ -28,7 +28,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     goModPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading dependencies from ${goModPath}`);
+    this.logger.verbose(`Reading dependencies from ${goModPath}`);
     const resolvedPath = path.resolve(this.cwd, goModPath);
 
     const goMod = await fsExtra.readFile(resolvedPath, "utf8");
@@ -72,7 +72,9 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
         }
       }
     }
-
+    this.logger.verbose(
+      `Found ${dependencies.length} dependencies in ${goModPath}`,
+    );
     this.logger.debug(`Dependencies found in ${goModPath}`, { dependencies });
 
     return dependencies;

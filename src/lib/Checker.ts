@@ -8,9 +8,11 @@ import parseSpdx from "spdx-expression-parse";
 import satisfies from "spdx-satisfies";
 
 import type { LicensesResult, Result } from "./Checker.types";
+import { getSystemConfig } from "./Config.js";
 import type { CheckerConfig, OtherLicenses } from "./Config.types";
 import { hasSystemId, removeSystemId } from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
+import type { DependencyInfo } from "./DependenciesInfo.types";
 import { createLogger } from "./Logger.js";
 
 function trueIfNotUndefined(value?: boolean): boolean {
@@ -124,7 +126,7 @@ export class Checker {
     if (licenseIdentifiers.length === 0) {
       return false;
     }
-    this._logger.verbose(
+    this._logger.silly(
       `Checking if ${license} from ${moduleData.module} satisfies ${licenseIdentifiers}`,
     );
     const licenseIsValidSpdx = this._isValidSpdx(license);
@@ -181,6 +183,22 @@ export class Checker {
     });
   }
 
+  private _dependencyIsExcluded(dependency: DependencyInfo): boolean {
+    const systemConfig = getSystemConfig(dependency.system, this._config);
+    if (systemConfig.excludeModules) {
+      return this._moduleIdIsInList(systemConfig.excludeModules, dependency.id);
+    }
+    return false;
+  }
+
+  private _dependencyIsIncluded(dependency: DependencyInfo): boolean {
+    const systemConfig = getSystemConfig(dependency.system, this._config);
+    if (systemConfig.modules) {
+      return this._moduleIdIsInList(systemConfig.modules, dependency.id);
+    }
+    return true;
+  }
+
   /**
    * Returns an array of modules using a license that is not in the exclusions, or is unknown
    * @returns List of modules using a license that is not in the exclusions
@@ -188,24 +206,18 @@ export class Checker {
   private async _getLicensesToCheck(): Promise<LicensesResult[]> {
     const dependencies = await this._dependenciesInfo.getDependencies();
 
-    this._logger.info("Checking licenses");
+    this._logger.info("Filtering dependencies to check");
 
     return dependencies
       .filter((dependency) => {
-        if (
-          this._config.modules &&
-          !this._moduleIdIsInList(this._config.modules, dependency.id)
-        ) {
-          this._logger.debug(
+        if (!this._dependencyIsIncluded(dependency)) {
+          this._logger.verbose(
             `Excluding dependency ${dependency.id} because it is not in the list of modules to check`,
           );
           return false;
         }
-        if (
-          this._config.excludeModules &&
-          this._moduleIdIsInList(this._config.excludeModules, dependency.id)
-        ) {
-          this._logger.debug(
+        if (this._dependencyIsExcluded(dependency)) {
+          this._logger.verbose(
             `Excluding dependency ${dependency.id} because it is in the list of modules to exclude`,
           );
           return false;
@@ -216,7 +228,7 @@ export class Checker {
           !this._development &&
           (!dependency.production || !this._config.production)
         ) {
-          this._logger.debug(
+          this._logger.verbose(
             `Excluding development dependency ${dependency.id}`,
           );
           return false;
@@ -227,14 +239,16 @@ export class Checker {
           !this._production &&
           (!dependency.development || !this._config.development)
         ) {
-          this._logger.debug(
+          this._logger.verbose(
             `Excluding production dependency ${dependency.id}`,
           );
           return false;
         }
 
         if (!dependency.direct && this._onlyDirect) {
-          this._logger.debug(`Excluding indirect dependency ${dependency.id}`);
+          this._logger.verbose(
+            `Excluding indirect dependency ${dependency.id}`,
+          );
           return false;
         }
         return true;
@@ -334,7 +348,10 @@ export class Checker {
    */
   public async check(): Promise<Result> {
     await this._initialize();
+
     const licensesToCheck = await this._getLicensesToCheck();
+
+    this._logger.info(`Checking ${licensesToCheck.length} licenses`);
 
     this._logger.debug("Licenses to check", {
       licenses: licensesToCheck,
@@ -371,22 +388,22 @@ export class Checker {
         });
       } else if (this._isAllowed(licenses, moduleData)) {
         this._logger.verbose(
-          `Licenses of ${moduleData.module} are allowed explicitly`,
+          `Licenses ${licenses.join(",")} of ${moduleData.module} are allowed explicitly`,
         );
         allowed.push(moduleData);
       } else if (this._isForbidden(licenses, moduleData)) {
         this._logger.verbose(
-          `Licenses of ${moduleData.module} are forbidden explicitly`,
+          `Licenses ${licenses.join(",")} of ${moduleData.module} are forbidden explicitly`,
         );
         forbidden.push(moduleData);
       } else if (this._isWarning(licenses, moduleData)) {
         this._logger.verbose(
-          `Licenses of ${moduleData.module} are warning explicitly`,
+          `Licenses ${licenses.join(",")} of ${moduleData.module} are warning explicitly`,
         );
         warning.push(moduleData);
       } else {
         this._logger.verbose(
-          `Licenses of ${moduleData.module} are not explicitly allowed, forbidden or warning. Adding it to "others"`,
+          `Licenses ${licenses.join(",")} of ${moduleData.module} are not explicitly allowed, forbidden or warning. Adding it to "others"`,
         );
         others.push(moduleData);
       }

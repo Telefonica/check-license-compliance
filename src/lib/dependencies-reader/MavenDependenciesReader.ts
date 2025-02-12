@@ -69,7 +69,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
       return version;
     };
 
-    const deps = dependencies.map((dep) => {
+    return dependencies.map((dep) => {
       const name = `${dep.groupId}:${dep.artifactId}`;
       const version = resolveVersionFromProperties(dep.version);
       const resolvedVersion = this.resolveVersion(name, version);
@@ -93,18 +93,13 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         production: !isDevelopment && scope === COMPILE,
       };
     });
-
-    this.logger.debug(`Dependencies found in ${filePath}`, {
-      dependencies: deps,
-    });
-    return deps;
   }
 
   public async readFileDependencies(
     pomPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading dependencies from ${pomPath}`);
+    this.logger.verbose(`Reading dependencies from ${pomPath}`);
     const resolvedPath = path.resolve(this.cwd, pomPath);
 
     // Read the pom.xml file
@@ -115,6 +110,10 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
       pomXml,
       resolvedPath,
       isDevelopment,
+    );
+
+    this.logger.verbose(
+      `Found ${dependencies.length} dependencies in ${pomPath}`,
     );
 
     this.logger.debug(`Dependencies found in ${pomPath}`, dependencies);

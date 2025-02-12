@@ -4,6 +4,7 @@ import type {
   System,
   DependencyUniqueProps,
   DependencyId,
+  SystemConfigKey,
 } from "./DependenciesReader.types";
 
 export const NPM_SYSTEM: System = "NPM";
@@ -15,6 +16,13 @@ export const GO_SYSTEM: System = "GO";
 const SYSTEM_IDS = [NPM_SYSTEM, MAVEN_SYSTEM, PYTHON_SYSTEM, GO_SYSTEM];
 
 const NUMERIC_VERSION_REGEX = /^\d+(\.\d+)*(\S*)$/;
+
+export const SYSTEM_CONFIGS_MAP: Record<System, SystemConfigKey> = {
+  [NPM_SYSTEM]: "npm",
+  [MAVEN_SYSTEM]: "maven",
+  [PYTHON_SYSTEM]: "python",
+  [GO_SYSTEM]: "go",
+};
 
 const SYSTEM_VERSION_SETTINGS: Record<
   System,

@@ -5,6 +5,7 @@ import type {
   MavenDependenciesReaderOptions,
   PythonDependenciesReaderOptions,
   GoDependenciesReaderOptions,
+  System,
 } from "./dependencies-reader/DependenciesReader.types";
 import type { createLogger } from "./Logger";
 import type { Version__Output as DepsDevVersionOutput } from "./proto/deps_dev/v3/Version";
@@ -33,7 +34,7 @@ export type DirectDependencies = DependencyId[];
 
 export interface DependencyInfo {
   id: DependencyId;
-  system: string;
+  system: System;
   name: string;
   version?: string;
   resolvedVersion?: string;

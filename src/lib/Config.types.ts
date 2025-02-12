@@ -50,8 +50,6 @@ export const configSchema = z
     production: z.boolean().optional(),
     development: z.boolean().optional(),
     onlyDirect: z.boolean().optional(),
-    modules: z.array(z.string()).optional(),
-    excludeModules: z.array(z.string()).optional(),
     log: logLevelSchema.optional(),
     cwd: z.string().optional(),
     npm: npmDependenciesReaderOptionsSchema.optional(),

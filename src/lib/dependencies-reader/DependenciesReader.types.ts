@@ -56,6 +56,8 @@ export type GoDependenciesReaderOptions = z.infer<
   typeof goDependenciesReaderOptionsSchema
 >;
 
+export type SystemConfigKey = "npm" | "maven" | "python" | "go";
+
 /**
  * Options for reading dependencies by system
  */

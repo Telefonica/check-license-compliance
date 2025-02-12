@@ -36,7 +36,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     if (!dependencies) {
       return [];
     }
-    const dependenciesFormatted = Object.keys(dependencies).map((name) => {
+    return Object.keys(dependencies).map((name) => {
       const version = dependencies[name];
       const resolvedVersion = this.resolveVersion(name, dependencies[name]);
       return {
@@ -54,14 +54,13 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
         production: !dev,
       };
     });
-    return dependenciesFormatted;
   }
 
   public async readFileDependencies(
     packageJsonPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading dependencies from ${packageJsonPath}`);
+    this.logger.verbose(`Reading dependencies from ${packageJsonPath}`);
     const resolvedPath = path.resolve(this.cwd, packageJsonPath);
 
     const packageJson = (await fsExtra.readJson(
@@ -84,6 +83,9 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
       ...packageDevDependencies,
     ];
 
+    this.logger.verbose(
+      `Found ${dependencies.length} dependencies in ${packageJsonPath}`,
+    );
     this.logger.debug(`Dependencies found in ${packageJsonPath}`, {
       dependencies,
     });
