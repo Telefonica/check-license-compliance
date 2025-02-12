@@ -100,7 +100,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     return deps;
   }
 
-  private async _getPomDependencies(
+  public async readFileDependencies(
     pomPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
@@ -120,26 +120,5 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     this.logger.debug(`Dependencies found in ${pomPath}`, dependencies);
 
     return dependencies;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading ${this.system} dependencies`);
-    const { dev, any } = this.findFiles();
-    const dependencies = await Promise.all(
-      any.map((pomPath) => this._getPomDependencies(pomPath)),
-    );
-    const devDependencies = this.development
-      ? await Promise.all(
-          dev.map((pomPath) => this._getPomDependencies(pomPath, true)),
-        )
-      : [];
-    const flatDependencies = [...dependencies, ...devDependencies].flat();
-    this.logger.info(
-      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
-    );
-    this.logger.debug(`${this.system} dependencies`, {
-      dependencies: flatDependencies,
-    });
-    return flatDependencies;
   }
 }

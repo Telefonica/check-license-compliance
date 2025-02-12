@@ -26,7 +26,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     });
   }
 
-  private async _getRequirementsTxtDependencies(
+  public async readFileDependencies(
     requirementsTxtPath: string,
     isDevelopment = false,
     processedFiles: Set<string> = new Set(),
@@ -53,7 +53,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           path.dirname(resolvedPath),
           includedFile,
         );
-        const includedDependencies = await this._getRequirementsTxtDependencies(
+        const includedDependencies = await this.readFileDependencies(
           includedFilePath,
           isDevelopment,
           processedFiles,
@@ -100,33 +100,5 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     });
 
     return dependencies;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading ${this.system} dependencies`);
-
-    const { dev, any } = this.findFiles();
-    const prodDependencies = await Promise.all(
-      any.map((requirementsTxtPath) =>
-        this._getRequirementsTxtDependencies(requirementsTxtPath),
-      ),
-    );
-    const devDependencies = this.development
-      ? await Promise.all(
-          dev.map((requirementsTxtPath) =>
-            this._getRequirementsTxtDependencies(requirementsTxtPath, true),
-          ),
-        )
-      : [];
-    const flatDependencies = [...prodDependencies, ...devDependencies].flat();
-
-    this.logger.info(
-      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
-    );
-    this.logger.debug(`${this.system} dependencies`, {
-      dependencies: flatDependencies,
-    });
-
-    return flatDependencies;
   }
 }

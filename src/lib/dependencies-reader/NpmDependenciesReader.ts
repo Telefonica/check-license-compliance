@@ -57,7 +57,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     return dependenciesFormatted;
   }
 
-  private async _getPackageJsonDependencies(
+  public async readFileDependencies(
     packageJsonPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
@@ -89,33 +89,5 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     });
 
     return dependencies;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading ${this.system} dependencies`);
-
-    const { dev, any } = this.findFiles();
-    const dependencies = await Promise.all(
-      any.map((packageJsonPath) =>
-        this._getPackageJsonDependencies(packageJsonPath),
-      ),
-    );
-    const devDependencies = this.development
-      ? await Promise.all(
-          dev.map((packageJsonPath) =>
-            this._getPackageJsonDependencies(packageJsonPath, true),
-          ),
-        )
-      : [];
-    const flatDependencies = [...dependencies, ...devDependencies].flat();
-
-    this.logger.info(
-      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
-    );
-    this.logger.debug(`${this.system} dependencies`, {
-      dependencies: flatDependencies,
-    });
-
-    return flatDependencies;
   }
 }

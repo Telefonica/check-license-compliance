@@ -24,7 +24,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     });
   }
 
-  private async _getGoModDependencies(
+  public async readFileDependencies(
     goModPath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
@@ -76,29 +76,5 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     this.logger.debug(`Dependencies found in ${goModPath}`, { dependencies });
 
     return dependencies;
-  }
-
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    this.logger.info(`Reading ${this.system} dependencies`);
-
-    const { dev, any } = this.findFiles();
-    const dependencies = await Promise.all(
-      any.map((goModPath) => this._getGoModDependencies(goModPath)),
-    );
-    const devDependencies = this.development
-      ? await Promise.all(
-          dev.map((goModPath) => this._getGoModDependencies(goModPath, true)),
-        )
-      : [];
-    const flatDependencies = [...dependencies, ...devDependencies].flat();
-
-    this.logger.info(
-      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
-    );
-    this.logger.debug(`${this.system} dependencies`, {
-      dependencies: flatDependencies,
-    });
-
-    return flatDependencies;
   }
 }

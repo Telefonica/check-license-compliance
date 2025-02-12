@@ -82,15 +82,51 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     this._defaultInclude = defaultInclude;
   }
 
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
-    throw new Error("Method not implemented.");
+  public async readFileDependencies(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _filePath: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _isDevelopment?: boolean,
+  ): Promise<DependencyDeclaration[]> {
+    throw new Error(
+      `Method readFileDependencies not implemented in system ${this.system}`,
+    );
+  }
+
+  public async readDependencies(): Promise<DependencyDeclaration[]> {
+    this.logger.info(`Reading ${this.system} dependencies`);
+
+    const { dev, any } = this.findFiles();
+    const dependencies = await Promise.all(
+      any.map((goModPath) => this.readFileDependencies(goModPath)),
+    );
+    let devDependencies: DependencyDeclaration[] = [];
+    if (this.development) {
+      devDependencies = (
+        await Promise.all(
+          dev.map((filePath) => this.readFileDependencies(filePath, true)),
+        )
+      ).flat();
+    } else {
+      this.logger.warn(`Skipping read ${this.system} development dependencies`);
+    }
+    const flatDependencies = [...dependencies, ...devDependencies].flat();
+
+    this.logger.info(
+      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
+    );
+    this.logger.debug(`${this.system} dependencies`, {
+      dependencies: flatDependencies,
+    });
+
+    return flatDependencies;
   }
 
   /**
    * Returns a list of files to read, relative to the cwd
    * @returns List of files to read, separated by files containing only development dependencies and files containing any type of dependencies
    */
-  protected findFiles(): {
+  private findFiles(): {
     dev: string[];
     any: string[];
   } {

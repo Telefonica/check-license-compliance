@@ -58,14 +58,14 @@ export class DirectDependenciesReader {
     this._logger = logger;
   }
 
-  public async getDependencies(): Promise<DependencyDeclaration[]> {
+  public async readDependencies(): Promise<DependencyDeclaration[]> {
     this._logger.info("Reading project dependencies");
 
     const dependencies = await Promise.all([
-      this._nodeDependenciesReader.getDependencies(),
-      this._mavenDependenciesReader.getDependencies(),
-      this._pythonDependenciesReader.getDependencies(),
-      this._goDependenciesReader.getDependencies(),
+      this._nodeDependenciesReader.readDependencies(),
+      this._mavenDependenciesReader.readDependencies(),
+      this._pythonDependenciesReader.readDependencies(),
+      this._goDependenciesReader.readDependencies(),
     ]);
 
     return dependencies.flat();

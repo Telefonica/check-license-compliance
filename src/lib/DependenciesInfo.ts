@@ -142,7 +142,7 @@ export class DependenciesInfo {
     DependencyDeclaration[] | void
   > {
     const dependencies =
-      await this._projectDependenciesReader.getDependencies();
+      await this._projectDependenciesReader.readDependencies();
     dependencies.forEach((dependency) => {
       // NOTE: Store each local dependency type in a different array for easier access later to improve performance
       if (dependency.production) {

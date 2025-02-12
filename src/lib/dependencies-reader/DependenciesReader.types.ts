@@ -135,5 +135,9 @@ export type DependencyDeclaration = DependencyUniqueProps & {
 };
 
 export interface DependenciesReader {
-  getDependencies(): Promise<DependencyDeclaration[]>;
+  readDependencies(): Promise<DependencyDeclaration[]>;
+  readFileDependencies(
+    filePath: string,
+    isDevelopment: boolean,
+  ): Promise<DependencyDeclaration[]>;
 }
