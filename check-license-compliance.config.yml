@@ -29,6 +29,14 @@ licenses:
   others: forbidden
   unknown: warning
 log: info
+go:
+  excludeFiles:
+    - "submodules/**"
+    - "vendor/**"
+npm:
+  excludeFiles:
+    - "**/node_modules/**"
+    - "submodules/**"
 # npm:
 #   excludeFiles:
 #     - "**/node_modules/**"
