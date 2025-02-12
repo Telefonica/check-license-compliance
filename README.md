@@ -137,6 +137,7 @@ The configuration file is a YAML file that must be placed at the root of your re
   * `modules`: List of modules (`name@version`) to check. If not defined, all modules will be checked.
   * `excludeModules`: List of modules (`name@version`) to exclude from the check.
   * `extraModules`: List of modules (`name@version`) to add to the check. This is useful when you want to check additional modules that are not directly defined in the dependencies tree.
+  * ...each system may also have its own specific options. Check the [Systems](#systems) section for more information.
 * `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid. Default is `true`.
 * `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`. Further info in the [Reporters](#reporters) section.
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`. This option enables logs for the headers check. You can also enable logs for the action itself _(useful if you find any problem while the action is loading the configuration, for example)_ by setting the `ACTIONS_STEP_DEBUG` secret to `true`.
