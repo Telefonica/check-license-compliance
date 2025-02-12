@@ -127,12 +127,16 @@ This project uses [Semantic Versioning](https://semver.org/). The version number
 
 ## Release process
 
+> [!IMPORTANT]
+> Before opening a PR, a new tag must be created in the repository with a beta version. This is because the composite action is used in the PR check, and the action must be referenced in the PR. The action can't be referenced locally, so it must be referenced by a tag. The tag must be created in the format `vX.Y.Z-beta.N`, where `X.Y.Z` is the version in the package.json file, and `N` is the beta version. For example, if the version in the package.json file is `1.0.0`, the tag must be `v1.0.0-beta.1`.
+
 Once the PR is approved and __merged into the release branch__, a project maintainer can start the release process by:
 
-1. Updating the version number in the `package.json` file.
-2. Updating the action version in the `.github/actions/check-and-comment/action.yml` file.
+1. Checking the version number in the `package.json` file and updating it if necessary.
+2. Checking the action version in the `.github/actions/check-and-comment/action.yml` file and updating it if necessary.
 3. Updating the CHANGELOG.md file with the changes in the new version.
-4. Tagging the release branch with the corresponding version numbers.
+4. Remove the beta tags created for the PR check.
+5. Tagging the release branch with the corresponding version numbers.
 
    This project includes a helper script, [`script/release`](./script/release)
    designed to streamline the process of tagging and pushing new releases for
@@ -158,7 +162,8 @@ Once the PR is approved and __merged into the release branch__, a project mainta
       commits, tags and branches to the remote repository. From here, you will need
       to create a new release in GitHub so users can easily reference the new tags
       in their workflows.
-5. Merge the release branch into the main branch.
+6. Merge the release branch into the main branch.
+
 
 ## License
 
