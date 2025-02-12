@@ -35,9 +35,6 @@ jobs:
         with:
           npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
 
-      - name: Lint
-        run: pnpm lint
-
       - name: Check spelling
         run: pnpm cspell
 
@@ -57,6 +54,9 @@ jobs:
       - name: Build dist/ Directory
         id: build
         run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
 
       # This will fail the workflow if the `src/lib/proto` directory is different than expected, meaning that protobuf files were not compiled.
       - name: Compare Directories
