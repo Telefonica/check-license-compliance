@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * feat(BREAKING CHANGE): Remove `excludePackages` option. Now it is replaced by the `excludeModules` option inside each language configuration.
 * feat(BREAKING CHANGE): Remove `allowWarnings` option. It has no sense anymore with the new options.
 * feat(BREAKING CHANGE): Remove `licenseCheckerOptions` option. It has no sense anymore with the new implementation.
+* chore: Remove fork of spdx-satisfies library, because the version that we wanted to use was already released
 
 ### Fixed
 
