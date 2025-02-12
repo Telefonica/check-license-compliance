@@ -3,6 +3,8 @@
 dist
 # Generated files
 src/lib/proto
+# Test action folder
+test-action
 
 # Logs
 logs
