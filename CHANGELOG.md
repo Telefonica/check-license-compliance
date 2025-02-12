@@ -15,28 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* feat: Support Python, Maven, and Go projects
+* feat: Add `npm`, `maven`, `python` and `go` options to set specific configuration for each language
 * feat: Add `licenses.others` option
 * feat: Add `licenses.unknown` option
 * feat: Add `production` option
 * feat: Add `development` option
-* feat: Add `direct` option
-* feat: Add `packages` option
-* feat: Add `excludePackages` option
-* feat: Add `excludePrivatePackages` option
+* feat: Add `onlyDirect` option
+* feat: Add `path` input to the action, enabling the user to set the path to the project root
 
 ### Changed
 
+* feat: Packages installation prior to running the action is not needed anymore
 * feat: Report unknown licenses as warnings by default
-* refactor: Run license-checker only once to get the dependencies ignoring the allowed ones. Use `spdx-satisfies` to check the type of each package license according to the configuration. 
 
 ### Removed
 
+* feat(BREAKING CHANGE): Remove `packages` option. Now it is replaced by the `modules` option inside each language configuration.
+* feat(BREAKING CHANGE): Remove `excludePackages` option. Now it is replaced by the `excludeModules` option inside each language configuration.
 * feat(BREAKING CHANGE): Remove `allowWarnings` option. It has no sense anymore with the new options.
-* feat(BREAKING CHANGE): Remove `licenseCheckerOptions` option. It has no sense anymore with the new options.
+* feat(BREAKING CHANGE): Remove `licenseCheckerOptions` option. It has no sense anymore with the new implementation.
 
 ### Fixed
 
-* fix: Remove default log level from the inputs, so it can be set from the configuration file
+* fix: Remove defaults from the inputs, so all options can be set in the configuration file
 
 ## [1.0.0] - 2025-01-17
 

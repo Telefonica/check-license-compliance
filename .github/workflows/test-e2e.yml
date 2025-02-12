@@ -35,8 +35,6 @@ jobs:
       - name: Check license compliance
         uses: ./
         id: check-license-compliance
-        with:
-          reporter: "markdown"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -58,6 +56,9 @@ jobs:
       #           "allowed": ["MIT"],
       #           "forbidden": ["Apache-2.0"]
       #         },
+      #         "go": {
+      #           "ignoreFiles": ["**"]
+      #         }
       #       }
       #     log: "debug"
       #     reporter: "json"

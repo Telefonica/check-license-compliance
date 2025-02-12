@@ -21,8 +21,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
       system: PYTHON_SYSTEM,
       defaultInclude: ["**/requirements.txt"],
       defaultDevelopment: ["**/requirements-dev.txt"],
-      // cspell: disable-next-line
-      defaultExclude: ["**/venv/**"],
+      defaultExclude: ["**/venv/**", "**/.venv/**"],
     });
   }
 
@@ -32,6 +31,11 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
     this.logger.verbose(`Reading dependencies from ${requirementsTxtPath}`);
+    const recursiveRequirements =
+      this.options.recursiveRequirements == undefined
+        ? true
+        : this.options.recursiveRequirements;
+
     const resolvedPath = path.resolve(this.cwd, requirementsTxtPath);
 
     if (processedFiles.has(resolvedPath)) {
@@ -44,21 +48,32 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     const dependencies: DependencyDeclaration[] = [];
     const lines = requirementsTxt
       .split("\n")
-      .filter((line) => line && !line.startsWith("#"));
+      .filter((line) => line && !line.startsWith("#"))
+      .map((line) => line.trim())
+      .filter((line) => line.length);
 
     for (const line of lines) {
       if (line.startsWith("-r ") || line.startsWith("--requirement ")) {
-        const includedFile = line.split(" ")[1];
-        const includedFilePath = path.resolve(
-          path.dirname(resolvedPath),
-          includedFile,
-        );
-        const includedDependencies = await this.readFileDependencies(
-          includedFilePath,
-          isDevelopment,
-          processedFiles,
-        );
-        dependencies.push(...includedDependencies);
+        if (recursiveRequirements) {
+          const includedFile = line.split(" ")[1];
+          const includedFilePath = path.resolve(
+            path.dirname(resolvedPath),
+            includedFile,
+          );
+          this.logger.verbose(
+            `Reading ${this.system} included file in ${requirementsTxtPath}`,
+          );
+          const includedDependencies = await this.readFileDependencies(
+            includedFilePath,
+            isDevelopment,
+            processedFiles,
+          );
+          dependencies.push(...includedDependencies);
+        } else {
+          this.logger.verbose(
+            `Skipping read of ${this.system} included file in ${requirementsTxtPath} because recursiveRequirements is disabled`,
+          );
+        }
       } else {
         const match = line.match(/(.*?)(==|>=|<=|!=|~=)(.*)/);
         if (!match) {

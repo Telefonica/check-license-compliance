@@ -11,8 +11,7 @@ Checks that repository dependencies are compliant with allowed licenses accordin
   - [Configuration file](#configuration-file)
   - [Inputs](#inputs)
   - [Configuration example](#configuration-example)
-- [How it works](#how-it-works)
-  - [Node.js](#nodejs)
+- [Systems](#systems)
 - [Outputs](#outputs)
 - [Contributing](#contributing)
 - [License](#license)
@@ -21,20 +20,22 @@ Checks that repository dependencies are compliant with allowed licenses accordin
 
 This repository contains a GitHub Action that checks that repository dependencies are compliant with allowed licenses according to a given configuration.
 
-For the moment, it supports the following languages:
+It is able to check the licenses of dependencies from next systems:
 
-* Node.js
+* Node.js (NPM)
+* Python (PyPi)
+* Maven
+* Go
 
-> [!IMPORTANT]
-> It requires dependencies to be installed in the repository. If you are using a package manager, make sure to run the installation command before running this action. Otherwise, it will simply return a warning.
+__It does not require to install the dependencies before checking__. It scans the `package.json`, `requirements.txt`, `pom.xml`, or `go.mod` files to get the dependencies, and then it retrieves the dependencies tree information recursively from the [deps.dev API](https://deps.dev/) and performs the check.
 
-For better user experience in PRs, it also includes a Github Composite Action that performs the check and posts the results into a comment in the PR. Read the [PR comments](#pr-comments) section for more information.
+For better user experience in PRs, this repository also contains a Github Composite Action that performs the check and posts the results into a comment in the PR. Read the [PR comments](#pr-comments) section for more information.
 
 ## Usage
 
-Create a configuration file `check-license-compliance.config.yml` at the root of your repository, containing the [forbidden, allowed, or warning licenses](#configuration).
+Create a configuration file `check-license-compliance.config.yml` at the root of your repository, containing the [forbidden, allowed, or warning licenses](#configuration) and the [other options](#configuration-file) you want to set.
 
-Then, create a GitHub Actions workflow file that uses the action. The action will check the dependencies according to the configuration file on every push.
+Then, create a GitHub Actions workflow file that uses the action. The action will check the dependencies according to the options defined in the [action inputs](#inputs) and in the [configuration file](#configuration-file).
 
 The main option is the `licenses` property, which contains the allowed, forbidden, and warning licenses. The licenses can be simple [SPDX license identifiers](https://spdx.dev/learn/handling-license-info/) like _MIT_, plus-ranges like _EPL-2.0+_, or licenses with exceptions like _Apache-2.0 WITH LLVM_. __They may not be compound expressions using AND or OR.__ You can also use not valid SPDX identifiers, and, in such case, the license will be matched simply by a string comparison.
 
@@ -64,27 +65,21 @@ licenses:
 Example of a GitHub Actions workflow file:
 
 ```yaml
-name: Check SPDX headers
+name: Check License Compliance
 
 on: push
 
 jobs:
   check-license-compliance:
-    name: Check License Compliance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Check dependencies licenses
-        uses: Telefonica/check-license-compliance@v1
+      - name: Check Licenses
+        uses: Telefonica/check-license-compliance@v2
 ```
 
-That's it! The action will check the dependencies according to the configuration file on every push.
+That's it! The action will check the dependencies according to the configuration file on every push 🚀.
 
 ### PR comments
 
@@ -109,19 +104,13 @@ permissions:
 
 jobs:
   check-license-compliance:
-    name: Check License Compliance
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-      - name: Install Node dependencies
-        run: npm ci
-
       - name: Check Licenses
-        uses: Telefonica/check-license-compliance/.github/actions/check-and-comment@v1
+        uses: Telefonica/check-license-compliance/.github/actions/check-and-comment@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -132,30 +121,38 @@ jobs:
 
 The configuration file is a YAML file that must be placed at the root of your repository by default (you can also change the path by using the [action inputs](#inputs)). It can contain the following properties:
 
-* `licenses`: Object containing details about the licenses that are allowed, forbidden, or should produce a warning. Licenses are identified by their [SPDX identifier](https://spdx.org/licenses/). Read [How it works](#how-it-works) for more information about how the action checks the licenses.
+* `licenses`: Object containing details about the licenses that are allowed, forbidden, or should produce a warning. Licenses are identified by their [SPDX identifier](https://spdx.org/licenses/).
   * `allowed`: Dependencies with these licenses are allowed.
   * `warning`: Dependencies with these licenses will produce a warning, but the check will be considered valid. Use it when you want to be notified about the presence of these licenses, but you don't want to fail the check.
   * `forbidden`: Dependencies with these licenses are forbidden, they will make the check fail. Use it when you want to explicitly disallow these licenses (it makes more sense when the `others` property is set to `warning`, otherwise, you can simply not include them in the `allowed` or `warning` lists).
   * `others`: Determines whether dependencies with licenses not defined in the previous lists should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `forbidden`.
   * `unknown`: Determines whether dependencies which license cannot be determined should produce a warning or make the check fail. Possible values are `forbidden` or `warning`. Default is `warning`.
-* `production`: Check only production dependencies. Default is `false`.
-* `development`: Check only development dependencies. Default is `false`.
-* `direct`: Check only direct dependencies. Default is `false`.
-* `packages`: Restrict the check to the specified packages (array of "package@version").
-* `excludePackages`: Exclude the specified packages (array of "package@version").
-* `excludePrivatePackages`: Do not check private packages. Default is `true`.
+* `production`: Whether to check production dependencies or not. Default is `true`.
+* `development`: Whether to check development dependencies or not. Default is `true`.
+* `onlyDirect`: Check only direct dependencies. Default is `false`.
+* `npm|python|go|maven`: Object containing specific options for each different system:
+  * `includeFiles`: List of [globbing patterns](https://github.com/cowboy/node-globule) for files to include in the check. If not defined, all files will be checked according to the [default configuration of each different system](#systems)
+  * `developmentFiles`: List of [globbing patterns](https://github.com/cowboy/node-globule) for files containing only development dependencies. If not defined, the default development files will be checked according to the [default configuration of each different system](#systems). You don't have to exclude this patterns from the `includeFiles` property (files matching both patterns will be considered as development files).
+  * `excludeFiles`: List of [globbing patterns](https://github.com/cowboy/node-globule) for files to exclude from the check. Both `includeFiles` and `developmentFiles` patterns will be excluded from this list. If not defined, files will be excluded according to the [default configuration of each different system](#systems).
+  * `modules`: List of modules (`name@version`) to check. If not defined, all modules will be checked.
+  * `excludeModules`: List of modules (`name@version`) to exclude from the check.
+  * `extraModules`: List of modules (`name@version`) to add to the check. This is useful when you want to check additional modules that are not directly defined in the dependencies tree.
 * `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid. Default is `true`.
 * `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`. Further info in the [Reporters](#reporters) section.
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`. This option enables logs for the headers check. You can also enable logs for the action itself _(useful if you find any problem while the action is loading the configuration, for example)_ by setting the `ACTIONS_STEP_DEBUG` secret to `true`.
 
 > [!TIP]
-> Read the [How it works](#how-it-works) section to understand how the action checks the licenses for better understanding of the configuration options.
+> Read the __[How it works section](#how-it-works)__ to understand how the action checks the licenses for better understanding of the configuration options, and the __[Systems section](#systems)__ to know the default configuration for each system.
 
 ### Inputs
 
 The action also allows to set the configuration by using inputs. When defined, they will override the values in the [configuration file](#configuration-file). The inputs are:
 
-* `config-file`: Path to the configuration file. Default is `check-license-compliance.config.yml`.
+* `path`: Path in the repository where to execute the action. Default is `.`. Note that this can't be an absolute path, only a relative path from the repository root.
+* `config-file`: Path to the configuration file, resolved from the `path` option. Default is `check-license-compliance.config.yml`.
+* `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`.
+* `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
+* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
 * `config`: Multiline string with the whole [configuration](#configuration) expressed as a JSON object as in the configuration file. It will extend the values defined in the [configuration file](#configuration-file). Any config value that is defined in other inputs will override the values here. NOTE: Here you should use JSON instead of YAML to avoid indentation issues.
     Example:
 
@@ -168,9 +165,6 @@ The action also allows to set the configuration by using inputs. When defined, t
         "direct": false
       }
     ```
-* `reporter`: Reporter to use. Possible values are `text`, `markdown` and `json`. Default is `text`.
-* `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`.
-* `fail-on-not-valid`: Boolean value to determine if the action should fail (exit 1) when the result is not valid.
 
 
 > [!WARNING]
@@ -179,19 +173,26 @@ The action also allows to set the configuration by using inputs. When defined, t
 ### Configuration example
 
 > [!TIP]
-> Note that you can use the inputs to override the values in the configuration file, or to define the whole configuration if you don't want to use a file.
+> Note that you can use the inputs to override the values in the configuration file, or even to define the whole configuration in the `config` input if you don't want to use a file.
 
 So, you can use the configuration file, the inputs, or both. The action will merge the values in the following order:
 
 1. Values in the configuration file.
 2. Values in the `config` input.
-6. The rest of the inputs.
+3. The rest of the inputs.
 
 Example of a complex configuration using both the configuration file and the inputs:
 
 ```yaml
 # Configuration file
 production: true
+node:
+  includeFiles:
+    - "**/package.json"
+  excludeFiles:
+    - "some/folder/to/exclude/**"
+  excludeModules:
+    - "express@4.17.1"
 ```
 
 ```yaml
@@ -202,18 +203,12 @@ on: push
 
 jobs:
   check-license-compliance:
-    name: Check Licenses
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Check
-        uses: Telefonica/check-license-compliance@v1
+      - name: Check Licenses
+        uses: Telefonica/check-license-compliance@v2
         with:
           config-file: "check-licenses.config.yml"
           # Properties defined at input first level will have preference over values defined in any other place
@@ -228,6 +223,101 @@ jobs:
               "production": false
             }
 ```
+
+## Systems
+
+Here you have the default configuration for each system, as well as the default files that are checked, etc.
+
+> [!TIP]
+> If you want to fully disable the check for a system, you can set the `includeFiles` property of that system to an empty list, or the `excludeFiles` property to `["**"]`.
+
+Note that you can also set next options in every system configuration:
+
+* `modules`: List of modules (`name@version`) to check. If not defined, all modules will be checked.
+* `excludeModules`: List of modules (`name@version`) to exclude from the check.
+* `extraModules`: List of modules (`name@version`) to add to the check. This is useful when you want to check additional modules that are not directly defined in the dependencies tree (see an usage example in the [Python](#python) section).
+
+### NPM
+
+Default configuration:
+
+```yaml
+npm:
+  includeFiles:
+    - "**/package.json"
+  developmentFiles: []
+  excludeFiles:
+    - "**/node_modules/**"
+```
+
+#### Resolving semver expressions
+
+When a dependency is defined using semver expressions (like `^1.0.0`), the action will resolve the version to the minimum version that satisfies the expression. This is done by using the [semver library](https://github.com/npm/node-semver).
+
+#### Development dependencies
+
+Dependencies defined in`devDependencies` in any `package.json` file will be considered as development dependencies.
+
+You can also define a `developmentFiles` property in the configuration to match files that contain only development dependencies. This may be useful when you have a monorepo with private packages that are used only in development, for example.
+
+### Python
+
+Default configuration:
+
+```yaml
+python:
+  includeFiles:
+    - "**/requirements.txt"
+  developmentFiles:
+    - "**/requirements-dev.txt"
+  excludeFiles:
+    - "**/venv/**"
+    - "**/.venv/**"
+```
+
+#### Loading requirements recursively
+
+When a `requirements.txt` file contains a line with `-r file.txt` or `--requirement file.txt`, the action will load the dependencies from the `file.txt` file recursively. You can disable this behavior by setting the `recursiveRequirements` property to `false`.
+
+#### Extra dependencies
+
+When a `requirements.txt` defines extra dependencies for a library using the `[extra]` section, the action will ignore them. You can include them manually in the check by getting the real dependency name and version from the corresponding `setup.py` file, and adding them to the `extraModules` property in the `python` configuration.
+
+#### Version specifiers
+
+When versions are defined using [version specifiers](https://packaging.python.org/en/latest/specifications/version-specifiers/#id5), the action will ignore them and check the license of the dependency with the version that is defined. The exception to this is the `!=` specifier, in which case it will use the latest available version.
+
+### Maven
+
+Default configuration:
+
+```yaml
+maven:
+  includeFiles:
+    - "**/pom.xml"
+  developmentFiles: []
+  excludeFiles: []
+```
+
+#### Reading the POM file
+
+The action is able to read the POM file and get the dependencies from the `project.dependencies` section. It will also read the `project.properties` section to get the properties that are used in the dependencies version. It automatically resolves the versions of the dependencies defined with `${property}`.
+
+### Go
+
+Default configuration:
+
+```yaml
+go:
+  includeFiles:
+    - "**/go.mod"
+  developmentFiles: []
+  excludeFiles: ["**/vendor/**"]
+```
+
+#### Reading the go.mod file
+
+The action is able to read the `go.mod` file and get the dependencies from the `require` section.
 
 ## Outputs
 

@@ -42,8 +42,10 @@ export type MavenDependenciesReaderOptions = z.infer<
   typeof mavenDependenciesReaderOptionsSchema
 >;
 
-export const pythonDependenciesReaderOptionsSchema =
-  baseSystemDependenciesOptionsSchema;
+export const pythonDependenciesReaderOptionsSchema = z.object({
+  ...baseSystemDependenciesOptionsSchema.shape,
+  recursiveRequirements: z.boolean().optional(),
+});
 
 export type PythonDependenciesReaderOptions = z.infer<
   typeof pythonDependenciesReaderOptionsSchema
