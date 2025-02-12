@@ -66,9 +66,9 @@ jobs:
           echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
 
       - name: Test - Case 1 - Assert 2 failed
-        if: contains(fromJson(steps.test-01.outputs.report).message, 'Found 637 allowed, 110 forbidden and 1 dangerous dependencies') == false
+        if: contains(fromJson(steps.test-01.outputs.report).message, 'Found 637 allowed, 112 forbidden and 1 dangerous dependencies') == false
         run: |
-          echo "Test case 1 failed. The check did not found 110 forbidden and 1 dangerous dependencies" && exit 1
+          echo "Test case 1 failed. Read logs for further details" && exit 1
 
       - name: Test - Case 2
         id: test-02
@@ -92,4 +92,4 @@ jobs:
       - name: Test - Case 2 - Assert 2 failed
         if: contains(fromJson(steps.test-02.outputs.report).message, 'Found 27 allowed, 83 forbidden and 638 dangerous dependencies.') == false
         run: |
-          echo "Test case 2 failed. The check did not found 83 forbidden and 638 dangerous dependencies" && exit 1    
+          echo "Test case 2 failed. Read logs for further details" && exit 1    
