@@ -221,7 +221,7 @@ function errorReport(
   switch (reporter) {
     case "json":
       return JSON.stringify({
-        message: `${textTitle}. Found ${result.allowed.length} allowed, ${result.forbidden.length} forbidden and ${result.warning.length} dependencies.`,
+        message: `${textTitle}. Found ${result.allowed.length} allowed, ${result.forbidden.length} forbidden and ${result.warning.length} dangerous dependencies.`,
         ...result,
       });
     case "markdown":
