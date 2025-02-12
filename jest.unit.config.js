@@ -22,6 +22,7 @@ export default {
   coverageDirectory: "coverage",
 
   // An object that configures minimum threshold enforcement for coverage results
+  // TODO: Uncomment this when we have 100% coverage again
   /* coverageThreshold: {
     global: {
       branches: 100,
