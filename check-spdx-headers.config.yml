@@ -44,6 +44,7 @@ ignore:
   - "dist/**"
   - "coverage/**"
   - ".github/ISSUE_TEMPLATE/**"
+  - "src/lib/proto/**"
 failOnError: false
 reporter: "text"
 log: "debug"

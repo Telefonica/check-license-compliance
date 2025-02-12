@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-License-Identifier: Apache-2.0
+
 import path from "node:path";
 
 export const ROOT_PATH = path.resolve(import.meta.dirname, "..", "..");
