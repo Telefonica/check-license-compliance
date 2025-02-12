@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-/* eslint-disable jest/max-expects */
-
 import { existsSync } from "fs";
 import { readFile } from "fs/promises";
 
@@ -13,7 +11,6 @@ import * as main from "../../../../src/action/index";
 import { Checker } from "../../../../src/lib/index";
 
 jest.mock("@actions/core");
-jest.mock("../../../../src/action/Config");
 
 jest.mock<typeof import("../../../../src/lib/index")>(
   "../../../../src/lib/index",
@@ -55,6 +52,7 @@ describe("action", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(existsSync).mockReturnValue(true);
+
     getInputMock = jest.spyOn(core, "getInput").mockImplementation(() => "");
     getMultilineInputMock = jest
       .spyOn(core, "getMultilineInput")
@@ -67,90 +65,6 @@ describe("action", () => {
     jest.spyOn(core, "info").mockImplementation();
     jest.spyOn(core, "warning").mockImplementation();
     jest.spyOn(core, "error").mockImplementation();
-  });
-
-  describe("when node_modules folder does not exist", () => {
-    it("should set a warning in the output and not fail", async () => {
-      jest.mocked(existsSync).mockReturnValue(false);
-
-      getMultilineInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "config") {
-          return [
-            '{"licenses": {"allowed": ["MIT"]}, "log": "debug", "reporter": "text"}',
-          ];
-        }
-        return [];
-      });
-
-      await main.run();
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        1,
-        "found-forbidden",
-        false,
-      );
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(2, "found-warning", false);
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        3,
-        "report",
-        "node_modules folder not found. Please install NPM dependencies before running this action.",
-      );
-
-      expect(core.warning).toHaveBeenCalledWith(
-        "node_modules folder not found. Please install NPM dependencies before running this action.",
-      );
-
-      expect(setFailedMock).not.toHaveBeenCalled();
-    });
-
-    it("should return report in markdown when defined in config", async () => {
-      jest.mocked(existsSync).mockReturnValue(false);
-
-      getMultilineInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "config") {
-          return [
-            '{"licenses": {"allowed": ["MIT"]}, "log": "debug", "reporter": "markdown"}',
-          ];
-        }
-        return [];
-      });
-
-      await main.run();
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        3,
-        "report",
-        expect.stringContaining("⚠️ node_modules folder not found"),
-      );
-    });
-
-    it("should return report in json when defined in config", async () => {
-      jest.mocked(existsSync).mockReturnValue(false);
-
-      getMultilineInputMock.mockImplementation((name: string) => {
-        // eslint-disable-next-line jest/no-conditional-in-test
-        if (name === "config") {
-          return [
-            '{"licenses": {"allowed": ["MIT"]}, "log": "debug", "reporter": "json"}',
-          ];
-        }
-        return [];
-      });
-
-      await main.run();
-
-      expect(setOutputMock).toHaveBeenNthCalledWith(
-        3,
-        "report",
-        expect.stringContaining(
-          '{"message":"node_modules folder not found. Please install NPM dependencies before running this action.","forbidden":[],"warning":[]}',
-        ),
-      );
-    });
   });
 
   describe("configuration", () => {
@@ -171,6 +85,20 @@ describe("action", () => {
 
       await expect(() => getConfig("/github/workspace")).rejects.toThrow(
         "Invalid boolean value",
+      );
+    });
+
+    it("should throw when path has an absolute value", async () => {
+      getInputMock.mockImplementation((name: string) => {
+        // eslint-disable-next-line jest/no-conditional-in-test
+        if (name === "path") {
+          return "/foo";
+        }
+        return "";
+      });
+
+      await expect(() => getConfig("/github/workspace")).rejects.toThrow(
+        "The path input must be a relative path",
       );
     });
 
@@ -267,6 +195,34 @@ reporter: json
       expect(config.log).toBe("warning");
       expect(config.reporter).toBe("markdown");
     });
+
+    it("should not throw when config file is not found", () => {
+      jest.mocked(existsSync).mockReturnValue(false);
+
+      expect(() => getConfig("/github/workspace")).not.toThrow();
+    });
+
+    it("should read config file from subpath when path option is provided", async () => {
+      getInputMock.mockImplementation((name: string) => {
+        // eslint-disable-next-line jest/no-conditional-in-test
+        if (name === "path") {
+          return "foo";
+        }
+        return "";
+      });
+
+      jest.mocked(readFile).mockResolvedValueOnce(`
+licenses: {}
+reporter: json
+      `);
+
+      await getConfig("/github/workspace");
+
+      expect(jest.mocked(readFile)).toHaveBeenCalledWith(
+        "/github/workspace/foo/check-license-compliance.config.yml",
+        "utf8",
+      );
+    });
   });
 
   describe("when all checks are valid", () => {
@@ -276,6 +232,11 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [],
           warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -292,7 +253,7 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        "All dependencies have acceptable licenses.",
+        "No dependencies found",
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", true);
@@ -304,6 +265,11 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [],
           warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -328,7 +294,7 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        expect.stringContaining("✅ All dependencies have acceptable licenses"),
+        expect.stringContaining("✅ No dependencies found"),
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", true);
@@ -340,6 +306,11 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [],
           warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -364,7 +335,16 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        '{"message":"All dependencies have acceptable licenses.","forbidden":[],"warning":[]}',
+        JSON.stringify({
+          message: "No dependencies found",
+          forbidden: [],
+          warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
+        }),
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", true);
@@ -378,11 +358,21 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [
             {
-              module: "foo",
+              module: "foo@1.0.0",
               licenses: ["MIT"],
+              origins: ["foo/path"],
+              ancestors: ["foo-ancestor@1.0.0"],
+              direct: false,
+              version: "^1.0.0",
+              resolvedVersion: "1.0.0",
             },
           ],
           warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -395,7 +385,13 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        "1 dependency has forbidden licenses.\n0 dependencies have dangerous licenses.",
+        removeIndentation(`Result: Not valid licenses
+
+
+          There is 1 dependency with forbidden licenses:
+          - foo@1.0.0 (1.0.0): MIT
+          - Transitive dependency of foo-ancestor@1.0.0. Defined in foo/path
+        `),
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", false);
@@ -411,16 +407,31 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [
             {
-              module: "foo",
+              module: "foo@1.0.0",
               licenses: ["MIT"],
+              origins: ["foo/path"],
+              ancestors: ["foo-ancestor@1.0.0"],
+              direct: false,
+              version: "^1.0.0",
+              resolvedVersion: "1.0.0",
             },
           ],
           warning: [
             {
-              module: "bar",
-              licenses: ["GPL"],
+              module: "foo-warn@2.0.0",
+              licenses: ["MIT"],
+              origins: ["foo-warn/path"],
+              ancestors: ["foo-warn-ancestor@2.0.0"],
+              direct: true,
+              version: "^1.0.0",
+              resolvedVersion: "2.0.0",
             },
           ],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -437,35 +448,54 @@ reporter: json
       expect(removeIndentation(setOutputMock.mock.calls[2][1])).toEqual(
         removeIndentation(`
             __Check License Compliance__
-    
-            ❌ There is 1 dependency with forbidden license:
-            * __foo__: MIT
+
+
+            ⚠️ There is 1 dependency with dangerous licenses:
+            * __foo-warn@2.0.0 (2.0.0)__: MIT
+              * _Direct dependency. Defined in foo-warn/path_
             
-            ⚠️ There is 1 dependency with dangerous license:
-            * __bar__: GPL
+            ❌ There is 1 dependency with forbidden licenses:
+            * __foo@1.0.0 (1.0.0)__: MIT
+              * _Transitive dependency of foo-ancestor@1.0.0. Defined in foo/path_
             
-            ❌ Result: Not valid
+            ❌ Result: Not valid licenses
           `),
       );
     });
 
     it("should return report in json when defined in config", async () => {
+      const result = {
+        forbidden: [
+          {
+            module: "foo@1.0.0",
+            licenses: ["MIT"],
+            origins: ["foo/path"],
+            ancestors: ["foo-ancestor@1.0.0"],
+            direct: false,
+            version: "^1.0.0",
+            resolvedVersion: "1.0.0",
+          },
+        ],
+        warning: [
+          {
+            module: "foo-warn@2.0.0",
+            licenses: ["MIT"],
+            origins: ["foo-warn/path"],
+            ancestors: ["foo-warn-ancestor@2.0.0"],
+            direct: true,
+            version: "^1.0.0",
+            resolvedVersion: "2.0.0",
+          },
+        ],
+        allowed: [],
+        caveats: {
+          errors: [],
+          warnings: [],
+        },
+      };
       // @ts-expect-error We don't want to mock the whole module
       jest.mocked(Checker).mockImplementation(() => ({
-        check: jest.fn().mockReturnValue({
-          forbidden: [
-            {
-              module: "foo",
-              licenses: ["MIT"],
-            },
-          ],
-          warning: [
-            {
-              module: "bar",
-              licenses: ["GPL"],
-            },
-          ],
-        }),
+        check: jest.fn().mockReturnValue(result),
       }));
 
       getInputMock.mockImplementation((name: string) => {
@@ -479,7 +509,10 @@ reporter: json
       await main.run();
 
       expect(setOutputMock.mock.calls[2][1]).toBe(
-        '{"message":"1 dependency has forbidden licenses. 1 dependency has dangerous licenses.","forbidden":[{"module":"foo","licenses":["MIT"]}],"warning":[{"module":"bar","licenses":["GPL"]}]}',
+        JSON.stringify({
+          message: "Result: Not valid licenses",
+          ...result,
+        }),
       );
     });
   });
@@ -491,11 +524,21 @@ reporter: json
         check: jest.fn().mockReturnValue({
           forbidden: [
             {
-              module: "foo",
+              module: "foo-warn@2.0.0",
               licenses: ["MIT"],
+              origins: ["foo-warn/path"],
+              ancestors: ["foo-warn-ancestor@2.0.0"],
+              direct: true,
+              version: "^1.0.0",
+              resolvedVersion: "2.0.0",
             },
           ],
           warning: [],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -516,7 +559,13 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        "1 dependency has forbidden licenses.\n0 dependencies have dangerous licenses.",
+        removeIndentation(`Result: Not valid licenses
+
+
+        There is 1 dependency with forbidden licenses:
+        - foo-warn@2.0.0 (2.0.0): MIT
+        - Direct dependency. Defined in foo-warn/path 
+        `),
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", false);
@@ -532,10 +581,20 @@ reporter: json
           forbidden: [],
           warning: [
             {
-              module: "foo",
+              module: "foo-warn@2.0.0",
               licenses: ["MIT"],
+              origins: ["foo-warn/path"],
+              ancestors: ["foo-warn-ancestor@2.0.0"],
+              direct: true,
+              version: "^1.0.0",
+              resolvedVersion: "2.0.0",
             },
           ],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -552,7 +611,13 @@ reporter: json
       expect(setOutputMock).toHaveBeenNthCalledWith(
         3,
         "report",
-        "0 dependencies have forbidden licenses.\n1 dependency has dangerous licenses.",
+        removeIndentation(`Result: Valid licenses 
+
+        There is 1 dependency with dangerous licenses:
+        - foo-warn@2.0.0 (2.0.0): MIT
+        - Direct dependency. Defined in foo-warn/path 
+
+        `),
       );
 
       expect(setOutputMock).toHaveBeenNthCalledWith(4, "valid", true);
@@ -566,14 +631,29 @@ reporter: json
           forbidden: [],
           warning: [
             {
-              module: "bar",
-              licenses: ["GPL"],
+              module: "foo-warn@2.0.0",
+              licenses: ["MIT"],
+              origins: ["foo-warn/path"],
+              ancestors: ["foo-warn-ancestor@2.0.0"],
+              direct: true,
+              version: "^1.0.0",
+              resolvedVersion: "2.0.0",
             },
             {
-              module: "foo",
-              licenses: ["MIT", "Apache-2.0"],
+              module: "foo-warn@2.0.0",
+              licenses: ["MIT"],
+              origins: ["foo-warn/path"],
+              ancestors: ["foo-warn-ancestor@2.0.0"],
+              direct: true,
+              version: "^1.0.0",
+              resolvedVersion: "2.0.0",
             },
           ],
+          allowed: [],
+          caveats: {
+            errors: [],
+            warnings: [],
+          },
         }),
       }));
 
@@ -589,15 +669,16 @@ reporter: json
 
       expect(removeIndentation(setOutputMock.mock.calls[2][1])).toEqual(
         removeIndentation(`
-            __Check License Compliance__
-            
+        __Check License Compliance__
 
 
-            ⚠️ There are 2 dependencies with dangerous licenses:
-            * __bar__: GPL
-            * __foo__: MIT, Apache-2.0
+        ⚠️ There are 2 dependencies with dangerous licenses:
+        * __foo-warn@2.0.0 (2.0.0)__: MIT
+          * _Direct dependency. Defined in foo-warn/path_
+        * __foo-warn@2.0.0 (2.0.0)__: MIT
+          * _Direct dependency. Defined in foo-warn/path_
             
-            ✅ Result: Valid
+        ✅ Result: Valid licenses
           `),
       );
     });
@@ -617,147 +698,6 @@ reporter: json
       expect(runMock).toHaveReturned();
 
       expect(setFailedMock).toHaveBeenNthCalledWith(1, "Foo error");
-    });
-  });
-});
-
-describe("get config", () => {
-  const defaultCwd = "/github/workspace";
-
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  describe("config file", () => {
-    beforeEach(() => {
-      process.env.INPUT_CONFIG = "";
-      process.env.INPUT_CONFIG_FILE = "";
-      process.env.INPUT_FAIL_ON_NOT_VALID = "";
-      process.env.INPUT_LOG = "";
-      process.env.INPUT_REPORTER = "";
-      process.env.INPUT_PATH = "";
-    });
-
-    it("should create a configuration with default values", async () => {
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
-      expect(config).toMatchObject({
-        log: "info",
-        reporter: "text",
-        failOnNotValid: true,
-      });
-    });
-
-    it("should throw error when fail-on-not-valid is not a boolean", async () => {
-      process.env.INPUT_FAIL_ON_NOT_VALID = "invalid";
-
-      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
-        "Invalid boolean value",
-      );
-    });
-
-    it("should throw error when the path input is absolute", async () => {
-      process.env.INPUT_PATH = "/absolute/path";
-
-      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
-        "The path input must be a relative path, because it is resolved from the workspace directory",
-      );
-    });
-
-    it("should use values from inputs", async () => {
-      process.env.INPUT_LOG = "debug";
-      process.env.INPUT_FAIL_ON_NOT_VALID = "false";
-      process.env.INPUT_PATH = "relative/path";
-
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
-      expect(config.log).toBe("debug");
-      expect(config.failOnNotValid).toBe(false);
-      expect(config.cwd).toBe("/github/workspace/relative/path");
-    });
-
-    it("should use values from yaml config", async () => {
-      process.env.INPUT_CONFIG = `
-log: debug
-failOnNotValid: false
-licenses:
-  allowed:
-    - MIT
-`;
-
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
-      expect(config.log).toBe("debug");
-      expect(config.failOnNotValid).toBe(false);
-      expect(config.licenses).toBeDefined();
-      expect(config.licenses?.allowed).toBeDefined();
-      expect(Array.isArray(config.licenses?.allowed)).toBe(true);
-      expect(config.licenses?.allowed).toHaveLength(1);
-      expect(config.licenses?.allowed?.[0]).toBe("MIT");
-    });
-
-    it("should merge values from yaml config and inputs", async () => {
-      process.env.INPUT_LOG = "debug";
-      process.env.INPUT_CONFIG = `
-failOnNotValid: false
-licenses:
-  allowed:
-    - MIT
-`;
-
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
-      expect(config.log).toBe("debug");
-      expect(config.failOnNotValid).toBe(false);
-      expect(config.licenses).toBeDefined();
-      expect(config.licenses?.allowed).toBeDefined();
-      expect(Array.isArray(config.licenses?.allowed)).toBe(true);
-      expect(config.licenses?.allowed).toHaveLength(1);
-      expect(config.licenses?.allowed?.[0]).toBe("MIT");
-    });
-  });
-
-  describe("errors", () => {
-    it("should throw error with invalid license configuration", async () => {
-      process.env.INPUT_CONFIG = `
-licenses:
-  allowed:
-    27: MIT
-`;
-
-      await expect(() => getConfig(defaultCwd)).rejects.toThrow(
-        "At path: licenses.allowed - Expected array, received object",
-      );
-    });
-  });
-
-  describe("default config file", () => {
-    it("should load from default config file", async () => {
-      process.env.INPUT_CONFIG = "";
-      process.env.INPUT_CONFIG_FILE = "";
-
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
-    });
-
-    it("should load from the specified config file", async () => {
-      process.env.INPUT_CONFIG = "";
-      process.env.INPUT_CONFIG_FILE = "my-config.yml";
-
-      const config = await getConfig(defaultCwd);
-
-      expect(config).toBeDefined();
-      expect(typeof config).toBe("object");
     });
   });
 });

@@ -81,7 +81,7 @@ function getAllowedMessage(
  * @returns The markdown message
  */
 function getForbiddenOrWarningMessage(
-  errors: LicensesResult[],
+  modules: LicensesResult[],
   type: "dangerous" | "forbidden",
   emoji: string,
   markdown = true,
@@ -89,13 +89,13 @@ function getForbiddenOrWarningMessage(
   const lines = [];
   const listSymbol = markdown ? "*" : "-";
 
-  if (errors.length > 0) {
+  if (modules.length > 0) {
     lines.push("");
-    if (errors.length > 1) {
+    if (modules.length > 1) {
       lines.push(
         messageWithEmoji(
           emoji,
-          `There are ${errors.length} dependencies with ${type} licenses:`,
+          `There are ${modules.length} dependencies with ${type} licenses:`,
           markdown,
         ),
       );
@@ -103,26 +103,26 @@ function getForbiddenOrWarningMessage(
       lines.push(
         messageWithEmoji(
           emoji,
-          `There is ${errors.length} dependency with ${type} licenses:`,
+          `There is ${modules.length} dependency with ${type} licenses:`,
           markdown,
         ),
       );
     }
-    for (const error of errors) {
-      const licensesToPrint = error.licenses.join(", ");
-      const originsToPrint = error.origins.length
-        ? `Defined in ${error.origins.join(", ")}`
+    for (const moduleInfo of modules) {
+      const licensesToPrint = moduleInfo.licenses.join(", ");
+      const originsToPrint = moduleInfo.origins.length
+        ? `Defined in ${moduleInfo.origins.join(", ")}`
         : "Not able to determine the file where it is defined";
-      const ancestorsToPrint = error.ancestors.length
-        ? error.ancestors.join(", ")
+      const ancestorsToPrint = moduleInfo.ancestors.length
+        ? moduleInfo.ancestors.join(", ")
         : "undetermined ancestors";
-      const directMessage = error.direct
+      const directMessage = moduleInfo.direct
         ? "Direct dependency"
         : `Transitive dependency of ${ancestorsToPrint}`;
       const displayName = getDependencyDisplayName({
-        id: error.module,
-        version: error.version,
-        resolvedVersion: error.resolvedVersion,
+        id: moduleInfo.module,
+        version: moduleInfo.version,
+        resolvedVersion: moduleInfo.resolvedVersion,
       });
 
       lines.push(
@@ -246,6 +246,31 @@ function errorReport(
 }
 
 /**
+ * Report a failed check
+ * @param reporter The reporter to use
+ * @param result The result of the check
+ * @returns The report in the specified format
+ */
+function emptyReport(reporter: Reporter, result: Result): string {
+  const message = "No dependencies found";
+  switch (reporter) {
+    case "json":
+      return JSON.stringify({
+        message,
+        ...result,
+      });
+    case "markdown":
+      return stripIndent(`
+        __${TITLE}__
+
+        ${indentMarkdownBlock([messageWithEmoji("✅", message, true)], false)}
+      `);
+    default:
+      return message;
+  }
+}
+
+/**
  * Get the report in the specified format
  * @param reporter The reporter to use
  * @param result The result of the check
@@ -256,6 +281,13 @@ export function getReport(
   result: Result,
   isValid: boolean,
 ): string {
+  if (
+    result.forbidden.length === 0 &&
+    result.warning.length === 0 &&
+    result.allowed.length === 0
+  ) {
+    return emptyReport(reporter, result);
+  }
   return result.forbidden.length > 0 || result.warning.length > 0
     ? errorReport(reporter, result, isValid)
     : successReport(reporter, result);

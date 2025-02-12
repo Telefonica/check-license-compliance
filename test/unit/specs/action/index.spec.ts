@@ -5,8 +5,8 @@ import * as core from "@actions/core";
 
 import { getConfig } from "../../../../src/action/Config";
 import { run } from "../../../../src/action/index";
-import { Checker } from "../../../../src/lib";
-import type { Result, LicensesResult } from "../../../../src/lib/Checker.types";
+import { Checker, getReport } from "../../../../src/lib";
+import type { Result } from "../../../../src/lib/Checker.types";
 
 jest.mock("@actions/core");
 jest.mock("../../../../src/lib");
@@ -15,13 +15,7 @@ jest.mock("../../../../src/action/Config");
 const coreMock = core as jest.Mocked<typeof core>;
 const getConfigMock = jest.mocked(getConfig);
 const CheckerMock = jest.mocked(Checker);
-
-const mockConfig = {
-  log: "info" as const,
-  failOnNotValid: true,
-  reporter: "text" as const,
-  cwd: "/github/workspace",
-};
+const getReportMock = jest.mocked(getReport);
 
 const mockResult: Result = {
   forbidden: [],
@@ -36,8 +30,14 @@ const mockResult: Result = {
 describe("run", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getConfigMock.mockResolvedValue(mockConfig);
+    getConfigMock.mockResolvedValue({
+      reporter: "text",
+      log: "info",
+      failOnNotValid: true,
+      cwd: "/github/workspace",
+    });
     CheckerMock.prototype.check.mockResolvedValue(mockResult);
+    getReportMock.mockReturnValue("Mocked report");
   });
 
   it("should set outputs correctly when there are no forbidden or warning licenses", async () => {
@@ -45,36 +45,30 @@ describe("run", () => {
 
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-forbidden", false);
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-warning", false);
-    expect(coreMock.setOutput).toHaveBeenCalledWith(
-      "report",
-      expect.any(String),
-    );
+    expect(coreMock.setOutput).toHaveBeenCalledWith("report", "Mocked report");
     expect(coreMock.setOutput).toHaveBeenCalledWith("valid", true);
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
   it("should set outputs correctly when there are forbidden licenses", async () => {
-    const mockLicense: LicensesResult = {
-      module: "forbidden-module",
-      licenses: [],
-      direct: true,
-      origins: [],
-      ancestors: [],
-    };
-
     CheckerMock.prototype.check.mockResolvedValueOnce({
       ...mockResult,
-      forbidden: [mockLicense],
+      forbidden: [
+        {
+          module: "forbidden-module",
+          licenses: [],
+          direct: true,
+          origins: [],
+          ancestors: [],
+        },
+      ],
     });
 
     await run();
 
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-forbidden", true);
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-warning", false);
-    expect(coreMock.setOutput).toHaveBeenCalledWith(
-      "report",
-      expect.any(String),
-    );
+    expect(coreMock.setOutput).toHaveBeenCalledWith("report", "Mocked report");
     expect(coreMock.setOutput).toHaveBeenCalledWith("valid", false);
     expect(coreMock.setFailed).toHaveBeenCalledWith(
       "Some dependencies have not acceptable licenses.",
@@ -82,27 +76,24 @@ describe("run", () => {
   });
 
   it("should set outputs correctly when there are warning licenses", async () => {
-    const mockLicense: LicensesResult = {
-      module: "warning-module",
-      licenses: [],
-      direct: true,
-      origins: [],
-      ancestors: [],
-    };
-
     CheckerMock.prototype.check.mockResolvedValueOnce({
       ...mockResult,
-      warning: [mockLicense],
+      warning: [
+        {
+          module: "warning-module",
+          licenses: [],
+          direct: true,
+          origins: [],
+          ancestors: [],
+        },
+      ],
     });
 
     await run();
 
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-forbidden", false);
     expect(coreMock.setOutput).toHaveBeenCalledWith("found-warning", true);
-    expect(coreMock.setOutput).toHaveBeenCalledWith(
-      "report",
-      expect.any(String),
-    );
+    expect(coreMock.setOutput).toHaveBeenCalledWith("report", "Mocked report");
     expect(coreMock.setOutput).toHaveBeenCalledWith("valid", true);
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });

@@ -6,6 +6,7 @@ import * as core from "@actions/core";
 import { Checker, getReport } from "../lib/index.js";
 
 import { getConfig } from "./Config.js";
+import { setupProcess } from "./Process.js";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
@@ -13,26 +14,13 @@ const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 
-const shutdown = (signal: string, exitCode: number) => {
-  // eslint-disable-next-line no-console
-  console.log(`Received ${signal}. Cleaning up...`);
-  process.exit(exitCode);
-};
-
-process.on("SIGINT", () => shutdown("SIGINT", 130));
-process.on("SIGTERM", () => shutdown("SIGTERM", 143));
-
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught exception:", err);
-  process.exit(1);
-});
-
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
   try {
+    setupProcess();
     core.debug("Getting configuration...");
     // NOTE: In github container actions, the workspace is mounted in /github/workspace
     const options = await getConfig("/github/workspace");
