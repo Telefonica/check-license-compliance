@@ -53,9 +53,6 @@ jobs:
               "licenses": {
                 "allowed": ["MIT"],
                 "forbidden": ["Apache-2.0"]
-              },
-              "go": {
-                "ignoreFiles": ["**"]
               }
             }
           log: "debug"
