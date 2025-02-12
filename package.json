@@ -1,7 +1,7 @@
 {
   "name": "@tid-xcut/check-license-compliance",
   "description": "Checks that repository dependencies are compliant with allowed licenses",
-  "version": "2.0.0",
+  "version": "2.0.0-beta.1",
   "author": "Telefónica Innovación Digital",
   "homepage": "https://github.com/Telefonica/check-license-compliance",
   "repository": {

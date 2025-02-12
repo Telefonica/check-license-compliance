@@ -35,6 +35,13 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     });
   }
 
+  /**
+   * Read the dependencies from a pom.xl content
+   * @param pom The pom.xml content to read the dependencies from
+   * @param filePath The path to the pom.xml file
+   * @param isDevelopment If the dependencies should be considered as development dependencies
+   * @returns The dependencies found in the pom.xml content
+   */
   private _getPomDependenciesInfo(
     pom: string,
     filePath: string,
@@ -98,12 +105,16 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     });
   }
 
+  /**
+   * Read the dependencies from a pom.xml file
+   * @returns The dependencies found in the pom.xml file
+   */
   public async readFileDependencies(
-    pomPath: string,
+    filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${pomPath}`);
-    const resolvedPath = path.resolve(this.cwd, pomPath);
+    this.logger.verbose(`Reading dependencies from ${filePath}`);
+    const resolvedPath = path.resolve(this.cwd, filePath);
 
     // Read the pom.xml file
     const pomXml = await fsExtra.readFile(resolvedPath, "utf8");
@@ -116,10 +127,10 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     );
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${pomPath}`,
+      `Found ${dependencies.length} dependencies in ${filePath}`,
     );
 
-    this.logger.debug(`Dependencies found in ${pomPath}`, dependencies);
+    this.logger.debug(`Dependencies found in ${filePath}`, dependencies);
 
     return dependencies;
   }

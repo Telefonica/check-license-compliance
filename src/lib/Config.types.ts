@@ -43,7 +43,7 @@ export const licensesConfigSchema = z.object({
 /** Configuration for licenses */
 export type LicensesConfig = z.infer<typeof licensesConfigSchema>;
 
-/** Options schema */
+/** Configuration options schema */
 export const configSchema = z
   .object({
     licenses: licensesConfigSchema.optional(),
@@ -59,5 +59,5 @@ export const configSchema = z
   })
   .strict();
 
-/** Options **/
+/** The whole configuration object **/
 export type CheckerConfig = z.infer<typeof configSchema>;

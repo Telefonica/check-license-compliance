@@ -82,22 +82,28 @@ function parseYamlConfig(config: string) {
   return parse(config);
 }
 
-async function loadConfigFile(configFile: string) {
-  const fileExists = existsSync(configFile);
+/**
+ * Loads a configuration file
+ * @param filePath The configuration file to load
+ * @returns The configuration parsed from the file, or an empty object if the file does not exist
+ */
+async function loadConfigFile(filePath: string) {
+  const fileExists = existsSync(filePath);
   if (fileExists) {
-    core.info(`Configuration file ${configFile} found. Loading...`);
-    const config = await readFile(configFile, "utf8");
+    core.info(`Configuration file ${filePath} found. Loading...`);
+    const config = await readFile(filePath, "utf8");
     const parsedConfig = parseYamlConfig(config);
 
     core.debug(`Configuration from file: ${JSON.stringify(parsedConfig)}`);
     return parsedConfig;
   }
-  core.info(`Configuration file ${configFile} not found`);
+  core.info(`Configuration file ${filePath} not found`);
   return {};
 }
 
 /**
  * Returns the configuration from the action inputs, loading configuration files if needed and parsing the inputs accordingly.
+ * @param cwd The current working directory.
  * @returns The configuration from the action inputs and configuration files.
  */
 export async function getConfig(cwd: string): Promise<AllConfig> {

@@ -37,15 +37,19 @@ import type { GetVersionRequest } from "./proto/deps_dev/v3/GetVersionRequest";
 import type { InsightsClient } from "./proto/deps_dev/v3/Insights";
 import type { Package__Output as PackageOutput } from "./proto/deps_dev/v3/Package.js";
 
+/** Path to the proto files */
 const PROTOS_PATH = path.join(ROOT_PATH, "proto");
+/** Path to the deps.dev proto files */
 const DEPS_DEV_PATH = path.join(PROTOS_PATH, "deps.dev");
+/** Path to the deps.dev API proto file */
 const API_PROTO_PATH = path.join(DEPS_DEV_PATH, "api", "v3", "api.proto");
+/** Paths to include in the proto loader when loading the deps.dev API proto file */
 const API_PROTO_DIRS = [path.join(DEPS_DEV_PATH, "submodules", "googleapis")];
-
+/** The deps.dev API url */
 const DEPS_DEV_URL = "api.deps.dev:443";
 
 /**
- * Get the dependencies information from the deps.dev API
+ * Read the dependencies information from the project dependencies and the deps.dev API
  */
 export class DependenciesInfo {
   private _logger: DependenciesInfoOptions["logger"];
@@ -69,6 +73,10 @@ export class DependenciesInfo {
   private _production: boolean;
   private _development: boolean;
 
+  /**
+   * Create a new instance of the DependenciesInfo
+   * @param options The options to create the DependenciesInfo instance
+   */
   constructor({
     logger,
     cwd,
@@ -127,6 +135,9 @@ export class DependenciesInfo {
     );
   }
 
+  /**
+   * Clear the cache of the instance, enabling to run again the read process
+   */
   private _clearCache() {
     this._depsDevModulesInfo = {};
     this._depsDevDependenciesInfo = {};
@@ -141,6 +152,10 @@ export class DependenciesInfo {
     this._parents = {};
   }
 
+  /**
+   * Read the project dependencies from the project dependencies reader
+   * @returns Array of dependency declarations found in the project files
+   */
   private async _readProjectDependencies(): Promise<
     DependencyDeclaration[] | void
   > {
@@ -159,6 +174,12 @@ export class DependenciesInfo {
     return dependencies;
   }
 
+  /**
+   * Request the versions of a module to the deps.dev API
+   * @param dependencyData The data of the dependency to request the versions
+   * @param retry Current retry number. When it reaches 3, it stops retrying
+   * @returns The response of the API with the versions of the module
+   */
   private _requestModuleVersions(
     { system, name }: DependencyNameUniqueProps,
     retry = 0,
@@ -213,6 +234,11 @@ export class DependenciesInfo {
     ) as Promise<PackageOutput>;
   }
 
+  /**
+   * Returns the default version of a module from the versions available in the deps.dev API
+   * @param moduleData The data of the module to get the default version
+   * @returns The default version of the module defined in the deps.dev API
+   */
   private async _getModuleDefaultVersion({
     system,
     name,
@@ -235,6 +261,11 @@ export class DependenciesInfo {
     return defaultVersion?.version_key?.version;
   }
 
+  /**
+   * Returns the default version of a module from the cache or requests it to the deps.dev API
+   * @param moduleData The data of the module to get the default version
+   * @returns The default version of the module defined in the deps.dev API
+   */
   private _getModuleDefaultVersionFromCache({
     system,
     name,
@@ -248,6 +279,12 @@ export class DependenciesInfo {
     return this._moduleVersionRequests[name];
   }
 
+  /**
+   * Request the information of a module to the deps.dev API, which includes the licenses of the module
+   * @param dependencyData The data of the module to request the information
+   * @param retry Current retry number. When it reaches 3, it stops retrying
+   * @returns The response of the API with the module information
+   */
   private _requestModuleVersionInfo(
     { system, name, version }: DependencyUniqueProps,
     retry = 0,
@@ -309,6 +346,12 @@ export class DependenciesInfo {
     ) as Promise<VersionOutput>;
   }
 
+  /**
+   * Request the dependencies of a module to the deps.dev API
+   * @param dependencyData The data of the module to request the dependencies
+   * @param retry Current retry number. When it reaches 3, it stops retrying
+   * @returns The response of the API with the module dependencies
+   */
   private _requestModuleDependencies(
     { system, name, version }: DependencyUniqueProps,
     retry = 0,
@@ -372,6 +415,18 @@ export class DependenciesInfo {
     ) as Promise<DependenciesOutput>;
   }
 
+  /**
+   * Request the information of a module and its dependencies to the deps.dev API and store it in the instance
+   * It requests the dependencies recursively, storing the ancestors of the module
+   * In case there are errors requesting the data, it stores objects with the minimal information and the error information
+   * These errors can be retrieved later to show them to the user by using the `errors` getter of the instance
+   * @param moduleData The data of the module to request the information and dependencies
+   * @param options The options to request the module and dependencies info
+   *  - isDirect: Whether the module is a direct dependency of the project
+   *  - ancestor: The ancestor of the module, if it is not a direct dependency
+   *  - development: Whether to request the development dependencies
+   *  - production: Whether to request the production dependencies
+   */
   private async _requestModuleAndDependenciesInfo(
     { system, name, version, resolvedVersion }: DependencyUniqueProps,
     { isDirect = false, ancestor = "", development = true, production = true },
@@ -581,6 +636,11 @@ export class DependenciesInfo {
     );
   }
 
+  /**
+   * Request the information of the dependencies of the project to the deps.dev API
+   * The result is stored in the instance
+   * @param projectDependencies The dependencies found in the project files
+   */
   private async _requestDependenciesInfo(
     projectDependencies: DependencyDeclaration[],
   ) {
@@ -596,6 +656,11 @@ export class DependenciesInfo {
     ]);
   }
 
+  /**
+   * Returns the ancestors of a dependency (project dependencies being the root)
+   * @param dependency The dependency to get the ancestors
+   * @returns Array of ancestors of the dependency
+   */
   private _getAncestors(dependency: DependencyId) {
     const searchAncestors = (
       dependencyId: DependencyId,
@@ -627,6 +692,12 @@ export class DependenciesInfo {
     return Array.from(new Set(result));
   }
 
+  /**
+   * Iterate over the dependencies info and fill the information of the dependencies
+   * It stores the information in the instance
+   * In detail, it adds the direct, production, development, ancestors, origins, errors and warnings information
+   * @param projectDependencies The dependencies found in the project files
+   */
   private _fillDependenciesInfo(projectDependencies: DependencyDeclaration[]) {
     this._logger.info("Preparing dependencies info");
 
@@ -718,6 +789,10 @@ export class DependenciesInfo {
     });
   }
 
+  /**
+   * Get the errors from all dependencies info, adding the display name of the dependency to the error message
+   * @returns Array of errors with the display name of the dependency in the message
+   */
   private _getErrors() {
     this._errors = this._dependenciesInfo.reduce((errors, dependencyInfo) => {
       return errors.concat(
@@ -736,6 +811,10 @@ export class DependenciesInfo {
     }, [] as Error[]);
   }
 
+  /**
+   * Get the warnings from all dependencies info, adding the display name of the dependency to the warning message
+   * @returns Array of warnings with the display name of the dependency in the message
+   */
   private _getWarnings() {
     this._warnings = this._dependenciesInfo.reduce(
       (warnings, dependencyInfo) => {
@@ -754,6 +833,11 @@ export class DependenciesInfo {
     );
   }
 
+  /**
+   * Get the dependencies information from the project dependencies and the deps.dev API
+   * It clears the cache, reads the project dependencies, requests the dependencies info and fills the dependencies info
+   * @returns The dependencies information
+   */
   private async _getDependencies(): Promise<GetDependenciesInfoResult> {
     this._clearCache();
 
@@ -788,10 +872,16 @@ export class DependenciesInfo {
     return this._getDependenciesPromise;
   }
 
+  /**
+   * Return the errors found while getting the dependencies information
+   */
   public get errors() {
     return this._errors;
   }
 
+  /**
+   * Return the warnings found while getting the dependencies information
+   */
   public get warnings() {
     return this._warnings;
   }

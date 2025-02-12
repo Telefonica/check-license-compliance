@@ -28,12 +28,21 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     });
   }
 
+  /**
+   * Read the dependencies from a package.json file content
+   * @param packageJson The package.json content to read the dependencies from
+   * @param filePath The path to the package.json file, useful for the origin field in the dependencies
+   * @param devDependencies Whether to read devDependencies or dependencies.
+   * @param isDevelopment If the dependencies should be considered as development dependencies, no matter if they are devDependencies or dependencies.
+   * @returns The dependencies found in the pom.xml content
+   */
   private _getPackageJsonDependenciesInfo(
     packageJson: NpmPackageJson,
-    packageJsonPath: string,
-    dev: boolean = false,
+    filePath: string,
+    devDependencies: boolean = false,
+    isDevelopment = false,
   ) {
-    const key = dev ? "devDependencies" : "dependencies";
+    const key = devDependencies ? "devDependencies" : "dependencies";
 
     const dependencies = packageJson[key];
     if (!dependencies) {
@@ -52,19 +61,25 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
         name,
         version,
         resolvedVersion,
-        origin: path.relative(this.cwd, packageJsonPath),
-        development: dev,
-        production: !dev,
+        origin: path.relative(this.cwd, filePath),
+        development: isDevelopment ? isDevelopment : devDependencies,
+        production: isDevelopment ? isDevelopment : !devDependencies,
       };
     });
   }
 
+  /**
+   * Read the dependencies from a package.json file
+   * @param filePath The path to the package.json file to read the dependencies from
+   * @param isDevelopment If the dependencies should be considered as development dependencies
+   * @returns The dependencies found in the package.json file
+   */
   public async readFileDependencies(
-    packageJsonPath: string,
+    filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${packageJsonPath}`);
-    const resolvedPath = path.resolve(this.cwd, packageJsonPath);
+    this.logger.verbose(`Reading dependencies from ${filePath}`);
+    const resolvedPath = path.resolve(this.cwd, filePath);
 
     const packageJson = (await fsExtra.readJson(
       resolvedPath,
@@ -73,12 +88,14 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     const packageProductionDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
       resolvedPath,
+      false,
       isDevelopment,
     );
     const packageDevDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
       resolvedPath,
       true,
+      isDevelopment,
     );
 
     const dependencies = [
@@ -87,9 +104,9 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     ];
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${packageJsonPath}`,
+      `Found ${dependencies.length} dependencies in ${filePath}`,
     );
-    this.logger.debug(`Dependencies found in ${packageJsonPath}`, {
+    this.logger.debug(`Dependencies found in ${filePath}`, {
       dependencies,
     });
 

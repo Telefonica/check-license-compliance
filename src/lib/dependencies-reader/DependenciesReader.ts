@@ -11,7 +11,7 @@ import { NpmDependenciesReader } from "./NpmDependenciesReader.js";
 import { PythonDependenciesReader } from "./PythonDependenciesReader.js";
 
 /**
- * Read all direct dependencies, from any system
+ * Read all direct dependencies, from all systems
  */
 export class DirectDependenciesReader {
   private _nodeDependenciesReader: NpmDependenciesReader;
@@ -20,6 +20,10 @@ export class DirectDependenciesReader {
   private _goDependenciesReader: GoDependenciesReader;
   private _logger: DependenciesReaderOptions["logger"];
 
+  /**
+   * Create a new instance of the DirectDependenciesReader
+   * @param options The options to create the reader
+   */
   constructor({
     logger,
     cwd,
@@ -61,6 +65,10 @@ export class DirectDependenciesReader {
     this._logger = logger;
   }
 
+  /**
+   * Read the dependencies from all systems
+   * @returns The list of dependency declarations
+   */
   public async readDependencies(): Promise<DependencyDeclaration[]> {
     this._logger.info("Reading project dependencies");
 

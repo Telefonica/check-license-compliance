@@ -16,6 +16,12 @@ const BOLD = "__";
 const NOT_VALID_RESULT = "Result: Not valid licenses";
 const VALID_RESULT = "Result: Valid licenses";
 
+/**
+ * Returns a bold text
+ * @param text The text to make bold
+ * @param markdown If the text should be in markdown format
+ * @returns The bold text when markdown is true, otherwise the text as is
+ */
 function bold(text: string, markdown: boolean): string {
   if (markdown) {
     return `${BOLD}${text}${BOLD}`;
@@ -23,6 +29,12 @@ function bold(text: string, markdown: boolean): string {
   return text;
 }
 
+/**
+ * Returns a cursive text
+ * @param text The text to make cursive
+ * @param markdown If the text should be in markdown format
+ * @returns The cursive text when markdown is true, otherwise the text as is
+ */
 function cursive(text: string, markdown: boolean): string {
   if (markdown) {
     return `_${text}_`;
@@ -30,6 +42,13 @@ function cursive(text: string, markdown: boolean): string {
   return text;
 }
 
+/**
+ * Returns a message with an emoji
+ * @param emoji The emoji to use
+ * @param message The message to display
+ * @param markdown If the message should be in markdown format
+ * @returns The message with the emoji when markdown is true, otherwise the message without the emoji
+ */
 function messageWithEmoji(
   emoji: string,
   message: string,
@@ -38,6 +57,12 @@ function messageWithEmoji(
   return markdown ? `${emoji} ${message}` : message;
 }
 
+/**
+ * Indent a block of markdown lines
+ * @param lines The lines to indent
+ * @param indentFirst If the first line should be indented
+ * @returns The indented block
+ */
 function indentMarkdownBlock(lines: string[], indentFirst = true): string {
   // NOTE: Add an empty line to separate the block from the previous one in case it is not the first one
   const linesToIndent = indentFirst ? ["", ...lines] : lines;
@@ -59,6 +84,12 @@ function removeBlankLines(text: string): string {
   return text.replace(/\n/gm, " ");
 }
 
+/**
+ * Returns a markdown message with the dependencies that have allowed licenses
+ * @param allowed The allowed dependencies
+ * @param markdown If the message should be in markdown format
+ * @returns The message in markdown or plain text
+ */
 function getAllowedMessage(
   allowed: LicensesResult[],
   markdown = true,
@@ -77,8 +108,12 @@ function getAllowedMessage(
 }
 
 /**
- * Returns a markdown message with the dependencies that failed the check
- * @returns The markdown message
+ * Returns a markdown message with the dependencies that failed the check or produced a warning
+ * @param modules The modules that failed the check or produced a warning
+ * @param type The type of message to generate
+ * @param emoji The emoji to use in the message
+ * @param markdown If the message should be in markdown format
+ * @returns The message in markdown or plain text
  */
 function getForbiddenOrWarningMessage(
   modules: LicensesResult[],
@@ -144,8 +179,10 @@ function getForbiddenOrWarningMessage(
 }
 
 /**
- * Returns a markdown message with the errors that happened while checking the licenses
- * @returns The markdown message
+ * Returns a markdown message with the errors and warnings that happened while checking the licenses
+ * @param caveats The caveats object containing the errors and warnings
+ * @param markdown If the message should be in markdown format
+ * @returns The message with the errors and warnings in markdown or plain text
  */
 function getCaveatsMessage(
   caveats: Result["caveats"],
@@ -209,6 +246,7 @@ function successReport(reporter: Reporter, result: Result): string {
  * Report a failed check
  * @param reporter The reporter to use
  * @param result The result of the check
+ * @param isValid If the check was successful
  * @returns The report in the specified format
  */
 function errorReport(
@@ -246,7 +284,7 @@ function errorReport(
 }
 
 /**
- * Report a failed check
+ * Report an empty check
  * @param reporter The reporter to use
  * @param result The result of the check
  * @returns The report in the specified format
@@ -274,6 +312,7 @@ function emptyReport(reporter: Reporter, result: Result): string {
  * Get the report in the specified format
  * @param reporter The reporter to use
  * @param result The result of the check
+ * @param isValid If the check was successful
  * @returns The report in the specified format
  */
 export function getReport(

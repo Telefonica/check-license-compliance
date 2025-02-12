@@ -25,7 +25,7 @@ const WARNING = "warning";
 const UNKNOWN = "unknown";
 
 /**
- * Check files for license headers
+ * Reads the dependencies and checks if they comply with the licenses configuration
  */
 export class Checker {
   private _logger: ReturnType<typeof createLogger>;
@@ -70,6 +70,10 @@ export class Checker {
     });
   }
 
+  /**
+   * Logs a warning only once when a license identifier in the configuration is not a valid SPDX identifier
+   * @param licenseIdentifier The license identifier to log
+   */
   private _logInvalidSpdxInConfig(licenseIdentifier: string): void {
     if (!this._loggedInvalidSpdxFromConfig.includes(licenseIdentifier)) {
       this._loggedInvalidSpdxFromConfig.push(licenseIdentifier);
@@ -79,12 +83,20 @@ export class Checker {
     }
   }
 
+  /**
+   * Initializes the checker
+   */
   private _initialize = async () => {
     this._spdxIds = await fsExtra.readJson(
       fileURLToPath(SPDX_LICENSE_IDS_PATH),
     );
   };
 
+  /**
+   * Determines if a license is a valid SPDX identifier
+   * @param license The license to check
+   * @returns True if the license is a valid SPDX identifier, false otherwise
+   */
   private _isValidSpdx(license: string): boolean {
     if (this._spdxIds.includes(license)) {
       return true;
@@ -97,6 +109,12 @@ export class Checker {
     }
   }
 
+  /**
+   * Logs that a license satisfies a license identifier
+   * @param license The license
+   * @param licenseIdentifier The license identifier that is satisfied
+   * @param moduleName The module name
+   */
   private _logSatisfies(
     license: string,
     licenseIdentifier: string,
@@ -107,6 +125,12 @@ export class Checker {
     );
   }
 
+  /**
+   * Logs that a license does not satisfy a license identifier
+   * @param license The license
+   * @param licenseIdentifier The license identifier that is not satisfied
+   * @param moduleName The module name
+   */
   private _logNotSatisfies(
     license: string,
     licenseIdentifier: string,
@@ -121,6 +145,7 @@ export class Checker {
    * Determines if a license satisfies a list of license identifiers
    * @param license The license to check
    * @param licenseIdentifiers The license identifiers to check
+   * @param moduleData The data of the module to which the license belongs to
    * @returns True if the license satisfies any of the license identifiers, false otherwise
    */
   private _licenseSatisfies(
@@ -168,6 +193,13 @@ export class Checker {
     });
   }
 
+  /**
+   * Determines if all the licenses satisfy a list of license identifiers
+   * @param licenses The licenses to check
+   * @param licenseIdentifiers The license identifiers to check
+   * @param moduleData The data of the module to which the licenses belong to
+   * @returns True if all the licenses satisfy any of the license identifiers, false otherwise
+   */
   private _allLicensesSatisfies(
     licenses: string[],
     licenseIdentifiers: string[],
@@ -178,6 +210,12 @@ export class Checker {
     );
   }
 
+  /**
+   * Determines if a module id is in a list. Ids can be passed with or without system id
+   * @param list The list to check
+   * @param moduleId The module id to check
+   * @returns True if the module id is in the list, false otherwise
+   */
   private _moduleIdIsInList(list: string[], moduleId: string): boolean {
     return list.some((id) => {
       const idHasSystem = hasSystemId(id);
@@ -188,6 +226,11 @@ export class Checker {
     });
   }
 
+  /**
+   * Returns true if the dependency is in the list of modules to exclude according to the configuration of the dependency system
+   * @param dependency The dependency to check
+   * @returns True if the dependency is in the list of modules to exclude, false otherwise
+   */
   private _dependencyIsExcluded(dependency: DependencyInfo): boolean {
     const systemConfig = getSystemConfig(dependency.system, this._config);
     if (systemConfig.excludeModules) {
@@ -196,6 +239,11 @@ export class Checker {
     return false;
   }
 
+  /**
+   * Returns true if the dependency is in the list of modules to include according to the configuration of the dependency system
+   * @param dependency The dependency to check
+   * @returns True if the dependency is in the list of modules to include, or if there is no list of modules to include, false otherwise
+   */
   private _dependencyIsIncluded(dependency: DependencyInfo): boolean {
     const systemConfig = getSystemConfig(dependency.system, this._config);
     if (systemConfig.modules) {
@@ -205,8 +253,8 @@ export class Checker {
   }
 
   /**
-   * Returns an array of modules using a license that is not in the exclusions, or is unknown
-   * @returns List of modules using a license that is not in the exclusions
+   * Read the project dependencies and returns an array of modules using a license that is not in the exclusions from configuration
+   * @returns List of modules using a license that is not in the exclusions from configuration
    */
   private async _getLicensesToCheck(): Promise<LicensesResult[]> {
     const dependencies = await this._dependenciesInfo.getDependencies();
@@ -274,6 +322,7 @@ export class Checker {
   /**
    * Determines if the licenses are allowed according to the configuration
    * @param licenses The licenses to check
+   * @param moduleData The data of the module to which the licenses belong to
    * @returns True if the licenses are allowed, false otherwise
    */
   private _isAllowed(licenses: string[], moduleData: LicensesResult): boolean {
@@ -296,6 +345,7 @@ export class Checker {
   /**
    * Determines if the licenses are forbidden according to the configuration
    * @param licenses The licenses to check
+   * @param moduleData The data of the module to which the licenses belong to
    * @returns True if the licenses are forbidden, false otherwise
    */
   private _isForbidden(
@@ -320,6 +370,7 @@ export class Checker {
   /**
    * Determines if the licenses are warning according to the configuration
    * @param licenses The licenses to check
+   * @param moduleData The data of the module to which the licenses belong to
    * @returns True if the licenses are warning, false otherwise
    */
   private _isWarning(licenses: string[], moduleData: LicensesResult): boolean {
@@ -339,16 +390,16 @@ export class Checker {
   }
 
   /**
-   * Determines if the licenses are unknown
+   * Determines if the licenses should be considered as unknown because they are empty
    * @param licenses The licenses to check
-   * @returns True if the licenses are unknown, false otherwise
+   * @returns True if the licenses are empty, false otherwise
    */
   private _isUnknown(licenses: string[]): boolean {
     return licenses.length === 0;
   }
 
   /**
-   * Checks all rules
+   * Reads the dependencies and checks if they comply with the licenses configuration
    * @returns An object with the result of the check
    */
   public async check(): Promise<Result> {

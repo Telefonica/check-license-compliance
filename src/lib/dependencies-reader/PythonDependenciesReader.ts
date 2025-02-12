@@ -28,18 +28,25 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     });
   }
 
+  /**
+   * Read the dependencies from a requirements.txt file
+   * @param filePath The path to the requirements.txt file to read the dependencies from
+   * @param isDevelopment If the dependencies should be considered as development dependencies
+   * @param processedFiles A set of already processed files to avoid circular dependencies when reading included files
+   * @returns The dependencies found in the requirements.txt file
+   */
   public async readFileDependencies(
-    requirementsTxtPath: string,
+    filePath: string,
     isDevelopment = false,
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${requirementsTxtPath}`);
+    this.logger.verbose(`Reading dependencies from ${filePath}`);
     const recursiveRequirements =
       this.options.recursiveRequirements == undefined
         ? true
         : this.options.recursiveRequirements;
 
-    const resolvedPath = path.resolve(this.cwd, requirementsTxtPath);
+    const resolvedPath = path.resolve(this.cwd, filePath);
 
     if (processedFiles.has(resolvedPath)) {
       this.logger.warn(`Skipping already processed file: ${resolvedPath}`);
@@ -64,7 +71,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
             includedFile,
           );
           this.logger.verbose(
-            `Reading ${this.system} included file in ${requirementsTxtPath}`,
+            `Reading ${this.system} included file in ${filePath}`,
           );
           const includedDependencies = await this.readFileDependencies(
             includedFilePath,
@@ -74,7 +81,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           dependencies.push(...includedDependencies);
         } else {
           this.logger.verbose(
-            `Skipping read of ${this.system} included file in ${requirementsTxtPath} because recursiveRequirements is disabled`,
+            `Skipping read of ${this.system} included file in ${filePath} because recursiveRequirements is disabled`,
           );
         }
       } else {
@@ -106,7 +113,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           name,
           version: versionToAssign,
           resolvedVersion,
-          origin: path.relative(this.cwd, requirementsTxtPath),
+          origin: path.relative(this.cwd, filePath),
           development: isDevelopment,
           production: !isDevelopment,
         });
@@ -114,9 +121,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     }
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${requirementsTxtPath}`,
+      `Found ${dependencies.length} dependencies in ${filePath}`,
     );
-    this.logger.debug(`Dependencies found in ${requirementsTxtPath}`, {
+    this.logger.debug(`Dependencies found in ${filePath}`, {
       dependencies,
     });
 

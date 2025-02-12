@@ -17,6 +17,10 @@ import { GO_SYSTEM, getDependencyId } from "./Helpers.js";
  * Read the Go dependencies from the go.mod files in the project
  */
 export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDependenciesReaderOptions> {
+  /**
+   * Create a new instance of the GoDependenciesReader
+   * @param options The options to create the reader
+   */
   constructor(
     options: SystemDependenciesReaderOptions<GoDependenciesReaderOptions>,
   ) {
@@ -27,12 +31,18 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     });
   }
 
+  /**
+   * Read the dependencies from a go.mod file in the project
+   * @param filePath The path to the go.mod file to read the dependencies from
+   * @param isDevelopment If the dependencies should be considered as development dependencies
+   * @returns The dependencies found in the go.mod file
+   */
   public async readFileDependencies(
-    goModPath: string,
+    filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${goModPath}`);
-    const resolvedPath = path.resolve(this.cwd, goModPath);
+    this.logger.verbose(`Reading dependencies from ${filePath}`);
+    const resolvedPath = path.resolve(this.cwd, filePath);
 
     const goMod = await fsExtra.readFile(resolvedPath, "utf8");
     const dependencies: DependencyDeclaration[] = [];
@@ -68,7 +78,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
             name,
             version,
             resolvedVersion,
-            origin: path.relative(this.cwd, goModPath),
+            origin: path.relative(this.cwd, filePath),
             development: isDevelopment,
             production: !isDevelopment,
           });
@@ -76,9 +86,9 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
       }
     }
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${goModPath}`,
+      `Found ${dependencies.length} dependencies in ${filePath}`,
     );
-    this.logger.debug(`Dependencies found in ${goModPath}`, { dependencies });
+    this.logger.debug(`Dependencies found in ${filePath}`, { dependencies });
 
     return dependencies;
   }

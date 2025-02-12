@@ -25,18 +25,33 @@ const NODE_SYSTEM: System = "NPM";
 
 const SYSTEM_IDS = [NODE_SYSTEM];
 
+/**
+ * Creates an unique id for a dependency
+ * @param dependency The dependency data to create the id from
+ * @returns An unique id for the dependency, containing the system, name and version
+ */
 export function getDependencyId(
   dependency: DependencyUniqueProps,
 ): DependencyId {
   return `${dependency.system}:${dependency.name}@${dependency.version}`;
 }
 
+/**
+ * Removes the system id from a dependency id
+ * @param dependencyId The dependency id to remove the system id from
+ * @returns The dependency id without the system id
+ */
 export function removeSystemId(dependencyId: DependencyId): string {
   return SYSTEM_IDS.reduce((acc, system) => {
     return acc.replace(`${system}:`, "");
   }, dependencyId);
 }
 
+/**
+ * Checks if a dependency id has a system id
+ * @param dependencyId The dependency id to check
+ * @returns True if the dependency id has a system id, false otherwise
+ */
 export function hasSystemId(dependencyId: DependencyId): boolean {
   return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
 }
@@ -57,6 +72,11 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   private _defaultExclude: string[];
   private _defaultDevelopment: string[];
 
+  /**
+   * Creates a new base system dependencies reader
+   * @param options The options for the reader
+   * @param system The system to read dependencies from
+   */
   constructor(
     {
       logger,
@@ -88,6 +108,33 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     this._defaultInclude = defaultInclude;
   }
 
+  /**
+   * Given a module name and version, resolve the version to a valid one
+   * @param moduleName The name of the module
+   * @param version The version to resolve
+   * @returns The resolved version or the original version if it could not be resolved
+   */
+  protected resolveVersion(
+    moduleName: string,
+    version?: string,
+  ): string | undefined {
+    try {
+      return resolveVersion(this.system, version);
+    } catch (error) {
+      this.logger.warn(
+        `Error resolving version "${version}" of dependency ${moduleName}`,
+        error,
+      );
+      return version;
+    }
+  }
+
+  /**
+   * Read the file dependencies. To be implemented by the child class
+   * @param _filePath The file path to read dependencies from
+   * @param _isDevelopment Whether the file is marked as development, so all of its dependencies should be marked as development
+   * @returns The dependencies found in the file
+   */
   public async readFileDependencies(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _filePath: string,
@@ -99,30 +146,10 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
     );
   }
 
-  private _getExtraModulesInfo(
-    extraModules: string[],
-  ): DependencyDeclaration[] {
-    return extraModules.map((moduleNameAndVersion) => {
-      const { name, version } =
-        getDependencyNameAndVersionFromId(moduleNameAndVersion);
-      const resolvedVersion = this.resolveVersion(name, version);
-      return {
-        system: this.system,
-        id: getDependencyId({
-          system: this.system,
-          name,
-          version,
-        }),
-        name,
-        version,
-        resolvedVersion,
-        origin: "extraModules",
-        development: true,
-        production: true,
-      };
-    });
-  }
-
+  /**
+   * Read the dependencies from the project files for the system
+   * @returns The system dependencies found in the project
+   */
   public async readDependencies(): Promise<DependencyDeclaration[]> {
     this.logger.info(`Reading ${this.system} dependencies`);
 
@@ -166,6 +193,35 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   }
 
   /**
+   * Return information about extra modules to add to the dependencies
+   * @param extraModules The extra modules to add
+   * @returns Array of dependency declarations for the extra modules
+   */
+  private _getExtraModulesInfo(
+    extraModules: string[],
+  ): DependencyDeclaration[] {
+    return extraModules.map((moduleNameAndVersion) => {
+      const { name, version } =
+        getDependencyNameAndVersionFromId(moduleNameAndVersion);
+      const resolvedVersion = this.resolveVersion(name, version);
+      return {
+        system: this.system,
+        id: getDependencyId({
+          system: this.system,
+          name,
+          version,
+        }),
+        name,
+        version,
+        resolvedVersion,
+        origin: "extraModules",
+        development: true,
+        production: true,
+      };
+    });
+  }
+
+  /**
    * Returns a list of files to read, relative to the cwd
    * @returns List of files to read, separated by files containing only development dependencies and files containing any type of dependencies
    */
@@ -194,20 +250,5 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
       dev: devFiles,
       any: allFiles.filter((file) => !devFiles.includes(file)),
     };
-  }
-
-  protected resolveVersion(
-    moduleName: string,
-    version?: string,
-  ): string | undefined {
-    try {
-      return resolveVersion(this.system, version);
-    } catch (error) {
-      this.logger.warn(
-        `Error resolving version "${version}" of dependency ${moduleName}`,
-        error,
-      );
-      return version;
-    }
   }
 }

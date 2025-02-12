@@ -4,5 +4,6 @@
 import { z } from "zod";
 
 export const reporterSchema = z.enum(["json", "markdown", "text"]).optional();
+
 /** Formatter of the response */
 export type Reporter = z.infer<typeof reporterSchema>;
