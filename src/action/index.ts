@@ -23,9 +23,9 @@ export async function run(): Promise<void> {
     setupProcess();
     core.debug("Getting configuration...");
     // NOTE: In github container actions, the workspace is mounted in /github/workspace
-    //const options = await getConfig("/github/workspace");
-    // Uncomment the following line to test the action locally
-    const options = await getConfig(".");
+    const options = await getConfig("/github/workspace");
+    // Uncomment the following line to test the NodeJS code locally without running the action
+    // const options = await getConfig(".");
 
     core.debug("Running checker...");
     const checker = new Checker({
