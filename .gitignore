@@ -1,7 +1,10 @@
 .npmrc
 .DS_Store
 dist
+# Generated files
 src/lib/proto
+# Useful to debug the action locally
+github/workspace
 
 # Logs
 logs

@@ -1,5 +1,0 @@
-# Install toolium-telefonica from repository
-toolium-telefonica==7.7.0
-toolium==3.3.0
-pydantic[email]==2.9.0
-python-dotenv==1.0.1
