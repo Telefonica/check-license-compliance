@@ -17,7 +17,6 @@ inputs:
       - 'warn'
       - 'error'
       - 'silent'
-    default: 'info'
     required: false
   reporter:
     description: 'Reporter to use'
@@ -26,12 +25,11 @@ inputs:
       - 'json'
       - 'markdown'
       - 'text'
-    default: 'text'
     required: false
   fail-on-not-valid:
     description: 'Fail the action (exit code 1) when the result is not valid'
     type: boolean
-    default: 'true'
+    required: false
   config:
     description: 'Configuration object expressed as a JSON string'
     multiline: true
@@ -39,6 +37,9 @@ inputs:
   config-file:
     description: 'Path to a configuration file'
     default: 'check-license-compliance.config.yml'
+  path:
+    description: 'Path to the directory where the check will be performed. config-file and other options will be relative to this path'
+    default: '.'
 outputs:
   found-forbidden:
     description: 'Whether forbidden licenses were found'
@@ -49,5 +50,5 @@ outputs:
   report:
     description: 'A report containing the results of the check'
 runs:
-  using: node20
-  main: dist/index.js
+  using: docker
+  image: Dockerfile

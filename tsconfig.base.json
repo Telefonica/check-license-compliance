@@ -8,10 +8,17 @@
     "baseUrl": "./",
     "sourceMap": true,
     "outDir": "./dist",
+    "declaration": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
+    "useDefineForClassFields": true,
+    "importsNotUsedAsValues": "remove",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noUnusedParameters": true,
+    "isolatedModules": true,
+    "strictPropertyInitialization": false,
+    "strictNullChecks": true,
     "skipLibCheck": true,
     "newLine": "lf"
   }

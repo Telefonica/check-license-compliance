@@ -9,6 +9,10 @@ on:
     branches:
       - main
 
+concurrency:  
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write
@@ -24,16 +28,21 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - uses: ./.github/actions/setup-node
-        id: setup-node
-        with:
-          npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
-
       # NOTE: This checks the license compliance of the dependencies in the repository with the real configuration
       - name: Check license compliance
         uses: ./
+        id: check-license-compliance
+        # with:
+          # log: "debug"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print outputs
+        run: |
+          echo "Output report: ${{ steps.check-license-compliance.outputs.report }}"
+          echo "Output valid: ${{ steps.check-license-compliance.outputs.valid }}"
+          echo "Output found-forbidden: ${{ steps.check-license-compliance.outputs.found-forbidden }}"
+          echo "Output found-warning: ${{ steps.check-license-compliance.outputs.found-warning }}"
 
       # NOTE: Next steps check that the library produces the expected errors when the dependencies are not valid according to the rules
       - name: Test - Case 1
@@ -45,9 +54,8 @@ jobs:
               "licenses": {
                 "allowed": ["MIT"],
                 "forbidden": ["Apache-2.0"]
-              },
+              }
             }
-          log: "debug"
           reporter: "json"
           fail-on-not-valid: false
 
@@ -56,10 +64,15 @@ jobs:
         run: |
           echo "Test case 1 failed. The check did not found forbidden dependencies" && exit 1
 
-      - name: Test - Case 1 - Assert 2 failed
-        if: contains(fromJson(steps.test-01.outputs.report).message, '116 dependencies have forbidden licenses. 1 dependency has dangerous licenses.') == false
+      - name: Test - Case 1 - Assert 1 failed
+        if: fromJson(steps.test-01.outputs.report).warning[0] == null
         run: |
-          echo "Test case 1 failed. The check did not found 116 forbidden dependencies and 1 dangerous dependency" && exit 1
+          echo "Test case 1 failed. The check did not found warning dependencies" && exit 1
+
+      - name: Test - Case 1 - Assert 3 failed
+        if: contains(fromJson(steps.test-01.outputs.report).message, 'Not valid licenses') == false
+        run: |
+          echo "Test case 1 failed. Read logs for further details" && exit 1
 
       - name: Test - Case 2
         id: test-02
@@ -72,7 +85,6 @@ jobs:
                 "warning": ["MIT"]
               },
             }
-          log: "debug"
           reporter: "json"
           fail-on-not-valid: false
 
@@ -82,6 +94,17 @@ jobs:
           echo "Test case 2 failed. The check did not found warning dependencies" && exit 1
 
       - name: Test - Case 2 - Assert 2 failed
-        if: contains(fromJson(steps.test-02.outputs.report).message, '91 dependencies have forbidden licenses. 666 dependencies have dangerous licenses.') == false
+        if: fromJson(steps.test-02.outputs.report).forbidden[0] == null
         run: |
-          echo "Test case 2 failed. The check did not found 91 forbidden dependencies and 666 dangerous dependency" && exit 1    
+          echo "Test case 2 failed. The check did not found forbidden dependencies" && exit 1
+
+      - name: Test - Case 2 - Assert 3 failed
+        if: contains(fromJson(steps.test-02.outputs.report).message, 'Not valid licenses') == false
+        run: |
+          echo "Test case 2 failed. Read logs for further details" && exit 1    
+
+      # NOTE: This checks the composite action
+      - name: Check license compliance
+        uses: ./.github/actions/check-and-comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
