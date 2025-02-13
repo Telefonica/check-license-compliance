@@ -75,12 +75,20 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           this.logger.verbose(
             `Reading ${this.system} included file in ${relativePath}`,
           );
-          const includedDependencies = await this.readFileDependencies(
-            includedFilePath,
-            isDevelopment,
-            processedFiles,
-          );
-          dependencies.push(...includedDependencies);
+          try {
+            const includedDependencies = await this.readFileDependencies(
+              includedFilePath,
+              isDevelopment,
+              processedFiles,
+            );
+            dependencies.push(...includedDependencies);
+          } catch (error) {
+            this.logger.error(
+              `${this.system}: Error reading dependencies from included file ${includedFilePath}`,
+              error,
+            );
+            this.readErrors.push(error as Error);
+          }
         } else {
           this.logger.verbose(
             `Skipping read of ${this.system} included file in ${relativePath} because recursiveRequirements is disabled`,
