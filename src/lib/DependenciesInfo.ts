@@ -795,23 +795,20 @@ export class DependenciesInfo {
    * @returns Array of errors with the display name of the dependency in the message, or the system in which from which reading the dependencies produced it
    */
   private _getErrors() {
-    const dependenciesErrors = this._dependenciesInfo.reduce(
-      (errors, dependencyInfo) => {
-        return errors.concat(
-          dependencyInfo.errors.map((error) => {
-            const displayName = getDependencyDisplayName({
-              id: dependencyInfo.id,
-              version: dependencyInfo.version,
-              resolvedVersion: dependencyInfo.resolvedVersion,
-            });
-            return {
-              ...error,
-              message: `${displayName}: ${error.message}`,
-            };
-          }),
-        );
+    const dependenciesErrors = this._dependenciesInfo.flatMap(
+      (dependencyInfo) => {
+        const displayName = getDependencyDisplayName({
+          id: dependencyInfo.id,
+          version: dependencyInfo.version,
+          resolvedVersion: dependencyInfo.resolvedVersion,
+        });
+        return dependencyInfo.errors.map((error) => {
+          return {
+            ...error,
+            message: `${displayName}: ${error.message}`,
+          };
+        });
       },
-      [] as Error[],
     );
     this._errors = [
       ...dependenciesErrors,
@@ -824,20 +821,17 @@ export class DependenciesInfo {
    * @returns Array of warnings with the display name of the dependency in the message
    */
   private _getWarnings() {
-    const dependenciesWarnings = this._dependenciesInfo.reduce(
-      (warnings, dependencyInfo) => {
+    const dependenciesWarnings = this._dependenciesInfo.flatMap(
+      (dependencyInfo) => {
         const displayName = getDependencyDisplayName({
           id: dependencyInfo.id,
           version: dependencyInfo.version,
           resolvedVersion: dependencyInfo.resolvedVersion,
         });
-        return warnings.concat(
-          dependencyInfo.warnings.map(
-            (warning) => `${displayName}: ${warning}`,
-          ),
+        return dependencyInfo.warnings.map(
+          (warning) => `${displayName}: ${warning}`,
         );
       },
-      [] as string[],
     );
     this._warnings = [
       ...dependenciesWarnings,

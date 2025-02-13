@@ -40,13 +40,15 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     isDevelopment = false,
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
+    const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
     const recursiveRequirements =
       this.options.recursiveRequirements == undefined
         ? true
         : this.options.recursiveRequirements;
-
-    const resolvedPath = path.resolve(this.cwd, filePath);
 
     if (processedFiles.has(resolvedPath)) {
       this.logger.warn(`Skipping already processed file: ${resolvedPath}`);
@@ -71,7 +73,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
             includedFile,
           );
           this.logger.verbose(
-            `Reading ${this.system} included file in ${filePath}`,
+            `Reading ${this.system} included file in ${relativePath}`,
           );
           const includedDependencies = await this.readFileDependencies(
             includedFilePath,
@@ -81,13 +83,13 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           dependencies.push(...includedDependencies);
         } else {
           this.logger.verbose(
-            `Skipping read of ${this.system} included file in ${filePath} because recursiveRequirements is disabled`,
+            `Skipping read of ${this.system} included file in ${relativePath} because recursiveRequirements is disabled`,
           );
         }
       } else {
         const match = line.match(/(.*?)(==|>=|<=|!=|~=)(.*)/);
         if (!match) {
-          const message = `${this.system}: Invalid dependency format reading file ${filePath}. Line content: "${line}"`;
+          const message = `${this.system}: Invalid dependency format reading file ${relativePath}. Line content: "${line}"`;
           this.logger.warn(message);
           this.readWarnings.push(message);
           continue;
@@ -115,7 +117,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           name,
           version: versionToAssign,
           resolvedVersion,
-          origin: filePath,
+          origin: relativePath,
           development: isDevelopment,
           production: !isDevelopment,
         });
@@ -123,9 +125,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     }
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
-    this.logger.debug(`Dependencies found in ${filePath}`, {
+    this.logger.debug(`Dependencies found in ${relativePath}`, {
       dependencies,
     });
 

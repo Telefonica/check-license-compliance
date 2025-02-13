@@ -41,8 +41,11 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
     const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
 
     const goMod = await fsExtra.readFile(resolvedPath, "utf8");
     const dependencies: DependencyDeclaration[] = [];
@@ -72,7 +75,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
         if (parts.length === 2) {
           const [name, version] = parts;
           if (!name) {
-            const message = `${this.system}: Not able to resolve dependency name in ${filePath}. Line content: "${trimmedLine}"`;
+            const message = `${this.system}: Not able to resolve dependency name in ${relativePath}. Line content: "${trimmedLine}"`;
             this.logger.warn(message, {
               line: trimmedLine,
               name,
@@ -92,7 +95,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
             name,
             version,
             resolvedVersion,
-            origin: filePath,
+            origin: relativePath,
             development: isDevelopment,
             production: !isDevelopment,
           });
@@ -100,9 +103,11 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
       }
     }
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
-    this.logger.debug(`Dependencies found in ${filePath}`, { dependencies });
+    this.logger.debug(`Dependencies found in ${relativePath}`, {
+      dependencies,
+    });
 
     return dependencies;
   }
