@@ -260,9 +260,9 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
       const resolvedVersion = this.resolveVersion(name, version);
 
       if (!name || !version) {
-        this.readErrors.push(
-          new Error(`Invalid extra module: ${moduleNameAndVersion}`),
-        );
+        const message = `Invalid extra module: ${moduleNameAndVersion}. It should be in the format name@version`;
+        this.logger.error(message);
+        this.readErrors.push(new Error(message));
       }
 
       return {
