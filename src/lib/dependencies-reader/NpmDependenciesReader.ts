@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
@@ -31,14 +31,14 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
   /**
    * Read the dependencies from a package.json file content
    * @param packageJson The package.json content to read the dependencies from
-   * @param filePath The path to the package.json file, useful for the origin field in the dependencies
+   * @param relativePath The relative path to the package.json file, useful for the origin field in the dependencies
    * @param devDependencies Whether to read devDependencies or dependencies.
    * @param isDevelopment If the dependencies should be considered as development dependencies, no matter if they are devDependencies or dependencies.
    * @returns The dependencies found in the pom.xml content
    */
   private _getPackageJsonDependenciesInfo(
     packageJson: NpmPackageJson,
-    filePath: string,
+    relativePath: string,
     devDependencies: boolean = false,
     isDevelopment = false,
   ) {
@@ -61,7 +61,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
         name,
         version,
         resolvedVersion,
-        origin: path.relative(this.cwd, filePath),
+        origin: relativePath,
         development: isDevelopment ? isDevelopment : devDependencies,
         production: isDevelopment ? isDevelopment : !devDependencies,
       };
@@ -78,8 +78,11 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
     const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
 
     const packageJson = (await fsExtra.readJson(
       resolvedPath,
@@ -87,13 +90,13 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
 
     const packageProductionDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
-      resolvedPath,
+      relativePath,
       false,
       isDevelopment,
     );
     const packageDevDependencies = this._getPackageJsonDependenciesInfo(
       packageJson,
-      resolvedPath,
+      relativePath,
       true,
       isDevelopment,
     );
@@ -104,9 +107,9 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
     ];
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
-    this.logger.debug(`Dependencies found in ${filePath}`, {
+    this.logger.debug(`Dependencies found in ${relativePath}`, {
       dependencies,
     });
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import { run } from "../dist/action/index.js";

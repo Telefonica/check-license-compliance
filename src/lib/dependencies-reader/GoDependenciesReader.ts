@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
@@ -41,8 +41,11 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
     filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
     const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
 
     const goMod = await fsExtra.readFile(resolvedPath, "utf8");
     const dependencies: DependencyDeclaration[] = [];
@@ -63,10 +66,24 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
         continue;
       }
 
+      if (trimmedLine.startsWith("//")) {
+        continue;
+      }
+
       if (inRequireBlock || trimmedLine.startsWith("require ")) {
         const parts = trimmedLine.replace("require ", "").trim().split(/\s+/);
         if (parts.length === 2) {
           const [name, version] = parts;
+          if (!name) {
+            const message = `${this.system}: Not able to resolve dependency name in ${relativePath}. Line content: "${trimmedLine}"`;
+            this.logger.warn(message, {
+              line: trimmedLine,
+              name,
+              version,
+            });
+            this.readWarnings.push(message);
+            continue;
+          }
           const resolvedVersion = this.resolveVersion(name, version);
           dependencies.push({
             system: GO_SYSTEM,
@@ -78,7 +95,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
             name,
             version,
             resolvedVersion,
-            origin: path.relative(this.cwd, filePath),
+            origin: relativePath,
             development: isDevelopment,
             production: !isDevelopment,
           });
@@ -86,9 +103,11 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
       }
     }
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
-    this.logger.debug(`Dependencies found in ${filePath}`, { dependencies });
+    this.logger.debug(`Dependencies found in ${relativePath}`, {
+      dependencies,
+    });
 
     return dependencies;
   }

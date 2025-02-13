@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
@@ -38,13 +38,13 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
   /**
    * Read the dependencies from a pom.xl content
    * @param pom The pom.xml content to read the dependencies from
-   * @param filePath The path to the pom.xml file
+   * @param relativePath The relative path to the pom.xml file
    * @param isDevelopment If the dependencies should be considered as development dependencies
    * @returns The dependencies found in the pom.xml content
    */
   private _getPomDependenciesInfo(
     pom: string,
-    filePath: string,
+    relativePath: string,
     isDevelopment = false,
   ): DependencyDeclaration[] {
     const pomData = new XMLParser().parse(pom) as MavenPom;
@@ -63,16 +63,16 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
       }
       if (version && version.startsWith("${") && version.endsWith("}")) {
         this.logger.silly(
-          `Resolving version ${version} from project properties in ${filePath}`,
+          `Resolving version ${version} from project properties in ${relativePath}`,
           {
             version,
           },
         );
         const propName = version.slice(2, -1);
         if (!properties[propName]) {
-          this.logger.warn(
-            `Property ${propName} not found in project properties of ${filePath}. Unable to resolve version.`,
-          );
+          const message = `${this.system}: Property ${propName} not found in project properties of ${relativePath}. Unable to resolve version.`;
+          this.logger.warn(message, { propName, properties });
+          this.readWarnings.push(message);
         }
         return properties[propName];
       }
@@ -94,7 +94,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         }),
         version,
         resolvedVersion,
-        origin: path.relative(this.cwd, filePath),
+        origin: relativePath,
         development:
           isDevelopment ||
           scope === "test" ||
@@ -113,8 +113,11 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     filePath: string,
     isDevelopment = false,
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
     const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
 
     // Read the pom.xml file
     const pomXml = await fsExtra.readFile(resolvedPath, "utf8");
@@ -122,15 +125,15 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     // Parse the pom.xml file to get the dependencies
     const dependencies = this._getPomDependenciesInfo(
       pomXml,
-      resolvedPath,
+      relativePath,
       isDevelopment,
     );
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
 
-    this.logger.debug(`Dependencies found in ${filePath}`, dependencies);
+    this.logger.debug(`Dependencies found in ${relativePath}`, dependencies);
 
     return dependencies;
   }

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
@@ -40,13 +40,15 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     isDevelopment = false,
     processedFiles: Set<string> = new Set(),
   ): Promise<DependencyDeclaration[]> {
-    this.logger.verbose(`Reading dependencies from ${filePath}`);
+    const resolvedPath = path.resolve(this.cwd, filePath);
+    const relativePath = path.relative(this.cwd, resolvedPath);
+    this.logger.verbose(
+      `${this.system}: Reading dependencies from ${relativePath}`,
+    );
     const recursiveRequirements =
       this.options.recursiveRequirements == undefined
         ? true
         : this.options.recursiveRequirements;
-
-    const resolvedPath = path.resolve(this.cwd, filePath);
 
     if (processedFiles.has(resolvedPath)) {
       this.logger.warn(`Skipping already processed file: ${resolvedPath}`);
@@ -71,32 +73,42 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
             includedFile,
           );
           this.logger.verbose(
-            `Reading ${this.system} included file in ${filePath}`,
+            `Reading ${this.system} included file in ${relativePath}`,
           );
-          const includedDependencies = await this.readFileDependencies(
-            includedFilePath,
-            isDevelopment,
-            processedFiles,
-          );
-          dependencies.push(...includedDependencies);
+          try {
+            const includedDependencies = await this.readFileDependencies(
+              includedFilePath,
+              isDevelopment,
+              processedFiles,
+            );
+            dependencies.push(...includedDependencies);
+          } catch (error) {
+            this.logger.error(
+              `${this.system}: Error reading dependencies from included file ${includedFilePath}`,
+              error,
+            );
+            this.readErrors.push(error as Error);
+          }
         } else {
           this.logger.verbose(
-            `Skipping read of ${this.system} included file in ${filePath} because recursiveRequirements is disabled`,
+            `Skipping read of ${this.system} included file in ${relativePath} because recursiveRequirements is disabled`,
           );
         }
       } else {
         const match = line.match(/(.*?)(==|>=|<=|!=|~=)(.*)/);
         if (!match) {
-          this.logger.warn(`Invalid dependency format: ${line}`);
+          const message = `${this.system}: Invalid dependency format reading file ${relativePath}. Line content: "${line}"`;
+          this.logger.warn(message);
+          this.readWarnings.push(message);
           continue;
         }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let [_, name, operator, version] = match;
         let versionToAssign: string | undefined = version;
         if (name.includes("[")) {
-          this.logger.warn(
-            `Removing extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}. You should add the corresponding extra modules manually to the configuration file`,
-          );
+          const message = `${this.system}: Removed extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}. You should add the corresponding extra modules manually to the configuration file`;
+          this.logger.warn(message);
+          this.readWarnings.push(message);
           name = name.split("[")[0];
         }
         if (operator === "!=") {
@@ -113,7 +125,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           name,
           version: versionToAssign,
           resolvedVersion,
-          origin: path.relative(this.cwd, filePath),
+          origin: relativePath,
           development: isDevelopment,
           production: !isDevelopment,
         });
@@ -121,9 +133,9 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
     }
 
     this.logger.verbose(
-      `Found ${dependencies.length} dependencies in ${filePath}`,
+      `Found ${dependencies.length} dependencies in ${relativePath}`,
     );
-    this.logger.debug(`Dependencies found in ${filePath}`, {
+    this.logger.debug(`Dependencies found in ${relativePath}`, {
       dependencies,
     });
 

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
+// SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import path from "node:path";
@@ -72,6 +72,7 @@ export class DependenciesInfo {
   private _onlyDirect: boolean;
   private _production: boolean;
   private _development: boolean;
+  private _readFilesErrors: Error[] = [];
 
   /**
    * Create a new instance of the DependenciesInfo
@@ -790,25 +791,29 @@ export class DependenciesInfo {
   }
 
   /**
-   * Get the errors from all dependencies info, adding the display name of the dependency to the error message
-   * @returns Array of errors with the display name of the dependency in the message
+   * Get the errors from all dependencies info, adding the display name of the dependency to the error message and also errors from the project dependencies reader
+   * @returns Array of errors with the display name of the dependency in the message, or the system in which from which reading the dependencies produced it
    */
   private _getErrors() {
-    this._errors = this._dependenciesInfo.reduce((errors, dependencyInfo) => {
-      return errors.concat(
-        dependencyInfo.errors.map((error) => {
-          const displayName = getDependencyDisplayName({
-            id: dependencyInfo.id,
-            version: dependencyInfo.version,
-            resolvedVersion: dependencyInfo.resolvedVersion,
-          });
+    const dependenciesErrors = this._dependenciesInfo.flatMap(
+      (dependencyInfo) => {
+        const displayName = getDependencyDisplayName({
+          id: dependencyInfo.id,
+          version: dependencyInfo.version,
+          resolvedVersion: dependencyInfo.resolvedVersion,
+        });
+        return dependencyInfo.errors.map((error) => {
           return {
             ...error,
             message: `${displayName}: ${error.message}`,
           };
-        }),
-      );
-    }, [] as Error[]);
+        });
+      },
+    );
+    this._errors = [
+      ...dependenciesErrors,
+      ...this._projectDependenciesReader.errors,
+    ];
   }
 
   /**
@@ -816,21 +821,22 @@ export class DependenciesInfo {
    * @returns Array of warnings with the display name of the dependency in the message
    */
   private _getWarnings() {
-    this._warnings = this._dependenciesInfo.reduce(
-      (warnings, dependencyInfo) => {
+    const dependenciesWarnings = this._dependenciesInfo.flatMap(
+      (dependencyInfo) => {
         const displayName = getDependencyDisplayName({
           id: dependencyInfo.id,
           version: dependencyInfo.version,
           resolvedVersion: dependencyInfo.resolvedVersion,
         });
-        return warnings.concat(
-          dependencyInfo.warnings.map(
-            (warning) => `${displayName}: ${warning}`,
-          ),
+        return dependencyInfo.warnings.map(
+          (warning) => `${displayName}: ${warning}`,
         );
       },
-      [] as string[],
     );
+    this._warnings = [
+      ...dependenciesWarnings,
+      ...this._projectDependenciesReader.warnings,
+    ];
   }
 
   /**
