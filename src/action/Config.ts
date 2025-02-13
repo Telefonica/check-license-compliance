@@ -1,13 +1,16 @@
 // SPDX-FileCopyrightText: 2024 Telefónica Innovación Digital and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { existsSync } from "fs";
+import { readFile } from "fs/promises";
+import path, { isAbsolute } from "node:path";
+
 import * as core from "@actions/core";
 import { parse } from "yaml";
-import { readFile } from "fs/promises";
-import { existsSync } from "fs";
-import { allConfigSchema } from "./Config.types";
-import type { InputOptions, AllConfig } from "./Config.types";
 import { fromError } from "zod-validation-error";
+
+import type { InputOptions, AllConfig } from "./Config.types";
+import { allConfigSchema } from "./Config.types.js";
 
 /**
  * Returns the value if it is defined, otherwise returns undefined.
@@ -48,6 +51,7 @@ function getInputs() {
   const reporter = core.getInput("reporter");
   const config = core.getMultilineInput("config").join("\n");
   const configFile = core.getInput("config-file");
+  const pathInput = core.getInput("path");
 
   const inputs = {
     log: valueIfDefined(log),
@@ -55,6 +59,7 @@ function getInputs() {
     reporter: valueIfDefined(reporter),
     config: valueIfDefined(config),
     configFile: valueIfDefined(configFile),
+    path: valueIfDefined(pathInput),
   };
 
   (Object.keys(inputs) as (keyof typeof inputs)[]).forEach((key) => {
@@ -77,25 +82,31 @@ function parseYamlConfig(config: string) {
   return parse(config);
 }
 
-async function loadConfigFile(configFile: string) {
-  const fileExists = existsSync(configFile);
+/**
+ * Loads a configuration file
+ * @param filePath The configuration file to load
+ * @returns The configuration parsed from the file, or an empty object if the file does not exist
+ */
+async function loadConfigFile(filePath: string) {
+  const fileExists = existsSync(filePath);
   if (fileExists) {
-    core.info(`Configuration file ${configFile} found. Loading...`);
-    const config = await readFile(configFile, "utf8");
+    core.info(`Configuration file ${filePath} found. Loading...`);
+    const config = await readFile(filePath, "utf8");
     const parsedConfig = parseYamlConfig(config);
 
     core.debug(`Configuration from file: ${JSON.stringify(parsedConfig)}`);
     return parsedConfig;
   }
-  core.info(`Configuration file ${configFile} not found`);
+  core.info(`Configuration file ${filePath} not found`);
   return {};
 }
 
 /**
  * Returns the configuration from the action inputs, loading configuration files if needed and parsing the inputs accordingly.
+ * @param cwd The current working directory.
  * @returns The configuration from the action inputs and configuration files.
  */
-export async function getConfig(): Promise<AllConfig> {
+export async function getConfig(cwd: string): Promise<AllConfig> {
   const inputs = getInputs();
   let config: Partial<AllConfig> = {};
   let configFromFile: Partial<AllConfig> = {};
@@ -106,8 +117,19 @@ export async function getConfig(): Promise<AllConfig> {
     core.debug(`Parsed config option from inputs: ${JSON.stringify(config)}`);
   }
 
+  if (inputs.path && isAbsolute(inputs.path)) {
+    throw new Error(
+      "The path input must be a relative path, because it is resolved from the workspace directory",
+    );
+  }
+
+  const cwdWithPath = inputs.path ? path.resolve(cwd, inputs.path) : cwd;
+
   configFromFile = await loadConfigFile(
-    inputs.configFile || "check-license-compliance.config.yml",
+    path.resolve(
+      cwdWithPath,
+      inputs.configFile || "check-license-compliance.config.yml",
+    ),
   );
 
   const inputsValues: InputOptions = {};
@@ -153,5 +175,8 @@ export async function getConfig(): Promise<AllConfig> {
     throw new Error(fromError(result.error).toString());
   }
 
-  return result.data;
+  return {
+    ...result.data,
+    cwd: cwdWithPath,
+  };
 }

@@ -10,6 +10,10 @@ on:
       - main
       - release
 
+concurrency:  
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: write
@@ -30,21 +34,20 @@ jobs:
         with:
           npm-token: ${{ secrets.NPM_TOKEN_XCUT }}
 
+      - name: Build dist/ Directory
+        run: pnpm build
+
       - name: Lint
-        id: npm-lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Check spelling
-        id: npm-check-spelling
-        run: npm run cspell
+        run: pnpm cspell
 
       - name: Check TypeScript types
-        id: npm-check-types
-        run: npm run check:types
+        run: pnpm check:types
       
       - name: Test unit
-        id: npm-test
-        run: npm run test:unit
+        run: pnpm test:unit
 
       - name: Upload coverage
         id: upload-coverage
@@ -53,23 +56,18 @@ jobs:
           name: coverage
           path: coverage/
 
-      - name: Build dist/ Directory
-        id: build
-        run: npm run package
-
-      # This will fail the workflow if the `dist/` directory is different than
-      # expected.
+      # This will fail the workflow if the `src/lib/proto` directory is different than expected, meaning that protobuf files were not compiled.
       - name: Compare Directories
         id: diff
         run: |
-          if [ ! -d dist/ ]; then
-            echo "Expected dist/ directory does not exist.  See status below:"
-            ls -la ./
+          if [ ! -d src/lib/proto/ ]; then
+            echo "Expected src/lib/proto directory does not exist.  See status below:"
+            ls -la src/lib
             exit 1
           fi
-          if [ "$(git diff --ignore-space-at-eol --text dist/ | wc -l)" -gt "0" ]; then
+          if [ "$(git diff --ignore-space-at-eol --text src/lib/proto/ | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build. See status below:"
-            git diff --ignore-space-at-eol --text dist/
+            git diff --ignore-space-at-eol --text src/lib/proto/
             exit 1
           fi
 

@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from "zod";
-import { logLevelSchema } from "./Logger.types";
+
+import {
+  npmDependenciesReaderOptionsSchema,
+  mavenDependenciesReaderOptionsSchema,
+  pythonDependenciesReaderOptionsSchema,
+  goDependenciesReaderOptionsSchema,
+} from "./dependencies-reader/DependenciesReader.types.js";
+import { logLevelSchema } from "./Logger.types.js";
 
 export const allowedLicensesSchema = z.string().array();
 
@@ -36,19 +43,21 @@ export const licensesConfigSchema = z.object({
 /** Configuration for licenses */
 export type LicensesConfig = z.infer<typeof licensesConfigSchema>;
 
-/** Options schema */
+/** Configuration options schema */
 export const configSchema = z
   .object({
     licenses: licensesConfigSchema.optional(),
     production: z.boolean().optional(),
     development: z.boolean().optional(),
-    direct: z.boolean().optional(),
-    packages: z.array(z.string()).optional(),
-    excludePackages: z.array(z.string()).optional(),
-    excludePrivatePackages: z.boolean().optional(),
+    onlyDirect: z.boolean().optional(),
     log: logLevelSchema.optional(),
+    cwd: z.string().optional(),
+    npm: npmDependenciesReaderOptionsSchema.optional(),
+    maven: mavenDependenciesReaderOptionsSchema.optional(),
+    python: pythonDependenciesReaderOptionsSchema.optional(),
+    go: goDependenciesReaderOptionsSchema.optional(),
   })
   .strict();
 
-/** Options **/
-export type Config = z.infer<typeof configSchema>;
+/** The whole configuration object **/
+export type CheckerConfig = z.infer<typeof configSchema>;

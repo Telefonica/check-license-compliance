@@ -22,19 +22,13 @@ Thank you for being part of the Telefónica Open Source Community!
 1. :hammer_and_wrench: Install the dependencies
 
    ```bash
-   npm install
+   pnpm install
    ```
 
-2. :building_construction: Package the TypeScript for distribution
+2. :white_check_mark: Run the unit tests
 
    ```bash
-   npm run package
-   ```
-
-3. :white_check_mark: Run the unit tests
-
-   ```bash
-   $ npm run test:unit
+   $ pnpm test:unit
 
    PASS  test/unit/specs/main.spec.ts
    PASS  test/unit/specs/index.spec.ts
@@ -42,30 +36,47 @@ Thank you for being part of the Telefónica Open Source Community!
 
 ## Test the action locally
 
-The [`@github/local-action`](https://github.com/github/local-action) utility
-can be used to test your action locally. It is a simple command-line tool
-that "stubs" (or simulates) the GitHub Actions Toolkit. This way, you can run
-your TypeScript action locally without having to commit and push your changes
-to a repository.
+The action is a Docker container that runs a Node.js script. To test the action locally, you can run the Docker compose file in the root of the repository. This will build the Docker image and run the action in a container.
 
-The `local-action` utility can be run in the following ways:
+```bash
+$ docker-compose build
+$ docker-compose run action
+```
 
-- Visual Studio Code Debugger
-
-   Make sure to review and, if needed, update
-   [`.vscode/launch.json`](./.vscode/launch.json)
-
-- Terminal/Command Prompt
-
-   ```bash
-   # npx local action <action-yaml-path> <entrypoint> <dotenv-file>
-   npx local-action . src/main.ts .env
-   ```
-
-You can provide a `.env` file to the `local-action` CLI to set environment
-variables used by the GitHub Actions Toolkit. For more information, see the example
-file, [`.env.example`](./.env.example), and the
+You can provide a `.env` file to set environment variables used by the GitHub Actions Toolkit. For more information, see the example file, [`.env.example`](./.env.example), and the
 [GitHub Actions Documentation](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables).
+
+> [!IMPORTANT]
+> The action will search for configuration file and dependencies in the `/github/workspace` directory. The root workspace directory is mounted as a volume in the container in that folder, so it will check for the configuration file and dependencies in the root of the repository, checking its own dependencies. You can set another directory to be checked by setting the `INPUT_PATH` environment variable to the desired directory (e.g. `INPUT_PATH=test-config`).
+
+## Test the Node.js code locally
+
+Apart from running the unit tests, you can also run the Node.js code locally by following these steps:
+
+* Modify the `src/action/index.ts` file to change the running directory from `/github/workspace` to the desired directory.
+* Build the action code using the `pnpm build` command.
+* Run the action code using the `node bin/check-license-compliance-action.js` command.
+
+## Updating the Grpc Proto files
+
+The code uses Protobuf files to define the gRPC services. The Protobuf files are located in the `proto` directory, and they are copied from the original repository. To update the Protobuf files, you should:
+
+1. Checkout the Git submodules:
+   ```bash
+   $ git submodule update --init --recursive
+   ```
+2. Update the Protobuf files:
+   ```bash
+   $ git submodule update --remote
+   ```
+3. Copy the Protobuf files to the `proto` directory, by running the following script:
+   ```bash
+   $ ./script/copy-protos.sh
+   ```
+4. Update the generated TypeScript files from proto definitions:
+   ```bash
+   pnpm run proto:gen-types
+   ```
 
 ## Branching model
 
@@ -116,12 +127,16 @@ This project uses [Semantic Versioning](https://semver.org/). The version number
 
 ## Release process
 
+> [!IMPORTANT]
+> Before opening a PR, a new tag must be created in the repository with a beta version. This is because the composite action is used in the PR check, and the action must be referenced in the PR. The action can't be referenced locally, so it must be referenced by a tag. The tag must be created in the format `vX.Y.Z-beta.N`, where `X.Y.Z` is the version in the package.json file, and `N` is the beta version. For example, if the version in the package.json file is `1.0.0`, the tag must be `v1.0.0-beta.1`.
+
 Once the PR is approved and __merged into the release branch__, a project maintainer can start the release process by:
 
-1. Updating the version number in the `package.json` file.
-2. Updating the action version in the `.github/actions/check-and-comment/action.yml` file.
+1. Checking the version number in the `package.json` file and updating it if necessary.
+2. Checking the action version in the `.github/actions/check-and-comment/action.yml` file and updating it if necessary.
 3. Updating the CHANGELOG.md file with the changes in the new version.
-4. Tagging the release branch with the corresponding version numbers.
+4. Remove the beta tags created for the PR check.
+5. Tagging the release branch with the corresponding version numbers.
 
    This project includes a helper script, [`script/release`](./script/release)
    designed to streamline the process of tagging and pushing new releases for
@@ -147,7 +162,8 @@ Once the PR is approved and __merged into the release branch__, a project mainta
       commits, tags and branches to the remote repository. From here, you will need
       to create a new release in GitHub so users can easily reference the new tags
       in their workflows.
-5. Merge the release branch into the main branch.
+6. Merge the release branch into the main branch.
+
 
 ## License
 

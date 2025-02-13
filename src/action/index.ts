@@ -3,11 +3,10 @@
 
 import * as core from "@actions/core";
 
-import { getConfig } from "./Config";
-import { Checker } from "./lib/index";
-import { existsSync } from "fs";
+import { Checker, getReport } from "../lib/index.js";
 
-import { getNotInstalledReport, getReport, NOT_INSTALLED } from "./Report";
+import { getConfig } from "./Config.js";
+import { setupProcess } from "./Process.js";
 
 const FAILED_MESSAGE = "Some dependencies have not acceptable licenses.";
 const OUTPUT_REPORT = "report";
@@ -21,27 +20,16 @@ const FOUND_WARNING = "found-warning";
  */
 export async function run(): Promise<void> {
   try {
+    setupProcess();
     core.debug("Getting configuration...");
-    const options = await getConfig();
-
-    if (!existsSync("node_modules")) {
-      core.warning(NOT_INSTALLED);
-      core.setOutput(FOUND_FORBIDDEN, false);
-      core.setOutput(FOUND_WARNING, false);
-      core.setOutput(OUTPUT_REPORT, getNotInstalledReport(options.reporter));
-      return;
-    }
+    // NOTE: In github container actions, the workspace is mounted in /github/workspace
+    const options = await getConfig("/github/workspace");
+    // Uncomment the following line to test the NodeJS code locally without running the action
+    // const options = await getConfig(".");
 
     core.debug("Running checker...");
     const checker = new Checker({
-      licenses: options.licenses,
-      production: options.production,
-      development: options.development,
-      direct: options.direct,
-      packages: options.packages,
-      excludePackages: options.excludePackages,
-      excludePrivatePackages: options.excludePrivatePackages,
-      log: options.log,
+      ...options,
     });
     const result = await checker.check();
 
