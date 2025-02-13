@@ -61,7 +61,7 @@ export class NpmDependenciesReader extends BaseSystemDependenciesReader<NpmDepen
         name,
         version,
         resolvedVersion,
-        origin: path.relative(this.cwd, filePath),
+        origin: filePath,
         development: isDevelopment ? isDevelopment : devDependencies,
         production: isDevelopment ? isDevelopment : !devDependencies,
       };

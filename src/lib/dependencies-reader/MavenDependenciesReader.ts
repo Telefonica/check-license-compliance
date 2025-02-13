@@ -70,9 +70,9 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         );
         const propName = version.slice(2, -1);
         if (!properties[propName]) {
-          this.logger.warn(
-            `Property ${propName} not found in project properties of ${filePath}. Unable to resolve version.`,
-          );
+          const message = `${this.system}: Property ${propName} not found in project properties of ${filePath}. Unable to resolve version.`;
+          this.logger.warn(message, { propName, properties });
+          this.readWarnings.push(message);
         }
         return properties[propName];
       }
@@ -94,7 +94,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
         }),
         version,
         resolvedVersion,
-        origin: path.relative(this.cwd, filePath),
+        origin: filePath,
         development:
           isDevelopment ||
           scope === "test" ||
@@ -122,7 +122,7 @@ export class MavenDependenciesReader extends BaseSystemDependenciesReader<MavenD
     // Parse the pom.xml file to get the dependencies
     const dependencies = this._getPomDependenciesInfo(
       pomXml,
-      resolvedPath,
+      filePath,
       isDevelopment,
     );
 

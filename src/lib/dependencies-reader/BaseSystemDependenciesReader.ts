@@ -68,6 +68,8 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   protected system: System;
   protected production: boolean;
   protected development: boolean;
+  protected readErrors: Error[] = [];
+  protected readWarnings: string[] = [];
   private _defaultInclude: string[];
   private _defaultExclude: string[];
   private _defaultDevelopment: string[];
@@ -147,49 +149,101 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
   }
 
   /**
+   * Read the file dependencies handling errors
+   * @param filePath The file path to read dependencies from
+   * @param isDevelopment Whether the file is marked as development, so all of its dependencies should be marked as development
+   * @returns The dependencies found in the file or an empty array if an error occurred
+   */
+  public async readFileDependenciesHandlingErrors(
+    filePath: string,
+    isDevelopment?: boolean,
+  ): Promise<DependencyDeclaration[]> {
+    try {
+      const dependencies = await this.readFileDependencies(
+        filePath,
+        isDevelopment,
+      );
+      return dependencies;
+    } catch (error) {
+      this.logger.error(
+        `${this.system}: Error reading dependencies from ${filePath}`,
+        error,
+      );
+      this.readErrors.push(error as Error);
+      return [];
+    }
+  }
+
+  /**
    * Read the dependencies from the project files for the system
-   * @returns The system dependencies found in the project
+   * @returns The system dependencies found in the project or an empty array if an error occurred
    */
   public async readDependencies(): Promise<DependencyDeclaration[]> {
+    this.readErrors = [];
+    this.readWarnings = [];
     this.logger.info(`Reading ${this.system} dependencies`);
 
-    const { dev, any } = this.findFiles();
-    const dependencies = await Promise.all(
-      any.map((goModPath) => this.readFileDependencies(goModPath)),
-    );
-    let devDependencies: DependencyDeclaration[] = [];
-    if (this.development) {
-      devDependencies = (
-        await Promise.all(
-          dev.map((filePath) => this.readFileDependencies(filePath, true)),
-        )
-      ).flat();
-    } else {
-      this.logger.warn(`Skipping read ${this.system} development dependencies`);
-    }
-    const flatDependencies = [...dependencies, ...devDependencies].flat();
-
-    this.logger.info(
-      `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
-    );
-
-    let finalDependencies: DependencyDeclaration[] = flatDependencies;
-
-    if (this.options.extraModules) {
-      this.logger.info(
-        `Adding extra modules to ${this.system} dependencies: ${this.options.extraModules.join(", ")}`,
+    try {
+      const { dev, any } = this.findFiles();
+      const dependencies = await Promise.all(
+        any.map((goModPath) =>
+          this.readFileDependenciesHandlingErrors(goModPath),
+        ),
       );
-      finalDependencies = [
-        ...flatDependencies,
-        ...this._getExtraModulesInfo(this.options.extraModules),
-      ].flat();
+      let devDependencies: DependencyDeclaration[] = [];
+      if (this.development) {
+        devDependencies = (
+          await Promise.all(
+            dev.map((filePath) =>
+              this.readFileDependenciesHandlingErrors(filePath, true),
+            ),
+          )
+        ).flat();
+      } else {
+        this.logger.warn(
+          `Skipping read ${this.system} development dependencies`,
+        );
+      }
+      const flatDependencies = [...dependencies, ...devDependencies].flat();
+
+      this.logger.info(
+        `Found ${flatDependencies.length} ${this.system} direct dependencies in the project`,
+      );
+
+      let finalDependencies: DependencyDeclaration[] = flatDependencies;
+
+      if (this.options.extraModules) {
+        this.logger.info(
+          `Adding extra modules to ${this.system} dependencies: ${this.options.extraModules.join(", ")}`,
+        );
+        finalDependencies = [
+          ...flatDependencies,
+          ...this._getExtraModulesInfo(this.options.extraModules),
+        ].flat();
+      }
+
+      this.logger.debug(`${this.system} dependencies`, {
+        dependencies: finalDependencies,
+      });
+
+      return finalDependencies;
+    } catch (error) {
+      this.readErrors.push(error as Error);
+
+      return [];
     }
+  }
 
-    this.logger.debug(`${this.system} dependencies`, {
-      dependencies: finalDependencies,
-    });
+  /**
+   * Return the errors found while reading dependencies
+   * @returns List of errors found while reading dependencies
+   */
+  public get errors(): Error[] {
+    return this.readErrors;
+  }
 
-    return finalDependencies;
+  public get warnings(): string[] {
+    return this.readWarnings;
   }
 
   /**
@@ -204,6 +258,13 @@ export class BaseSystemDependenciesReader<T extends SystemDependenciesOptions>
       const { name, version } =
         getDependencyNameAndVersionFromId(moduleNameAndVersion);
       const resolvedVersion = this.resolveVersion(name, version);
+
+      if (!name || !version) {
+        this.readErrors.push(
+          new Error(`Invalid extra module: ${moduleNameAndVersion}`),
+        );
+      }
+
       return {
         system: this.system,
         id: getDependencyId({

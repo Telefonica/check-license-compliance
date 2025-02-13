@@ -19,6 +19,8 @@ export class DirectDependenciesReader {
   private _pythonDependenciesReader: PythonDependenciesReader;
   private _goDependenciesReader: GoDependenciesReader;
   private _logger: DependenciesReaderOptions["logger"];
+  private _errors: Error[] = [];
+  private _warnings: string[] = [];
 
   /**
    * Create a new instance of the DirectDependenciesReader
@@ -70,6 +72,8 @@ export class DirectDependenciesReader {
    * @returns The list of dependency declarations
    */
   public async readDependencies(): Promise<DependencyDeclaration[]> {
+    this._errors = [];
+    this._warnings = [];
     this._logger.info("Reading project dependencies");
 
     const dependencies = await Promise.all([
@@ -79,6 +83,36 @@ export class DirectDependenciesReader {
       this._goDependenciesReader.readDependencies(),
     ]);
 
+    this._errors = [
+      ...this._nodeDependenciesReader.errors,
+      ...this._mavenDependenciesReader.errors,
+      ...this._pythonDependenciesReader.errors,
+      ...this._goDependenciesReader.errors,
+    ];
+
+    this._warnings = [
+      ...this._nodeDependenciesReader.warnings,
+      ...this._mavenDependenciesReader.warnings,
+      ...this._pythonDependenciesReader.warnings,
+      ...this._goDependenciesReader.warnings,
+    ];
+
     return dependencies.flat();
+  }
+
+  /**
+   * Return the errors found while reading dependencies
+   * @returns List of errors found while reading dependencies
+   */
+  public get errors(): Error[] {
+    return this._errors;
+  }
+
+  /**
+   * Return the warnings found while reading dependencies
+   * @returns List of warnings found while reading dependencies
+   */
+  public get warnings(): string[] {
+    return this._warnings;
   }
 }

@@ -63,10 +63,24 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
         continue;
       }
 
+      if (trimmedLine.startsWith("//")) {
+        continue;
+      }
+
       if (inRequireBlock || trimmedLine.startsWith("require ")) {
         const parts = trimmedLine.replace("require ", "").trim().split(/\s+/);
         if (parts.length === 2) {
           const [name, version] = parts;
+          if (!name) {
+            const message = `${this.system}: Not able to resolve dependency name in ${filePath}. Line content: "${trimmedLine}"`;
+            this.logger.warn(message, {
+              line: trimmedLine,
+              name,
+              version,
+            });
+            this.readWarnings.push(message);
+            continue;
+          }
           const resolvedVersion = this.resolveVersion(name, version);
           dependencies.push({
             system: GO_SYSTEM,
@@ -78,7 +92,7 @@ export class GoDependenciesReader extends BaseSystemDependenciesReader<GoDepende
             name,
             version,
             resolvedVersion,
-            origin: path.relative(this.cwd, filePath),
+            origin: filePath,
             development: isDevelopment,
             production: !isDevelopment,
           });

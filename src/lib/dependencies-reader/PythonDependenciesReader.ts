@@ -87,16 +87,18 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
       } else {
         const match = line.match(/(.*?)(==|>=|<=|!=|~=)(.*)/);
         if (!match) {
-          this.logger.warn(`Invalid dependency format: ${line}`);
+          const message = `${this.system}: Invalid dependency format reading file ${filePath}. Line content: "${line}"`;
+          this.logger.warn(message);
+          this.readWarnings.push(message);
           continue;
         }
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let [_, name, operator, version] = match;
         let versionToAssign: string | undefined = version;
         if (name.includes("[")) {
-          this.logger.warn(
-            `Removing extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}. You should add the corresponding extra modules manually to the configuration file`,
-          );
+          const message = `${this.system}: Removed extras from dependency: ${getDependencyId({ system: PYTHON_SYSTEM, name, version })}. You should add the corresponding extra modules manually to the configuration file`;
+          this.logger.warn(message);
+          this.readWarnings.push(message);
           name = name.split("[")[0];
         }
         if (operator === "!=") {
@@ -113,7 +115,7 @@ export class PythonDependenciesReader extends BaseSystemDependenciesReader<Pytho
           name,
           version: versionToAssign,
           resolvedVersion,
-          origin: path.relative(this.cwd, filePath),
+          origin: filePath,
           development: isDevelopment,
           production: !isDevelopment,
         });
