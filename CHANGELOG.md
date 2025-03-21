@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [3.0.0-beta.3] - 2025-03-21
+
+### Added
+
+* feat: Support including or excluding dependencies from the check by:
+  - Name equality
+  - Name regex
+  - Version equality
+  - Version regex
+  - Version semver range
+
 ## [3.0.0-beta.2] - 2025-02-13
 
 ### Fixed

@@ -10,7 +10,13 @@ import satisfies from "spdx-satisfies";
 import type { LicensesResult, Result } from "./Checker.types";
 import { getSystemConfig } from "./Config.js";
 import type { CheckerConfig, OtherLicenses } from "./Config.types";
-import { hasSystemId, removeSystemId } from "./dependencies-reader/Helpers.js";
+import type { ModuleSpec } from "./dependencies-reader/DependenciesReader.types";
+import {
+  isString,
+  hasSystemId,
+  matchesDependencyModule,
+  removeSystemId,
+} from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
 import type { DependencyInfo } from "./DependenciesInfo.types";
 import { createLogger } from "./Logger.js";
@@ -212,17 +218,23 @@ export class Checker {
 
   /**
    * Determines if a module id is in a list. Ids can be passed with or without system id
-   * @param list The list to check
+   * @param moduleSpecs The list to check
    * @param moduleId The module id to check
    * @returns True if the module id is in the list, false otherwise
    */
-  private _moduleIdIsInList(list: string[], moduleId: string): boolean {
-    return list.some((id) => {
-      const idHasSystem = hasSystemId(id);
-      if (idHasSystem) {
-        return id === moduleId;
+  private _moduleMatchSpecs(
+    dependencyInfo: DependencyInfo,
+    moduleSpecs: ModuleSpec[],
+  ): boolean {
+    return moduleSpecs.some((spec) => {
+      if (isString(spec)) {
+        const idHasSystem = hasSystemId(spec);
+        if (idHasSystem) {
+          return spec === dependencyInfo.id;
+        }
+        return spec === removeSystemId(dependencyInfo.id);
       }
-      return id === removeSystemId(moduleId);
+      return matchesDependencyModule(dependencyInfo, spec);
     });
   }
 
@@ -234,7 +246,7 @@ export class Checker {
   private _dependencyIsExcluded(dependency: DependencyInfo): boolean {
     const systemConfig = getSystemConfig(dependency.system, this._config);
     if (systemConfig.excludeModules) {
-      return this._moduleIdIsInList(systemConfig.excludeModules, dependency.id);
+      return this._moduleMatchSpecs(dependency, systemConfig.excludeModules);
     }
     return false;
   }
@@ -247,7 +259,7 @@ export class Checker {
   private _dependencyIsIncluded(dependency: DependencyInfo): boolean {
     const systemConfig = getSystemConfig(dependency.system, this._config);
     if (systemConfig.modules) {
-      return this._moduleIdIsInList(systemConfig.modules, dependency.id);
+      return this._moduleMatchSpecs(dependency, systemConfig.modules);
     }
     return true;
   }

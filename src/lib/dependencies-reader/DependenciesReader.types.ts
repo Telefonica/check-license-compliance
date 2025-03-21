@@ -10,11 +10,25 @@ import type { createLogger } from "../Logger";
  */
 export type System = "NPM" | "MAVEN" | "PYPI" | "GO"; // cspell:disable-line
 
+export const moduleSpecSchema = z.object({
+  name: z.string().optional(),
+  version: z.string().optional(),
+  semver: z.string().optional(),
+  nameMatch: z.string().optional(),
+  versionMatch: z.string().optional(),
+});
+
+/**
+ * Module specification for inclusion or exclusion
+ */
+export type ModuleSpec = z.infer<typeof moduleSpecSchema> | string;
+
 export const baseSystemDependenciesOptionsSchema = z.object({
   includeFiles: z.array(z.string()).optional(),
   excludeFiles: z.array(z.string()).optional(),
-  modules: z.array(z.string()).optional(),
-  excludeModules: z.array(z.string()).optional(),
+  // Support an array of strings or module specs
+  modules: z.array(z.union([z.string(), moduleSpecSchema])).optional(),
+  excludeModules: z.array(z.union([z.string(), moduleSpecSchema])).optional(),
   extraModules: z.array(z.string()).optional(),
   developmentFiles: z.array(z.string()).optional(),
 });
