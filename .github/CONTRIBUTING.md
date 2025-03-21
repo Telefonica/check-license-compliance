@@ -39,8 +39,8 @@ Thank you for being part of the Telefónica Open Source Community!
 The action is a Docker container that runs a Node.js script. To test the action locally, you can run the Docker compose file in the root of the repository. This will build the Docker image and run the action in a container.
 
 ```bash
-$ docker-compose build
-$ docker-compose run action
+$ docker compose build
+$ docker compose run action
 ```
 
 You can provide a `.env` file to set environment variables used by the GitHub Actions Toolkit. For more information, see the example file, [`.env.example`](./.env.example), and the
@@ -128,7 +128,7 @@ This project uses [Semantic Versioning](https://semver.org/). The version number
 ## Release process
 
 > [!IMPORTANT]
-> Before opening a PR, a new tag must be created in the repository with a beta version. This is because the composite action is used in the PR check, and the action must be referenced in the PR. The action can't be referenced locally, so it must be referenced by a tag. The tag must be created in the format `vX.Y.Z-beta.N`, where `X.Y.Z` is the version in the package.json file, and `N` is the beta version. For example, if the version in the package.json file is `1.0.0`, the tag must be `v1.0.0-beta.1`.
+> Before opening a PR, a new tag must be created in the repository with a beta version. This is because the composite action is used in the PR check, and the action must be referenced in the PR. The action can't be referenced locally, so it must be referenced by a tag. The tag must be created in the format `vX.Y.Z-beta.N`, where `X.Y.Z` is the version in the package.json file, and `N` is the beta version. For example, if the version in the package.json file is `1.0.0`, the tag must be `v1.0.0-beta.1`. This beta version must be defined in the `check-and-comment` composite action in the PR branch and in the package.json file. The beta version must be removed before tagging the release, as described below.
 
 Once the PR is approved and __merged into the release branch__, a project maintainer can start the release process by:
 

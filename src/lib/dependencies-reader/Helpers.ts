@@ -3,11 +3,14 @@
 
 import semver from "semver";
 
+import type { DependencyInfo } from "../DependenciesInfo.types.js";
+
 import type {
   System,
   DependencyUniqueProps,
   DependencyId,
   SystemConfigKey,
+  ModuleSpec,
 } from "./DependenciesReader.types";
 
 /** System identifier used in NPM dependencies */
@@ -196,9 +199,90 @@ export function resolveVersion(
     return version;
   }
   if (SYSTEM_VERSION_SETTINGS[system].useSemver) {
+    // TODO: Get max version that satisfies the range from the versions available in the registry
     const semverVersion = semver.minVersion(version);
     const result = semverVersion ? semverVersion.toString() : version;
     return result;
   }
   return version;
+}
+
+/**
+ * Checks if a value is a string
+ * @param value The value to check
+ * @returns True if the value is a string, false otherwise
+ */
+export function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+/**
+ * Checks if a dependency matches a module specification
+ * @param dependency The dependency to check
+ * @param moduleSpec The module specification
+ * @returns True if the dependency matches the module specification
+ */
+export function matchesDependencyModule(
+  dependency: DependencyInfo,
+  moduleSpec: ModuleSpec,
+): boolean {
+  // Case 1: Simple string format "name@version"
+  if (isString(moduleSpec)) {
+    const { name: dependencyName, version: dependencyVersionFromId } =
+      getDependencyNameAndVersionFromId(moduleSpec);
+    const dependencyResolvedVersion =
+      dependency.resolvedVersion || dependency.version;
+
+    return (
+      dependencyName === dependencyName &&
+      (!dependencyVersionFromId ||
+        !dependencyResolvedVersion ||
+        dependencyResolvedVersion === dependencyVersionFromId)
+    );
+  }
+
+  // Case 2: Object format
+  const {
+    name,
+    version,
+    semver: semverExpression,
+    nameMatch,
+    versionMatch,
+  } = moduleSpec;
+
+  // Match name (either exact match or regex pattern)
+  let nameMatches = true;
+  if (nameMatch) {
+    const nameRegex = new RegExp(nameMatch);
+    nameMatches = nameRegex.test(dependency.name);
+  } else if (name) {
+    nameMatches = dependency.name === name;
+  }
+
+  if (!nameMatches) return false;
+
+  // Match version (exact match, regex pattern, or semver expression)
+  let versionMatches = true;
+  const dependencyVersion = dependency.resolvedVersion || dependency.version;
+
+  if (!dependencyVersion) {
+    return false;
+  }
+
+  if (versionMatch) {
+    const versionRegex = new RegExp(versionMatch);
+    versionMatches = versionRegex.test(dependencyVersion);
+  } else if (semverExpression) {
+    // Only run semver check if it's a valid semver version
+    if (semver.valid(dependencyVersion)) {
+      versionMatches = semver.satisfies(dependencyVersion, semverExpression);
+    } else {
+      // If not a valid semver, consider it doesn't match
+      versionMatches = false;
+    }
+  } else if (version) {
+    versionMatches = dependencyVersion === version;
+  }
+
+  return nameMatches && versionMatches;
 }
