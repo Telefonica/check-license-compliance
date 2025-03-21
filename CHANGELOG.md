@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Version regex
   - Version semver range
 
+### Changed
+
+* docs: Improve contributing docs
+* chore: Add copilot instructions
+
 ## [3.0.0-beta.2] - 2025-02-13
 
 ### Fixed
