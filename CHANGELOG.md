@@ -11,11 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
-## [Unreleased]
+## [3.0.0] - 2025-03-28
 
 ### Added
 
-* test: Add unit tests for all the features
+* test: Add unit tests to increase coverage to 70%
 
 ### Changed
 
