@@ -22,7 +22,7 @@ import type { DependencyInfo } from "./DependenciesInfo.types";
 import { createLogger } from "./Logger.js";
 import { SPDX_LICENSE_IDS_PATH } from "./Paths.js";
 
-function valeOrTrueIfUndefined(value?: boolean): boolean {
+function valueOrTrueIfUndefined(value?: boolean): boolean {
   return value !== undefined ? value : true;
 }
 
@@ -53,9 +53,9 @@ export class Checker {
     this._logger = createLogger(config.log);
     this._config = config;
     this._logger.verbose("Checker created with config", config);
-    this._production = valeOrTrueIfUndefined(config.production);
+    this._production = valueOrTrueIfUndefined(config.production);
     this._onlyDirect = config.onlyDirect || false;
-    this._development = valeOrTrueIfUndefined(config.development);
+    this._development = valueOrTrueIfUndefined(config.development);
 
     if (config.licenses?.others) {
       this._others = config.licenses.others;
