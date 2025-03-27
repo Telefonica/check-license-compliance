@@ -4,5 +4,6 @@ LogForm
 NOASSERTION
 oneofs
 protos
+PYPI
 syncrc
 venv

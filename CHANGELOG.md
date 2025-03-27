@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * feat: Change "one dependency" by "1 dependency" in the success report message, to make it more consistent with the other messages
 
+### Fixed
+
+* fix: Excluding or including by a string with the module name without version was not working
+
 ## [3.0.0-beta.3] - 2025-03-21
 
 ### Added

@@ -141,6 +141,9 @@ export function getDependencyNameAndVersionFromId(
 ): Omit<DependencyUniqueProps, "system"> {
   const dependencyWithoutSystem = removeSystemId(dependency);
   const lastAtIndex = dependencyWithoutSystem.lastIndexOf("@");
+  if (lastAtIndex === -1) {
+    return { name: dependencyWithoutSystem };
+  }
   const name = dependencyWithoutSystem.substring(0, lastAtIndex);
   const version = dependencyWithoutSystem.substring(lastAtIndex + 1);
   return { name, version };
@@ -234,7 +237,7 @@ export function matchesDependencyModule(
       dependency.resolvedVersion || dependency.version;
 
     return (
-      dependencyName === dependencyName &&
+      dependencyName === dependency.name &&
       (!dependencyVersionFromId ||
         !dependencyResolvedVersion ||
         dependencyResolvedVersion === dependencyVersionFromId)

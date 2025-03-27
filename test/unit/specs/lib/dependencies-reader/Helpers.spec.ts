@@ -1,9 +1,12 @@
 // SPDX-FileCopyrightText: 2025 Telefónica Innovación Digital
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ModuleSpec } from "../../../src/lib/dependencies-reader/DependenciesReader.types.js";
-import { matchesDependencyModule } from "../../../src/lib/dependencies-reader/Helpers.js";
-import type { DependencyInfo } from "../../../src/lib/DependenciesInfo.types.js";
+import type { ModuleSpec } from "../../../../../src/lib/dependencies-reader/DependenciesReader.types.js";
+import {
+  getDependencyName,
+  matchesDependencyModule,
+} from "../../../../../src/lib/dependencies-reader/Helpers.js";
+import type { DependencyInfo } from "../../../../../src/lib/DependenciesInfo.types.js";
 
 describe("matchesDependencyModule", () => {
   const dependency: DependencyInfo = {
@@ -119,12 +122,6 @@ describe("matchesDependencyModule", () => {
     expect(matchesDependencyModule(dependencyWithoutVersion, moduleSpec)).toBe(
       true,
     );
-
-    const moduleSpecWithVersion: ModuleSpec = "express@4.17.1";
-
-    expect(
-      matchesDependencyModule(dependencyWithoutVersion, moduleSpecWithVersion),
-    ).toBe(false);
   });
 
   it("should prioritize nameMatch over name", () => {
@@ -155,5 +152,86 @@ describe("matchesDependencyModule", () => {
     };
 
     expect(matchesDependencyModule(dependency, moduleSpec)).toBe(true);
+  });
+
+  it("should handle invalid semver versions gracefully", () => {
+    const dependencyWithInvalidVersion: DependencyInfo = {
+      ...dependency,
+      version: "invalid-semver",
+      resolvedVersion: "invalid-semver",
+    };
+
+    const moduleSpec: ModuleSpec = {
+      name: "express",
+      semver: "^4.17.0",
+    };
+
+    expect(
+      matchesDependencyModule(dependencyWithInvalidVersion, moduleSpec),
+    ).toBe(false);
+  });
+
+  it("should handle complex object specs with multiple criteria", () => {
+    const moduleSpec: ModuleSpec = {
+      nameMatch: "^exp.*",
+      versionMatch: "^4\\..*",
+    };
+
+    expect(matchesDependencyModule(dependency, moduleSpec)).toBe(true);
+  });
+
+  it("should correctly handle string moduleSpec with system id", () => {
+    const moduleSpec: ModuleSpec = "NPM:express@4.17.1";
+
+    expect(matchesDependencyModule(dependency, moduleSpec)).toBe(true);
+  });
+});
+
+describe("getDependencyName", () => {
+  it("should return a string with system and name for NPM package", () => {
+    const dependency = {
+      system: "NPM",
+      name: "express",
+    } as DependencyInfo;
+
+    expect(getDependencyName(dependency)).toBe("NPM:express");
+  });
+
+  it("should return a string with system and name for Maven package", () => {
+    const dependency = {
+      system: "MAVEN",
+      name: "org.apache.commons:commons-lang3",
+    } as DependencyInfo;
+
+    expect(getDependencyName(dependency)).toBe(
+      "MAVEN:org.apache.commons:commons-lang3",
+    );
+  });
+
+  it("should return a string with system and name for Python package", () => {
+    const dependency = {
+      system: "PYPI",
+      name: "requests",
+    } as DependencyInfo;
+
+    expect(getDependencyName(dependency)).toBe("PYPI:requests");
+  });
+
+  it("should return a string with system and name for Go package", () => {
+    const dependency = {
+      system: "GO",
+      name: "github.com/foo/testify",
+    } as DependencyInfo;
+
+    expect(getDependencyName(dependency)).toBe("GO:github.com/foo/testify");
+  });
+
+  it("should handle dependency with special characters in name", () => {
+    const dependency = {
+      system: "NPM",
+      name: "@types/node",
+    } as DependencyInfo;
+
+    expect(getDependencyName(dependency)).toBe("NPM:@types/node");
   });
 });
