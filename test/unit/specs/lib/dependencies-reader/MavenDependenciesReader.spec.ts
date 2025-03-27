@@ -46,11 +46,11 @@ describe("mavenDependenciesReader", () => {
 
     // Setup default mock responses
     jest
-    // eslint-disable-next-line jest/unbound-method
+      // eslint-disable-next-line jest/unbound-method
       .mocked(path.resolve)
       .mockImplementation((_cwd, filePath) => `/mock/cwd/${filePath}`);
     jest
-    // eslint-disable-next-line jest/unbound-method
+      // eslint-disable-next-line jest/unbound-method
       .mocked(path.relative)
       .mockImplementation((_cwd, fullPath) =>
         fullPath.replace("/mock/cwd/", ""),
