@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * fix: Excluding or including by a string with the module name without version was not working
+* fix: Option "developmentFiles" was not working properly for NPM dependencies. Dependencies were being still considered as production ones.
 
 ## [3.0.0-beta.3] - 2025-03-21
 
