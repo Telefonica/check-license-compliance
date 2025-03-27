@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [Unreleased]
+
+### Added
+
+* test: Add unit tests for all the features
+
+### Changed
+
+* feat: Change "one dependency" by "1 dependency" in the success report message, to make it more consistent with the other messages
+
 ## [3.0.0-beta.3] - 2025-03-21
 
 ### Added
