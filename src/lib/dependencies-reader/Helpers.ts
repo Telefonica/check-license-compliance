@@ -23,7 +23,7 @@ export const PYTHON_SYSTEM: System = "PYPI"; // cspell:disable-line
 export const GO_SYSTEM: System = "GO";
 
 /** List of all available system identifiers */
-const SYSTEM_IDS = [NPM_SYSTEM, MAVEN_SYSTEM, PYTHON_SYSTEM, GO_SYSTEM];
+export const SYSTEM_IDS = [NPM_SYSTEM, MAVEN_SYSTEM, PYTHON_SYSTEM, GO_SYSTEM];
 
 /** Regular expression to validate a numeric version */
 const NUMERIC_VERSION_REGEX = /^\d+(\.\d+)*(\S*)$/;

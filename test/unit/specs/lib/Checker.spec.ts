@@ -33,7 +33,9 @@ describe("checker", () => {
         warnings: [],
       };
     };
-    jest.mocked(fsExtra.readJson).mockResolvedValue(["MIT", "GPL-3.0"]);
+    jest
+      .mocked(fsExtra.readJson)
+      .mockResolvedValue(["MIT", "GPL-3.0", "APACHE-2.0"]);
     // @ts-expect-error mockImplementation is not typed
     jest.mocked(DependenciesInfo).mockImplementation(dependenciesInfoMock);
   });
@@ -163,7 +165,7 @@ describe("checker", () => {
           id: "packageName",
           system: "NPM",
           name: "packageName",
-          licenses: ["CustomLicense"],
+          licenses: ["MIT"],
           direct: true,
           origins: [],
           ancestors: [],
@@ -178,7 +180,7 @@ describe("checker", () => {
       const checker = new Checker({
         log: "error",
         licenses: {
-          allowed: ["MIT"],
+          allowed: ["APACHE-2.0"],
         },
       });
       const result = await checker.check();
@@ -186,7 +188,7 @@ describe("checker", () => {
       expect(result.forbidden).toEqual([
         expect.objectContaining({
           module: "packageName",
-          licenses: ["CustomLicense"],
+          licenses: ["MIT"],
         }),
       ]);
       expect(result.warning).toEqual([]);
@@ -397,6 +399,39 @@ describe("checker", () => {
       expect(result.allowed[0].module).toBe("devPackage");
     });
 
+    it("should filter dependencies as development when they are also production and should be filtered as well", async () => {
+      getDependenciesMock.mockResolvedValue([
+        {
+          id: "devPackage",
+          system: "NPM",
+          name: "devPackage",
+          licenses: ["MIT"],
+          direct: true,
+          origins: [],
+          ancestors: [],
+          production: true,
+          development: true,
+          dependencies: [],
+          errors: [],
+          warnings: [],
+        },
+      ]);
+      jest.mocked(satisfies).mockImplementation(() => true);
+      const checker = new Checker({
+        log: "error",
+        production: false,
+        development: false,
+        licenses: {
+          allowed: ["MIT"],
+        },
+      });
+      const result = await checker.check();
+
+      expect(result.allowed).toHaveLength(0);
+      expect(result.warning).toHaveLength(0);
+      expect(result.forbidden).toHaveLength(0);
+    });
+
     it("should filter by direct dependencies when onlyDirect is true", async () => {
       getDependenciesMock.mockResolvedValue([
         {
@@ -529,6 +564,108 @@ describe("checker", () => {
         log: "error",
         npm: {
           excludeModules: ["excluded@1.0.0"],
+        },
+        licenses: {
+          allowed: ["MIT"],
+        },
+      });
+      const result = await checker.check();
+
+      expect(result.allowed).toHaveLength(1);
+      expect(result.allowed[0].module).toBe("NPM:included@1.0.0");
+    });
+
+    it("should exclude modules from configuration when defined with system id", async () => {
+      getDependenciesMock.mockResolvedValue([
+        {
+          id: "NPM:included@1.0.0",
+          system: "NPM",
+          name: "included",
+          version: "1.0.0",
+          licenses: ["MIT"],
+          direct: true,
+          origins: [],
+          ancestors: [],
+          production: true,
+          development: false,
+          dependencies: [],
+          errors: [],
+          warnings: [],
+        },
+        {
+          id: "NPM:excluded@1.0.0",
+          system: "NPM",
+          name: "excluded",
+          version: "1.0.0",
+          licenses: ["MIT"],
+          direct: true,
+          origins: [],
+          ancestors: [],
+          production: true,
+          development: false,
+          dependencies: [],
+          errors: [],
+          warnings: [],
+        },
+      ]);
+      jest.mocked(satisfies).mockImplementation(() => true);
+      const checker = new Checker({
+        log: "error",
+        npm: {
+          excludeModules: ["NPM:excluded@1.0.0"],
+        },
+        licenses: {
+          allowed: ["MIT"],
+        },
+      });
+      const result = await checker.check();
+
+      expect(result.allowed).toHaveLength(1);
+      expect(result.allowed[0].module).toBe("NPM:included@1.0.0");
+    });
+
+    it("should exclude modules from configuration when defined with module details", async () => {
+      getDependenciesMock.mockResolvedValue([
+        {
+          id: "NPM:included@1.0.0",
+          system: "NPM",
+          name: "included",
+          version: "1.0.0",
+          licenses: ["MIT"],
+          direct: true,
+          origins: [],
+          ancestors: [],
+          production: true,
+          development: false,
+          dependencies: [],
+          errors: [],
+          warnings: [],
+        },
+        {
+          id: "NPM:excluded@1.0.0",
+          system: "NPM",
+          name: "excluded",
+          version: "1.0.0",
+          licenses: ["MIT"],
+          direct: true,
+          origins: [],
+          ancestors: [],
+          production: true,
+          development: false,
+          dependencies: [],
+          errors: [],
+          warnings: [],
+        },
+      ]);
+      jest.mocked(satisfies).mockImplementation(() => true);
+      const checker = new Checker({
+        log: "error",
+        npm: {
+          excludeModules: [
+            {
+              name: "excluded",
+            },
+          ],
         },
         licenses: {
           allowed: ["MIT"],
