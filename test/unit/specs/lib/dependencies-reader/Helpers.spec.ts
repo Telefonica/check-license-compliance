@@ -5,7 +5,7 @@
 
 import type { ModuleSpec } from "../../../../../src/lib/dependencies-reader/DependenciesReader.types.js";
 import {
-  getDependencyName,
+  getDependencyNameWithSystem,
   isValidVersion,
   matchesDependencyModule,
   resolveVersion,
@@ -202,7 +202,7 @@ describe("getDependencyName", () => {
       name: "express",
     } as DependencyInfo;
 
-    expect(getDependencyName(dependency)).toBe("NPM:express");
+    expect(getDependencyNameWithSystem(dependency)).toBe("NPM:express");
   });
 
   it("should return a string with system and name for Maven package", () => {
@@ -211,7 +211,7 @@ describe("getDependencyName", () => {
       name: "org.apache.commons:commons-lang3",
     } as DependencyInfo;
 
-    expect(getDependencyName(dependency)).toBe(
+    expect(getDependencyNameWithSystem(dependency)).toBe(
       "MAVEN:org.apache.commons:commons-lang3",
     );
   });
@@ -222,7 +222,7 @@ describe("getDependencyName", () => {
       name: "requests",
     } as DependencyInfo;
 
-    expect(getDependencyName(dependency)).toBe("PYPI:requests");
+    expect(getDependencyNameWithSystem(dependency)).toBe("PYPI:requests");
   });
 
   it("should return a string with system and name for Go package", () => {
@@ -231,7 +231,9 @@ describe("getDependencyName", () => {
       name: "github.com/foo/testify",
     } as DependencyInfo;
 
-    expect(getDependencyName(dependency)).toBe("GO:github.com/foo/testify");
+    expect(getDependencyNameWithSystem(dependency)).toBe(
+      "GO:github.com/foo/testify",
+    );
   });
 
   it("should handle dependency with special characters in name", () => {
@@ -240,7 +242,7 @@ describe("getDependencyName", () => {
       name: "@types/node",
     } as DependencyInfo;
 
-    expect(getDependencyName(dependency)).toBe("NPM:@types/node");
+    expect(getDependencyNameWithSystem(dependency)).toBe("NPM:@types/node");
   });
 });
 

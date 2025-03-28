@@ -48,20 +48,23 @@ export interface DependenciesInfoOptions {
 /** Project direct dependencies */
 export type DirectDependencies = DependencyId[];
 
-/**
- * Information about a dependency
- */
-export interface DependencyInfo {
+export interface DependencyBasicInfo {
   /** Dependency unique id, including the system, name and version */
   id: DependencyId;
   /** The system where the dependency is defined */
   system: System;
-  /** The name of the dependency */
-  name: string;
   /** The version of the dependency */
   version?: string;
   /** The version of the dependency after resolving semver, etc */
   resolvedVersion?: string;
+  /** The name of the dependency */
+  name: string;
+}
+
+/**
+ * Information about a dependency
+ */
+export interface DependencyInfo extends DependencyBasicInfo {
   /** List of dependencies of this dependency */
   dependencies: DependencyUniqueProps[];
   /** List of licenses of the dependency */

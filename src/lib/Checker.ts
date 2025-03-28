@@ -8,17 +8,9 @@ import parseSpdx from "spdx-expression-parse";
 import satisfies from "spdx-satisfies";
 
 import type { LicensesResult, Result } from "./Checker.types";
-import { getSystemConfig } from "./Config.js";
 import type { CheckerConfig, OtherLicenses } from "./Config.types";
-import type { ModuleSpec } from "./dependencies-reader/DependenciesReader.types";
-import {
-  isString,
-  hasSystemId,
-  matchesDependencyModule,
-  removeSystemId,
-} from "./dependencies-reader/Helpers.js";
 import { DependenciesInfo } from "./DependenciesInfo.js";
-import type { DependencyInfo } from "./DependenciesInfo.types";
+import { dependencyIsExcluded, dependencyIsIncluded } from "./Helpers.js";
 import { createLogger } from "./Logger.js";
 import { SPDX_LICENSE_IDS_PATH } from "./Paths.js";
 
@@ -217,54 +209,6 @@ export class Checker {
   }
 
   /**
-   * Determines if a module id is in a list. Ids can be passed with or without system id
-   * @param moduleSpecs The list to check
-   * @param moduleId The module id to check
-   * @returns True if the module id is in the list, false otherwise
-   */
-  private _moduleMatchSpecs(
-    dependencyInfo: DependencyInfo,
-    moduleSpecs: ModuleSpec[],
-  ): boolean {
-    return moduleSpecs.some((spec) => {
-      if (isString(spec)) {
-        const specHasSystemId = hasSystemId(spec);
-        if (specHasSystemId) {
-          return spec === dependencyInfo.id;
-        }
-        return spec === removeSystemId(dependencyInfo.id);
-      }
-      return matchesDependencyModule(dependencyInfo, spec);
-    });
-  }
-
-  /**
-   * Returns true if the dependency is in the list of modules to exclude according to the configuration of the dependency system
-   * @param dependency The dependency to check
-   * @returns True if the dependency is in the list of modules to exclude, false otherwise
-   */
-  private _dependencyIsExcluded(dependency: DependencyInfo): boolean {
-    const systemConfig = getSystemConfig(dependency.system, this._config);
-    if (systemConfig.excludeModules) {
-      return this._moduleMatchSpecs(dependency, systemConfig.excludeModules);
-    }
-    return false;
-  }
-
-  /**
-   * Returns true if the dependency is in the list of modules to include according to the configuration of the dependency system
-   * @param dependency The dependency to check
-   * @returns True if the dependency is in the list of modules to include, or if there is no list of modules to include, false otherwise
-   */
-  private _dependencyIsIncluded(dependency: DependencyInfo): boolean {
-    const systemConfig = getSystemConfig(dependency.system, this._config);
-    if (systemConfig.modules) {
-      return this._moduleMatchSpecs(dependency, systemConfig.modules);
-    }
-    return true;
-  }
-
-  /**
    * Read the project dependencies and returns an array of modules using a license that is not in the exclusions from configuration
    * @returns List of modules using a license that is not in the exclusions from configuration
    */
@@ -275,13 +219,13 @@ export class Checker {
 
     return dependencies
       .filter((dependency) => {
-        if (!this._dependencyIsIncluded(dependency)) {
+        if (!dependencyIsIncluded(dependency, this._config)) {
           this._logger.verbose(
             `Excluding dependency ${dependency.id} because it is not in the list of modules to check`,
           );
           return false;
         }
-        if (this._dependencyIsExcluded(dependency)) {
+        if (dependencyIsExcluded(dependency, this._config)) {
           this._logger.verbose(
             `Excluding dependency ${dependency.id} because it is in the list of modules to exclude`,
           );
