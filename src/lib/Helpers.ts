@@ -16,6 +16,7 @@ const INCLUDE_KEY = "include";
  * Determines if a module id is in a list. Ids can be passed with or without system id
  * @param moduleSpecs The list to check
  * @param moduleId The module id to check
+ * @param requireIgnored Only match ignored modules
  * @returns True if the module id is in the list, false otherwise
  */
 export function moduleMatchSpecs(
@@ -31,6 +32,14 @@ export function moduleMatchSpecs(
   });
 }
 
+/**
+ * Returns true if the dependency is in the list of modules to exclude or include according to the configuration of the dependency system
+ * @param dependency The dependency to check
+ * @param config The configuration of the dependency system
+ * @param type The type of list to check
+ * @param requireIgnored Only match ignored modules
+ * @returns True if the dependency is in the list of modules to exclude, false otherwise
+ */
 export function dependencyIsExcludedOrIncluded(
   dependency: DependencyBasicInfo,
   config: OptionsBySystem,
@@ -48,6 +57,7 @@ export function dependencyIsExcludedOrIncluded(
 /**
  * Returns true if the dependency is in the list of modules to exclude according to the configuration of the dependency system
  * @param dependency The dependency to check
+ * @param config The configuration of the dependency system
  * @returns True if the dependency is in the list of modules to exclude, false otherwise
  */
 export function dependencyIsExcluded(
@@ -60,6 +70,7 @@ export function dependencyIsExcluded(
 /**
  * Returns true if the dependency is in the list of modules to exclude according to the configuration of the dependency system
  * @param dependency The dependency to check
+ * @param config The configuration of the dependency system
  * @returns True if the dependency is in the list of modules to exclude, false otherwise
  */
 export function dependencyIsIncluded(
@@ -72,6 +83,7 @@ export function dependencyIsIncluded(
 /**
  * Returns true if the dependency is in the list of modules to exclude and it is ignored according to the configuration of the dependency system
  * @param dependency The dependency to check
+ * @param config The configuration of the dependency system
  * @returns True if the dependency is in the list of modules to exclude, false otherwise
  */
 export function dependencyIsIgnored(
