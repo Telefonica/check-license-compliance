@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [3.0.0] - 2025-03-28
+
+### Added
+
+* test: Add unit tests to increase coverage to 70%
+
+### Changed
+
+* feat: Change "one dependency" by "1 dependency" in the success report message, to make it more consistent with the other messages
+
+### Fixed
+
+* fix: Excluding or including by a string with the module name without version was not working
+* fix: Option "developmentFiles" was not working properly for NPM dependencies. Dependencies were being still considered as production ones.
+
 ## [3.0.0-beta.3] - 2025-03-21
 
 ### Added

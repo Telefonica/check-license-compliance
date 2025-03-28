@@ -22,15 +22,14 @@ export default {
   coverageDirectory: "coverage",
 
   // An object that configures minimum threshold enforcement for coverage results
-  // TODO: Uncomment this when we have 100% coverage again
-  /* coverageThreshold: {
+  coverageThreshold: {
     global: {
-      branches: 100,
-      functions: 100,
-      lines: 100,
-      statements: 100,
+      branches: 70,
+      functions: 70,
+      lines: 80,
+      statements: 80,
     },
-  }, */
+  },
 
   setupFiles: ["./test/unit/setup.ts"],
 

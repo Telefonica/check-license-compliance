@@ -92,9 +92,6 @@ Some important points to consider:
 * Usually, feature branches should be short-lived, and they should be merged into the "release" branch as soon as possible. This way, the changes will be included in the next release, and the feature branch can be deleted.
 * When necessary, a medium-lived branch can be created from the "release" branch to group changes that will be released together and require more time to be prepared. Once the changes are ready, the branch can be merged into the "release" branch.
 
-> [!IMPORTANT]
-> The action code must be always packaged before pushing changes to the repository. This is because the action code is executed in the GitHub Actions environment, and it must be in the JavaScript format. The action code is packaged using the `npm run package` command. A github action check is executed on every PR to verify if the action code was packaged before pushing changes to the repository.
-
 ### Merging strategy
 
 We use the __squash and merge strategy for merging PRs to the release branch__. This means that all the changes in the PR will be squashed into a single commit before being merged. The reasons are:

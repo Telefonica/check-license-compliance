@@ -17,13 +17,10 @@ import type {
   System,
 } from "./DependenciesReader.types";
 import {
+  SYSTEM_IDS,
   resolveVersion,
   getDependencyNameAndVersionFromId,
 } from "./Helpers.js";
-
-const NODE_SYSTEM: System = "NPM";
-
-const SYSTEM_IDS = [NODE_SYSTEM];
 
 /**
  * Creates an unique id for a dependency
@@ -45,15 +42,6 @@ export function removeSystemId(dependencyId: DependencyId): string {
   return SYSTEM_IDS.reduce((acc, system) => {
     return acc.replace(`${system}:`, "");
   }, dependencyId);
-}
-
-/**
- * Checks if a dependency id has a system id
- * @param dependencyId The dependency id to check
- * @returns True if the dependency id has a system id, false otherwise
- */
-export function hasSystemId(dependencyId: DependencyId): boolean {
-  return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
 }
 
 /**

@@ -19,6 +19,7 @@ Read the README.md file to understand the project features.
 
 ## Testing
 
+- When asked to write unit tests, always read the files in the `./src` folder to have more context
 - Always write tests for the code you are implementing. Search for the file that contains the tests for the file you are modifying and add the necessary tests, or add a new file if necessary.
 - The tests are written using the `jest` library.
 - Unit tests are in the `./test/unit/specs/lib` and `./test/unit/specs/action` folders.
