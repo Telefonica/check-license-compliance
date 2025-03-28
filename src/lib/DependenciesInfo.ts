@@ -14,6 +14,7 @@ import type {
   DependencyId,
   DependencyNameUniqueProps,
   System,
+  OptionsBySystem,
 } from "./dependencies-reader/DependenciesReader.types";
 import {
   getDependencyId,
@@ -29,6 +30,7 @@ import type {
   DepsDevDependenciesInfo,
   VersionOutput,
 } from "./DependenciesInfo.types";
+import { dependencyIsIgnored } from "./Helpers.js";
 import { ROOT_PATH } from "./Paths.js";
 import type { ProtoGrpcType } from "./proto/api";
 import type { Dependencies__Output as DependenciesOutput } from "./proto/deps_dev/v3/Dependencies";
@@ -58,6 +60,7 @@ export class DependenciesInfo {
   private _depsDevModulesInfo: DepsDevModulesInfo = {};
   private _depsDevDependenciesInfo: DepsDevDependenciesInfo = {};
   private _requestedModules: DependencyId[] = [];
+  private _ignoredModules: DependencyId[] = [];
   private _directDependencies: DirectDependencies = [];
   private _directDevDependencies: DirectDependencies = [];
   private _directProdDependencies: DirectDependencies = [];
@@ -72,7 +75,7 @@ export class DependenciesInfo {
   private _onlyDirect: boolean;
   private _production: boolean;
   private _development: boolean;
-  private _readFilesErrors: Error[] = [];
+  private _optionsBySystem: OptionsBySystem;
 
   /**
    * Create a new instance of the DependenciesInfo
@@ -89,6 +92,12 @@ export class DependenciesInfo {
     production,
     development,
   }: DependenciesInfoOptions) {
+    this._optionsBySystem = {
+      npm,
+      maven,
+      python,
+      go,
+    };
     this._logger = logger;
     this._initGrpcClient();
     this._projectDependenciesReader = new DirectDependenciesReader({
@@ -147,6 +156,7 @@ export class DependenciesInfo {
     this._directDevDependencies = [];
     this._directProdDependencies = [];
     this._requestedModules = [];
+    this._ignoredModules = [];
     this._errors = [];
     this._warnings = [];
     this._moduleVersionRequests = {};
@@ -440,6 +450,24 @@ export class DependenciesInfo {
 
     const ancestorToPass = isDirect ? id : ancestor;
     const ancestorToSet = isDirect ? undefined : ancestor;
+
+    if (this._ignoredModules.includes(id)) {
+      this._logger.silly(`The module ${id} is ignored. Skipping`);
+      return;
+    }
+
+    if (
+      dependencyIsIgnored(
+        { system, name, version, resolvedVersion, id },
+        this._optionsBySystem,
+      )
+    ) {
+      this._logger.warn(
+        `The module ${id} is ignored. Skipping request of info and dependencies`,
+      );
+      this._ignoredModules.push(id);
+      return;
+    }
 
     if (this._requestedModules.includes(id)) {
       this._logger.silly(

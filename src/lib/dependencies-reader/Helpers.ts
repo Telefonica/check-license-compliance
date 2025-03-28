@@ -3,7 +3,7 @@
 
 import semver from "semver";
 
-import type { DependencyInfo } from "../DependenciesInfo.types.js";
+import type { DependencyBasicInfo } from "../DependenciesInfo.types.js";
 
 import type {
   System,
@@ -226,7 +226,7 @@ export function isString(value: unknown): value is string {
  * @returns True if the dependency matches the module specification
  */
 export function matchesDependencyModule(
-  dependency: DependencyInfo,
+  dependency: DependencyBasicInfo,
   moduleSpec: ModuleSpec,
 ): boolean {
   // Case 1: Simple string format "name@version"

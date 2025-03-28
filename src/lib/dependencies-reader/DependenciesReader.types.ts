@@ -16,6 +16,7 @@ export const moduleSpecSchema = z.object({
   semver: z.string().optional(),
   nameMatch: z.string().optional(),
   versionMatch: z.string().optional(),
+  ignore: z.boolean().optional(),
 });
 
 /**

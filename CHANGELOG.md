@@ -11,7 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
-## [Unreleased]
+## [3.1.0] - 2025-03-28
+
+### Added
+
+* feat: Add `ignore` option to module options in `excludeModules`. When true, the module information nor its dependencies will be even fetched from the deps.dev API
 
 ### Changed
 
