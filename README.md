@@ -149,7 +149,8 @@ The configuration file is a YAML file that must be placed at the root of your re
 
 In the configuration, there are options enabling to define the list of modules to check or to exclude from the check (`[system]/modules` and `[system]/excludeModules`). A module can be defined in two ways:
 
-1. A module and version string, like `express@4.17.1`.
+1. A module and version string, like `express@4.17.1`. In this case, only the specific version will be included or excluded.
+2. A module name as string, like `express`. In this case, all versions of the module will be included or excluded.
 2. An object with some of the following properties. You have to provide at least one of the properties `name` or `nameMatch`. If no version is provided, the module will be included or excluded regardless of the version.
     * `name`: The module name.
     * `nameMatch`: A regex pattern to match the module name. When defined, the `name` property will be ignored.

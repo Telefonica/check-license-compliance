@@ -9,40 +9,16 @@ import type {
   DependenciesReaderOptions,
   DependenciesReader,
   DependencyDeclaration,
-  DependencyUniqueProps,
-  DependencyId,
   SystemDependenciesReaderOptions,
   SystemDependenciesOptions,
   BaseSystemDependenciesReaderOptions,
   System,
 } from "./DependenciesReader.types";
 import {
-  SYSTEM_IDS,
   resolveVersion,
   getDependencyNameAndVersionFromId,
+  getDependencyId,
 } from "./Helpers.js";
-
-/**
- * Creates an unique id for a dependency
- * @param dependency The dependency data to create the id from
- * @returns An unique id for the dependency, containing the system, name and version
- */
-export function getDependencyId(
-  dependency: DependencyUniqueProps,
-): DependencyId {
-  return `${dependency.system}:${dependency.name}@${dependency.version}`;
-}
-
-/**
- * Removes the system id from a dependency id
- * @param dependencyId The dependency id to remove the system id from
- * @returns The dependency id without the system id
- */
-export function removeSystemId(dependencyId: DependencyId): string {
-  return SYSTEM_IDS.reduce((acc, system) => {
-    return acc.replace(`${system}:`, "");
-  }, dependencyId);
-}
 
 /**
  * Base class for dependencies readers

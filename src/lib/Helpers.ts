@@ -5,11 +5,12 @@ import type {
 } from "./dependencies-reader/DependenciesReader.types";
 import {
   isString,
-  hasSystemId,
   matchesDependencyModule,
-  removeSystemId,
 } from "./dependencies-reader/Helpers.js";
 import type { DependencyBasicInfo } from "./DependenciesInfo.types";
+
+const EXCLUDE_KEY = "exclude";
+const INCLUDE_KEY = "include";
 
 /**
  * Determines if a module id is in a list. Ids can be passed with or without system id
@@ -23,16 +24,9 @@ export function moduleMatchSpecs(
   requireIgnored?: boolean,
 ): boolean {
   return moduleSpecs.some((spec) => {
-    if (isString(spec)) {
-      const specHasSystemId = hasSystemId(spec);
-      if (specHasSystemId) {
-        return spec === dependencyInfo.id;
-      }
-      return spec === removeSystemId(dependencyInfo.id);
-    }
     return (
       matchesDependencyModule(dependencyInfo, spec) &&
-      (!requireIgnored || spec.ignore === true)
+      (!requireIgnored || (!isString(spec) && spec.ignore === true))
     );
   });
 }
@@ -44,11 +38,11 @@ export function dependencyIsExcludedOrIncluded(
   requireIgnored?: boolean,
 ): boolean {
   const systemConfig = getSystemConfig(dependency.system, config);
-  const key = type === "exclude" ? "excludeModules" : "modules";
+  const key = type === EXCLUDE_KEY ? "excludeModules" : "modules";
   if (systemConfig[key]) {
     return moduleMatchSpecs(dependency, systemConfig[key], requireIgnored);
   }
-  return type === "exclude" ? false : true;
+  return type !== EXCLUDE_KEY;
 }
 
 /**
@@ -60,7 +54,7 @@ export function dependencyIsExcluded(
   dependency: DependencyBasicInfo,
   config: OptionsBySystem,
 ): boolean {
-  return dependencyIsExcludedOrIncluded(dependency, config, "exclude");
+  return dependencyIsExcludedOrIncluded(dependency, config, EXCLUDE_KEY);
 }
 
 /**
@@ -72,7 +66,7 @@ export function dependencyIsIncluded(
   dependency: DependencyBasicInfo,
   config: OptionsBySystem,
 ): boolean {
-  return dependencyIsExcludedOrIncluded(dependency, config, "include");
+  return dependencyIsExcludedOrIncluded(dependency, config, INCLUDE_KEY);
 }
 
 /**
@@ -84,5 +78,5 @@ export function dependencyIsIgnored(
   dependency: DependencyBasicInfo,
   config: OptionsBySystem,
 ): boolean {
-  return dependencyIsExcludedOrIncluded(dependency, config, "exclude", true);
+  return dependencyIsExcludedOrIncluded(dependency, config, EXCLUDE_KEY, true);
 }

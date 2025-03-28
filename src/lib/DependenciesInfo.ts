@@ -18,7 +18,7 @@ import type {
 } from "./dependencies-reader/DependenciesReader.types";
 import {
   getDependencyId,
-  getDependencyName,
+  getDependencyNameWithSystem,
   isValidVersion,
   getDependencyDisplayName,
 } from "./dependencies-reader/Helpers.js";
@@ -195,7 +195,7 @@ export class DependenciesInfo {
     { system, name }: DependencyNameUniqueProps,
     retry = 0,
   ): Promise<PackageOutput> {
-    const id = getDependencyName({
+    const id = getDependencyNameWithSystem({
       system,
       name,
     });
@@ -254,7 +254,7 @@ export class DependenciesInfo {
     system,
     name,
   }: DependencyNameUniqueProps): Promise<string | undefined> {
-    const id = getDependencyName({
+    const id = getDependencyNameWithSystem({
       system,
       name,
     });
