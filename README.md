@@ -2,9 +2,6 @@
 
 Checks that repository dependencies are compliant with allowed licenses according to a given configuration.
 
-> [!WARNING]
-> This is a beta version. Please, report any issue you find. If you want to use a stable version, please use a v2 release.
-
 ## Table of Contents
 
 - [Preface](#preface)
@@ -79,7 +76,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check Licenses
-        uses: Telefonica/check-license-compliance@v3.0.0-beta.2
+        uses: Telefonica/check-license-compliance@v3
 ```
 
 That's it! The action will check the dependencies according to the configuration file on every push 🚀.
@@ -113,7 +110,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check Licenses
-        uses: Telefonica/check-license-compliance/.github/actions/check-and-comment@v3.0.0-beta.2
+        uses: Telefonica/check-license-compliance/.github/actions/check-and-comment@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -246,7 +243,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check Licenses
-        uses: Telefonica/check-license-compliance@v3.0.0-beta.2
+        uses: Telefonica/check-license-compliance@v3
         with:
           config-file: "check-licenses.config.yml"
           # Properties defined at input first level will have preference over values defined in any other place

@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 
+## [Unreleased]
+
+### Changed
+
+* docs: Change action version in docs to v3
+
 ## [3.0.0] - 2025-03-28
 
 ### Added
