@@ -147,6 +147,7 @@ export function getDependencyNameAndVersionFromId(
  * @returns True if the version is valid, false otherwise
  */
 function isValidStringVersion(version: string, system: System): boolean {
+  // Ignore this line in coverage because it's not possible to test it. It is provided by the system configuration. The check is done just by defensive programming
   // istanbul ignore next
   if (!SYSTEM_VERSION_SETTINGS[system].validVersionRegex) {
     return false;
