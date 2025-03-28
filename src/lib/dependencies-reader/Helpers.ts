@@ -3,7 +3,7 @@
 
 import semver from "semver";
 
-import type { DependencyInfo } from "../DependenciesInfo.types.js";
+import type { DependencyBasicInfo } from "../DependenciesInfo.types.js";
 
 import type {
   System,
@@ -85,7 +85,7 @@ export function getDependencyDisplayName({
  * @param dependency The dependency data to get the name from
  * @returns An string containing the system and the name of the dependency
  */
-export function getDependencyName(
+export function getDependencyNameWithSystem(
   dependency: Omit<DependencyUniqueProps, "version">,
 ): DependencyId {
   return `${dependency.system}:${dependency.name}`;
@@ -101,7 +101,7 @@ export function getDependencyId({
   name,
   version,
 }: DependencyUniqueProps): DependencyId {
-  const fullName = getDependencyName({
+  const fullName = getDependencyNameWithSystem({
     system: system,
     name: name,
   });
@@ -120,15 +120,6 @@ export function removeSystemId(dependencyId: DependencyId): string {
   return SYSTEM_IDS.reduce((acc, system) => {
     return acc.replace(`${system}:`, "");
   }, dependencyId);
-}
-
-/**
- * Returns true if a dependency id has a system id
- * @param dependencyId The dependency id to check
- * @returns True if the dependency id has a system id, false otherwise
- */
-export function hasSystemId(dependencyId: DependencyId): boolean {
-  return SYSTEM_IDS.some((system) => dependencyId.startsWith(`${system}:`));
 }
 
 /**
@@ -156,6 +147,8 @@ export function getDependencyNameAndVersionFromId(
  * @returns True if the version is valid, false otherwise
  */
 function isValidStringVersion(version: string, system: System): boolean {
+  // Ignore this line in coverage because it's not possible to test it. It is provided by the system configuration. The check is done just by defensive programming
+  // istanbul ignore next
   if (!SYSTEM_VERSION_SETTINGS[system].validVersionRegex) {
     return false;
   }
@@ -226,7 +219,7 @@ export function isString(value: unknown): value is string {
  * @returns True if the dependency matches the module specification
  */
 export function matchesDependencyModule(
-  dependency: DependencyInfo,
+  dependency: DependencyBasicInfo,
   moduleSpec: ModuleSpec,
 ): boolean {
   // Case 1: Simple string format "name@version"

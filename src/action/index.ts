@@ -14,6 +14,9 @@ const OUTPUT_VALID = "valid";
 const FOUND_FORBIDDEN = "found-forbidden";
 const FOUND_WARNING = "found-warning";
 
+// NOTE: Modify this path if you want to test the action locally without using Docker
+const BASE_PATH = "/github/workspace";
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -23,7 +26,7 @@ export async function run(): Promise<void> {
     setupProcess();
     core.debug("Getting configuration...");
     // NOTE: In github container actions, the workspace is mounted in /github/workspace
-    const options = await getConfig("/github/workspace");
+    const options = await getConfig(BASE_PATH);
     // Uncomment the following line to test the NodeJS code locally without running the action
     // const options = await getConfig(".");
 

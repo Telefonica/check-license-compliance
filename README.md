@@ -135,7 +135,7 @@ The configuration file is a YAML file that must be placed at the root of your re
   * `developmentFiles`: List of [globbing patterns](https://github.com/cowboy/node-globule) for files containing only development dependencies. If not defined, the default development files will be checked according to the [default configuration of each different system](#systems). You don't have to exclude this patterns from the `includeFiles` property (files matching both patterns will be considered as development files).
   * `excludeFiles`: List of [globbing patterns](https://github.com/cowboy/node-globule) for files to exclude from the check. Both `includeFiles` and `developmentFiles` patterns will be excluded from this list. If not defined, files will be excluded according to the [default configuration of each different system](#systems).
   * `modules`: List of [modules](#module-options) to check. If not defined, all modules will be checked.
-  * `excludeModules`: List of [modules](#module-options) to exclude from the check.
+  * `excludeModules`: List of [modules](#module-options) to exclude from the check. (The information about the module will be still retrieved, and its dependencies will be checked, but the module itself will be ignored in the check, unless you set the `ignore` property to `true` in the [module options](#module-options)).
   * `extraModules`: List of modules (`name@version`) to add to the check. This is useful when you want to check additional modules that are not directly defined in the dependencies tree.
   * ...each system may also have its own specific options. Check the [Systems](#systems) section for more information.
 * `failOnNotValid`: Boolean indicating if the check should fail (exit 1) when the result is not valid. Default is `true`.
@@ -149,14 +149,16 @@ The configuration file is a YAML file that must be placed at the root of your re
 
 In the configuration, there are options enabling to define the list of modules to check or to exclude from the check (`[system]/modules` and `[system]/excludeModules`). A module can be defined in two ways:
 
-1. A module and version string, like `express@4.17.1`.
-2. An object with some of the following properties. You have to provide at least one of the properties `name` or `nameMatch`. If no version is provided, the module will be included or excluded regardless of the version.
+1. A module and version string, like `express@4.17.1`. In this case, only the specific version will be included or excluded.
+2. A module name as string, like `express`. In this case, all versions of the module will be included or excluded.
+3. An object with some of the following properties. You have to provide at least one of the properties `name` or `nameMatch`. If no version is provided, the module will be included or excluded regardless of the version.
     * `name`: The module name.
     * `nameMatch`: A regex pattern to match the module name. When defined, the `name` property will be ignored.
     * `version`: The module version.
     * `versionMatch`: A regex pattern to match the module version. When defined, the `version` and `semver` properties will be ignored.
     * `semver`: The module version, defined using [semver expressions](https://semver.org/). This is useful when you want to include or exclude only a range of versions of a module, for example. The `version` property will be ignored when this property is defined. NOTE:
         * It will include ox exclude the versions that satisfy the expression. Note that, in case the dependency version is expressed using a semver expression in the project in systems supporting it (NPM), the action will resolve the version to the minimum version that satisfies it. So, it will compare the minimum version that satisfies the expression in the dependency with the expression in the configuration. If the dependency version is lower, it will be included (`modules` option) or excluded (`excludeModules` option) from the check.
+    * `ignore`: Boolean value to completely ignore the module and its dependencies. If set to `true`, the module will be completely ignored. Neither the information about the module nor its dependencies will be retrieved from the [deps.dev API](https://deps.dev/). This is useful when you want to exclude a module and its dependencies from the check, or for local private packages in monorepos. This property has only sense in the `excludeModules` option. Default is `false`.
 
 Examples:
 
@@ -176,6 +178,7 @@ npm:
       versionMatch: "^17\.1\.[12]$"
     - nameMatch: "@react/.*"
       semver: "^17.0.0"
+      ignore: true # This will also ignore the module and its dependencies when retrieving the information from the deps.dev API
     
 ```
 
@@ -268,8 +271,8 @@ Here you have the default configuration for each system, as well as the default 
 
 Note that you can also set next options in every system configuration:
 
-* `modules`: List of modules (`name@version`) to check. If not defined, all modules will be checked.
-* `excludeModules`: List of modules (`name@version`) to exclude from the check.
+* `modules`: List of [modules](#module-options) to check. If not defined, all modules will be checked.
+* `excludeModules`: List of [modules](#module-options) to exclude from the check.
 * `extraModules`: List of modules (`name@version`) to add to the check. This is useful when you want to check additional modules that are not directly defined in the dependencies tree (see an usage example in the [Python](#python) section).
 
 ### NPM
