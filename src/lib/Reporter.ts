@@ -99,7 +99,7 @@ function getAllowedMessage(
     lines.push("");
     const message =
       allowed.length === 1
-        ? "There is one dependency with allowed licenses."
+        ? "There is 1 dependency with allowed licenses."
         : `There are ${allowed.length} dependencies with allowed licenses.`;
     lines.push(messageWithEmoji("✅", message, markdown));
     lines.push("");

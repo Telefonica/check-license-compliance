@@ -22,7 +22,7 @@ import type { DependencyInfo } from "./DependenciesInfo.types";
 import { createLogger } from "./Logger.js";
 import { SPDX_LICENSE_IDS_PATH } from "./Paths.js";
 
-function trueIfNotUndefined(value?: boolean): boolean {
+function valueOrTrueIfUndefined(value?: boolean): boolean {
   return value !== undefined ? value : true;
 }
 
@@ -53,9 +53,9 @@ export class Checker {
     this._logger = createLogger(config.log);
     this._config = config;
     this._logger.verbose("Checker created with config", config);
-    this._production = trueIfNotUndefined(config.production);
+    this._production = valueOrTrueIfUndefined(config.production);
     this._onlyDirect = config.onlyDirect || false;
-    this._development = trueIfNotUndefined(config.development);
+    this._development = valueOrTrueIfUndefined(config.development);
 
     if (config.licenses?.others) {
       this._others = config.licenses.others;
@@ -228,8 +228,8 @@ export class Checker {
   ): boolean {
     return moduleSpecs.some((spec) => {
       if (isString(spec)) {
-        const idHasSystem = hasSystemId(spec);
-        if (idHasSystem) {
+        const specHasSystemId = hasSystemId(spec);
+        if (specHasSystemId) {
           return spec === dependencyInfo.id;
         }
         return spec === removeSystemId(dependencyInfo.id);
@@ -291,7 +291,9 @@ export class Checker {
         if (
           dependency.development &&
           !this._development &&
-          (!dependency.production || !this._config.production)
+          (!dependency.production ||
+            // The first one check is redundant, but it is here to make the condition more readable
+            (dependency.production && !this._production))
         ) {
           this._logger.verbose(
             `Excluding development dependency ${dependency.id}`,
@@ -302,7 +304,7 @@ export class Checker {
         if (
           dependency.production &&
           !this._production &&
-          (!dependency.development || !this._config.development)
+          !dependency.development
         ) {
           this._logger.verbose(
             `Excluding production dependency ${dependency.id}`,

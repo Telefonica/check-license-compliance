@@ -2,7 +2,10 @@ commonmark
 frontmatter
 LogForm
 NOASSERTION
+numpy
 oneofs
 protos
+PYPI
+pytest
 syncrc
 venv
