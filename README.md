@@ -1,3 +1,5 @@
+[![Build status](https://github.com/Telefonica/check-license-compliance/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Telefonica/check-license-compliance/actions?query=workflow%3Abuild+branch%3Amain) [![Last commit](https://img.shields.io/github/last-commit/Telefonica/check-license-compliance.svg)](https://github.com/Telefonica/check-license-compliance/commits) [![Last release](https://img.shields.io/github/release-date/Telefonica/check-license-compliance.svg)](https://github.com/Telefonica/check-license-compliance/releases)
+
 # Check License Compliance
 
 Checks that repository dependencies are compliant with allowed licenses according to a given configuration.
@@ -143,7 +145,7 @@ The configuration file is a YAML file that must be placed at the root of your re
 * `log`: Log level to use. Possible values are `silly`, `debug`, `info`, `warning` and `error`. Default is `info`. This option enables logs for the headers check. You can also enable logs for the action itself _(useful if you find any problem while the action is loading the configuration, for example)_ by setting the `ACTIONS_STEP_DEBUG` secret to `true`.
 
 > [!TIP]
-> Read the __[How it works section](#how-it-works)__ to understand how the action checks the licenses for better understanding of the configuration options, and the __[Systems section](#systems)__ to know the default configuration for each system.
+> Read the __[Systems section](#systems)__ to know the default configuration for each system.
 
 #### Module options
 
