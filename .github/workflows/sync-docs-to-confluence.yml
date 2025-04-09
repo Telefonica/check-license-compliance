@@ -37,15 +37,15 @@ jobs:
             [
               {
                 "path": "README.md",
-                "id": "${{ vars.CONFLUENCE_README_PAGE_ID }}",
+                "id": "${{ secrets.CONFLUENCE_README_PAGE_ID }}",
                 "title": "[Cross] Check License Compliance"
               },
               {
                 "path": "CHANGELOG.md",
-                "id": "${{ vars.CONFLUENCE_CHANGELOG_PAGE_ID }}",
+                "id": "${{ secrets.CONFLUENCE_CHANGELOG_PAGE_ID }}",
                 "title": "[Cross] [Check License Compliance] Releases"
               }
             ]
-          confluence-url: ${{ vars.CONFLUENCE_URL }}
-          confluence-space-key: ${{ vars.CONFLUENCE_SPACE_KEY }}
+          confluence-url: ${{ secrets.CONFLUENCE_URL }}
+          confluence-space-key: ${{ secrets.CONFLUENCE_SPACE_KEY }}
           confluence-personal-access-token: ${{ secrets.CONFLUENCE_PAT }}
